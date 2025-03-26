@@ -9,3 +9,13 @@ VALUES (
     $3
 )
 RETURNING *;
+
+-- name: GetUserByUsername :one
+SELECT * FROM users
+WHERE username = $1;
+
+-- name: UpdateUser :one
+UPDATE users
+SET username = $2, hashed_password = $3, email = $4, updated_at = NOW()
+WHERE id = $1
+RETURNING *;

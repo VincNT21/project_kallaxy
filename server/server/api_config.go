@@ -3,11 +3,13 @@ package server
 import "github.com/VincNT21/kallaxy/server/internal/database"
 
 type apiConfig struct {
-	db *database.Queries
+	db        *database.Queries
+	jwtsecret string
 }
 
-func newAPIConfig(db *database.Queries) *apiConfig {
+func newAPIConfig(db *database.Queries, jwtsecret string) *apiConfig {
 	return &apiConfig{
-		db: db,
+		db:        db,
+		jwtsecret: jwtsecret,
 	}
 }

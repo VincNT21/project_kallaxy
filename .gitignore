@@ -3,4 +3,4 @@ hints.md
 Kallaxy DB.session.sql
 run_migrations_up.sh
 run_migrations_down.sh
-server/.env
+.env

@@ -22,7 +22,11 @@ func Start() {
 	// Get info from .env
 	dbUrl := os.Getenv("DB_URL")
 	if dbUrl == "" {
-		log.Fatal("DB_URL must be set")
+		log.Fatal("DB_URL env. variable must be set")
+	}
+	jwtsecret := os.Getenv("SECRET")
+	if jwtsecret == "" {
+		log.Fatal("SECRET env. variable must be set")
 	}
 
 	// Open a connection to database
@@ -36,13 +40,19 @@ func Start() {
 	db := database.New(dbConnection)
 
 	// Init apiCfg
-	apiCfg := newAPIConfig(db)
+	apiCfg := newAPIConfig(db, jwtsecret)
 
 	// Create the request multiplexer (router)
 	mux := http.NewServeMux()
 
 	// Register handlers
-	mux.HandleFunc("POST /api/users", apiCfg.CreateUser)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.Handle("PUT /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateUser)))
+
+	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
+
+	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{

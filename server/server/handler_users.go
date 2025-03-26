@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -13,15 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type User struct {
-	ID        pgtype.UUID      `json:"id"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	Username  string           `json:"username"`
-	Email     string           `json:"email"`
-}
-
-func (cfg *apiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	// Parameters struct match what we'll get from request
 	type parameters struct {
 		Username string `json:"username"`
@@ -51,7 +42,7 @@ func (cfg *apiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call query function
-	user, err := cfg.db.CreateUser(context.Background(), database.CreateUserParams{
+	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
 		Username:       params.Username,
 		HashedPassword: hash,
 		Email:          params.Email,
@@ -72,6 +63,62 @@ func (cfg *apiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with new user's data
 	respondWithJson(w, 201, response{
+		User: User{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Username:  user.Username,
+			Email:     user.Email,
+		},
+	})
+}
+
+func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+	// Parameters struct match what we'll get from request
+	type parameters struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+	// Response struct match what we'll use for response
+	type response struct {
+		User
+	}
+
+	// Get body from request
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "couldn't decode body from request", err)
+		return
+	}
+
+	// Hash password
+	hash, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, 500, "couldn't hash password", err)
+		return
+	}
+
+	// Get user ID
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Call query function
+	user, err := cfg.db.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             userID,
+		Username:       params.Username,
+		HashedPassword: hash,
+		Email:          params.Email,
+	})
+	if err != nil {
+		respondWithError(w, 500, "couldn't update user info in DB", err)
+		return
+	}
+
+	// Respond
+	respondWithJson(w, 200, response{
 		User: User{
 			ID:        user.ID,
 			CreatedAt: user.CreatedAt,
