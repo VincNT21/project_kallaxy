@@ -42,7 +42,7 @@ func Start() {
 	mux := http.NewServeMux()
 
 	// Register handlers
-	apiCfg.db.CreateUser(context.Background(), database.CreateUserParams{})
+	mux.HandleFunc("POST /api/users", apiCfg.CreateUser)
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{
@@ -50,12 +50,12 @@ func Start() {
 		Handler: mux,
 	}
 
+	log.Printf("Server started on port %s\n", port)
+
 	// Start the server and log a fatal error if it fails to start
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
-	} else {
-		log.Printf("Server started on port %s\n", port)
 	}
 
 }
