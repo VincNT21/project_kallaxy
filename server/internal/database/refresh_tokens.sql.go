@@ -43,6 +43,16 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 	return i, err
 }
 
+const deleteRevokedTokens = `-- name: DeleteRevokedTokens :exec
+DELETE FROM refresh_tokens
+WHERE revoked_at IS NOT NULL
+`
+
+func (q *Queries) DeleteRevokedTokens(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteRevokedTokens)
+	return err
+}
+
 const getRefreshToken = `-- name: GetRefreshToken :one
 SELECT token, created_at, updated_at, user_id, expires_at, revoked_at FROM refresh_tokens
 WHERE token = $1

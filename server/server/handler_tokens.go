@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 	"time"
@@ -93,6 +94,11 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 	// Revoke Refresh token in DB
 	err = cfg.db.RevokeRefreshToken(r.Context(), refreshTokenStr)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Revoke token given is not in db
+			respondWithError(w, 404, "refresh token not found", err)
+			return
+		}
 		respondWithError(w, 500, "couldn't revoke refresh token in db", err)
 		return
 	}

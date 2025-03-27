@@ -11,7 +11,7 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
+		log.Printf("--ERROR-- Couldn't marshalling JSON: %s", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -22,8 +22,8 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 // Format a proper error response payload and call respond with JSON
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
-		log.Println(err)
-		log.Printf("Responding with %d error status code: %s", code, msg)
+		log.Printf("--ERROR-- %v", err)
+		log.Printf("--INFO-- Responding with %d error status code: %s", code, msg)
 	}
 
 	type errorResponse struct {

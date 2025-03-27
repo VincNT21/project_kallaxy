@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
@@ -31,6 +32,20 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "couldn't decode body from request", err)
+		return
+	}
+
+	// Validate required fields
+	if params.Username == "" {
+		respondWithError(w, 400, "Username is required", errors.New("no username provided in request body"))
+		return
+	}
+	if params.Password == "" {
+		respondWithError(w, 400, "Password is required", errors.New("no password provided in request body"))
+		return
+	}
+	if params.Email == "" {
+		respondWithError(w, 400, "email is required", errors.New("no email provided in request body"))
 		return
 	}
 
@@ -113,6 +128,11 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 		Email:          params.Email,
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Means that user doesn't exist which shouldn't happen if the JWT is valid
+			respondWithError(w, 500, "server error: user record inconsistency", err)
+			return
+		}
 		respondWithError(w, 500, "couldn't update user info in DB", err)
 		return
 	}
