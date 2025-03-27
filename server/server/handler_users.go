@@ -110,6 +110,20 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate required fields
+	if params.Username == "" {
+		respondWithError(w, 400, "Username is required", errors.New("no username provided in request body"))
+		return
+	}
+	if params.Password == "" {
+		respondWithError(w, 400, "Password is required", errors.New("no password provided in request body"))
+		return
+	}
+	if params.Email == "" {
+		respondWithError(w, 400, "email is required", errors.New("no email provided in request body"))
+		return
+	}
+
 	// Hash password
 	hash, err := auth.HashPassword(params.Password)
 	if err != nil {
@@ -134,6 +148,17 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		respondWithError(w, 500, "couldn't update user info in DB", err)
+		return
+	}
+
+	// Logout user by revoking all their refresh token
+	count, err := cfg.db.RevokeAllRefreshTokensByUserID(r.Context(), user.ID)
+	if err != nil {
+		respondWithError(w, 500, "couldn't logout user", err)
+		return
+	}
+	if count == 0 {
+		respondWithError(w, 500, "error with logout user: no refresh token found", err)
 		return
 	}
 

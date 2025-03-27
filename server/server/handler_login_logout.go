@@ -1,7 +1,9 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -32,6 +34,10 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	// Get user info from database
 	user, err := cfg.db.GetUserByUsername(r.Context(), params.Username)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondWithError(w, 401, "username doesn't exist", err)
+			return
+		}
 		respondWithError(w, 500, "couldn't get user info from DB", err)
 		return
 	}
@@ -85,4 +91,23 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			RefreshToken: refreshToken.Token,
 		},
 	})
+}
+
+func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
+	// Get user ID
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Call query function
+	count, err := cfg.db.RevokeAllRefreshTokensByUserID(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, 500, "couldn't revoke all refresh token by user ID", err)
+		return
+	}
+	if count == 0 {
+		respondWithError(w, 404, "no refresh token found for user ID", err)
+		return
+	}
+
+	// Respond
+	w.WriteHeader(204)
 }

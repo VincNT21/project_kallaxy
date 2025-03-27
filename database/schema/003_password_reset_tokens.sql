@@ -1,12 +1,11 @@
 -- +goose Up
-CREATE TABLE refresh_tokens (
+CREATE TABLE password_reset_tokens (
     token TEXT PRIMARY KEY,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    revoked_at TIMESTAMP
+    used_at TIMESTAMP
 );
 
 -- +goose Down
-DROP TABLE refresh_tokens;
+DROP TABLE password_reset_tokens

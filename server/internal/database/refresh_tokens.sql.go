@@ -72,13 +72,36 @@ func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshTok
 	return i, err
 }
 
-const revokeRefreshToken = `-- name: RevokeRefreshToken :exec
-UPDATE refresh_tokens
-SET revoked_at = NOW(), updated_at = NOW()
-WHERE token = $1
+const revokeAllRefreshTokensByUserID = `-- name: RevokeAllRefreshTokensByUserID :one
+WITH revoked AS (
+    UPDATE refresh_tokens
+    SET revoked_at = NOW(), updated_at = NOW()
+    WHERE user_id = $1
+    RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
+)
+SELECT count(*) FROM revoked
 `
 
-func (q *Queries) RevokeRefreshToken(ctx context.Context, token string) error {
-	_, err := q.db.Exec(ctx, revokeRefreshToken, token)
-	return err
+func (q *Queries) RevokeAllRefreshTokensByUserID(ctx context.Context, userID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, revokeAllRefreshTokensByUserID, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const revokeRefreshToken = `-- name: RevokeRefreshToken :one
+WITH revoked AS (
+    UPDATE refresh_tokens
+    SET revoked_at = NOW(), updated_at = NOW()
+    WHERE token = $1
+    RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
+)
+SELECT count(*) FROM revoked
+`
+
+func (q *Queries) RevokeRefreshToken(ctx context.Context, token string) (int64, error) {
+	row := q.db.QueryRow(ctx, revokeRefreshToken, token)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }

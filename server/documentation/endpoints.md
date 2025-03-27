@@ -1,10 +1,9 @@
 # Project Kallaxy Endpoints <!-- omit from toc -->
 
-## Public API Endpoints
 
-### Users related Endpoints
+## 1. Users related Endpoints
 
-#### POST /api/users -- User creation
+### 1.1. POST /api/users -- User creation
 -> *Description* : 
 >Create a new user in **users** table
 
@@ -40,9 +39,9 @@
 }
 ```
 
-#### PUT /api/users -- User info update
+### 1.2. PUT /api/users -- User info update
 -> *Description* : 
-> Update username/password/email for a logged-in user. Client needs to properly log out user if receiving a 200 OK response.
+> Update username/password/email for a logged-in user. **WARNING : User's refresh tokens will be revoked and they need to login again.**
 
 -> *Request headers* : 
 > A valid access token in "Authorization" header
@@ -69,11 +68,13 @@
 ```
 -> *Error Response status code to handle* : 
 
+    - 400 Bad Request : one or many fields are missing in request
     - 401 Unauthorized : means that access token is expired, client should fetch **POST /auth/refresh** to get a new access token
 
 -> *OK Response status code expected* : 
 
     200 OK
+    /!\ If client receives 200 OK response, it also means that user has been logged out and need to log in again for new refresh token /!\ 
 
 -> *Response body example* :
 ```json
@@ -85,11 +86,11 @@
     "email": "vincnt21@example.com"
 }
 ```
-/!\ If client receives 200 OK response, it needs to call logout endpoint to revoke refresh tokens and to clears local storage/cookies of access and refresh tokens /!\ 
 
-#### POST /auth/login -- Authentification
+
+### 1.3. POST /auth/login -- Authentification
 -> *Description* : 
-> Login user by checking giver email/password, create Refresh Token (valid for 60 days) stored in server's database and a Access Token (valid for 1 hour) not stored. Both tokens are sent back to client, along with the logged user's info.
+> Login user by checking given email/password, create Refresh Token (valid for 60 days) stored in server's database and a Access Token (valid for 1 hour) not stored. Both tokens are sent back to client, along with the logged user's info.
 
 -> *Request body* :
 > user's username (string) and user's password (string)
@@ -105,11 +106,11 @@
 
 -> *Error Response status code to handle* : 
 
-    - 401- Unauthorized: given username/password does not match.
+    - 401 Unauthorized: given username/password does not match.
 
 -> *OK Response status code expected* : 
 
-    201- Created
+    201 Created
 
 -> *Response body example* :
 ```json
@@ -124,7 +125,34 @@
 }
 ```
 
-#### POST /auth/refresh -- Refresh access token
+### 1.4. POST /auth/logout -- Logout a user
+-> *Description* : 
+> Logout a user by revoking all their refresh tokens
+
+-> *Request headers* : 
+> A valid access token in "Authorization" header
+
+*Example*:
+```json
+{
+    "Authorization": "Bearer <access_token>"
+}
+
+``` 
+
+-> *Request body* :
+>None
+
+-> *Error Response status code to handle* : 
+
+    - 401 Unauthorized : means that access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 404 Not Found: No refresh token associated to user's ID (from access token) found in database
+
+-> *OK Response status code expected* : 
+
+    204 No Content
+
+### 1.5. POST /auth/refresh -- Refresh access token
 -> *Description* : 
 >If given Refresh Token is still valid and not revoked, create a new Access Token and a new Refresh Token. Both tokens are sent back to client.
 
@@ -144,11 +172,11 @@
 
 -> *Error Response status code to handle* : 
 
-    - 401- Unauthorized: Refresh token doesn't exist in server's database or has been revoked or has expired. Client should fetch **POST /auth/login** to get a new refresh token.
+    - 401 Unauthorized: Refresh token doesn't exist in server's database or has been revoked or has expired. Client should fetch **POST /auth/login** to get a new refresh token.
 
 -> *OK Response status code expected* : 
 
-    201- Created
+    201 Created
 
 -> *Response body example* :
 ```json
@@ -158,7 +186,7 @@
 }
 ```
 
-#### POST /auth/revoke -- Revoke refresh token
+### 1.6. POST /auth/revoke -- Revoke a refresh token
 -> *Description* : 
 >Revoke a refresh token in server's database
 
@@ -178,7 +206,7 @@
 
 -> *Error Response status code to handle* : 
 
-    - 401 Unauthorized: There is a problem with "Authorization" header
+    - 401 Unauthorized: There is a problem with "Authorization" header: missing or malformed
     - 404 Not Found: The refresh token doesn't exist in server's database
 
 -> *OK Response status code expected* : 
@@ -190,7 +218,7 @@
 -> *Response body example* :
 >Empty
 
-## Model
+## 2. Model
 -> *Description* : 
 >
 

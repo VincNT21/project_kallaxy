@@ -129,3 +129,12 @@ func GetBearerToken(headers http.Header) (string, error) {
 
 	return splitAuth[1], nil
 }
+
+/* =============================
+Other security related functions
+===============================*/
+
+func GenerateResetToken() string {
+	randomString := rand.Text()
+	return randomString
+}

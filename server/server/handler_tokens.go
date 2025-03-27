@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"time"
@@ -68,7 +67,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Revoked old refresh token
-	err = cfg.db.RevokeRefreshToken(r.Context(), refreshTokenOldStr)
+	_, err = cfg.db.RevokeRefreshToken(r.Context(), refreshTokenOldStr)
 	if err != nil {
 		respondWithError(w, 500, "couldn't delete old refresh token from db", err)
 		return
@@ -92,14 +91,14 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Revoke Refresh token in DB
-	err = cfg.db.RevokeRefreshToken(r.Context(), refreshTokenStr)
+	count, err := cfg.db.RevokeRefreshToken(r.Context(), refreshTokenStr)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Revoke token given is not in db
-			respondWithError(w, 404, "refresh token not found", err)
-			return
-		}
 		respondWithError(w, 500, "couldn't revoke refresh token in db", err)
+		return
+	}
+	if count == 0 {
+		// Refresh token given is not in db
+		respondWithError(w, 404, "refresh token not found", err)
 		return
 	}
 

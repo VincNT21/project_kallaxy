@@ -59,6 +59,7 @@ func Start(envVars ...map[string]string) {
 	mux := http.NewServeMux()
 
 	// Register handlers
+
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.Handle("PUT /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateUser)))
 
@@ -66,7 +67,7 @@ func Start(envVars ...map[string]string) {
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
 
 	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
-	mux.HandleFunc("POST /auth/logout", apiCfg.handlerRevoke)
+	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{

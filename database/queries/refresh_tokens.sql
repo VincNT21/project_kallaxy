@@ -13,10 +13,23 @@ RETURNING *;
 SELECT * FROM refresh_tokens
 WHERE token = $1;
 
--- name: RevokeRefreshToken :exec
-UPDATE refresh_tokens
-SET revoked_at = NOW(), updated_at = NOW()
-WHERE token = $1;
+-- name: RevokeRefreshToken :one
+WITH revoked AS (
+    UPDATE refresh_tokens
+    SET revoked_at = NOW(), updated_at = NOW()
+    WHERE token = $1
+    RETURNING *
+)
+SELECT count(*) FROM revoked;
+
+-- name: RevokeAllRefreshTokensByUserID :one
+WITH revoked AS (
+    UPDATE refresh_tokens
+    SET revoked_at = NOW(), updated_at = NOW()
+    WHERE user_id = $1
+    RETURNING *
+)
+SELECT count(*) FROM revoked;
 
 -- name: DeleteRevokedTokens :exec
 DELETE FROM refresh_tokens
