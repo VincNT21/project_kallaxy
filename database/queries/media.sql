@@ -1,5 +1,5 @@
 -- name: CreateMedium :one
-INSERT INTO media (id, type, created_at, updated_at, title, creator, release_year, image_url, metadata)
+INSERT INTO media (id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata)
 VALUES (
     gen_random_uuid(),
     $1,
@@ -21,11 +21,11 @@ RETURNING *;
 
 -- name: GetMediumByTitle :one
 SELECT * FROM media
-WHERE title = $1;
+WHERE LOWER(title) = LOWER($1);
 
 -- name: GetMediaByType :many
 SELECT * FROM media
-WHERE type = $1;
+WHERE LOWER(media_type) = LOWER($1);
 
 -- name: DeleteMedium :one
 WITH deleted AS (

@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE media (
     id UUID PRIMARY KEY,
-    type TEXT NOT NULL,
+    media_type TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     title TEXT NOT NULL UNIQUE,

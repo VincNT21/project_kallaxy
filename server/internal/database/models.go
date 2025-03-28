@@ -10,7 +10,7 @@ import (
 
 type Medium struct {
 	ID          pgtype.UUID
-	Type        string
+	MediaType   string
 	CreatedAt   pgtype.Timestamp
 	UpdatedAt   pgtype.Timestamp
 	Title       string

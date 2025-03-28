@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// "POST /auth/reset-password"
+// POST /auth/reset-password
 func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email string `json:"email"`
@@ -78,7 +78,7 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 
 }
 
-// "GET /auth/resest-password?token=xxxxxxx"
+// GET /auth/resest-password?token=xxxxxxx
 func (cfg *apiConfig) handlerVerifyResetToken(w http.ResponseWriter, r *http.Request) {
 	type response struct {
 		Valid bool   `json:"valid"`
@@ -107,7 +107,7 @@ func (cfg *apiConfig) handlerVerifyResetToken(w http.ResponseWriter, r *http.Req
 
 }
 
-// "PUT /auth/reset-password"
+// PUT /auth/reset-password
 func (cfg *apiConfig) handlerResetPassword(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Token       string `json:"token"`

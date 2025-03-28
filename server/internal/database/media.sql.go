@@ -12,7 +12,7 @@ import (
 )
 
 const createMedium = `-- name: CreateMedium :one
-INSERT INTO media (id, type, created_at, updated_at, title, creator, release_year, image_url, metadata)
+INSERT INTO media (id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata)
 VALUES (
     gen_random_uuid(),
     $1,
@@ -24,11 +24,11 @@ VALUES (
     $5,
     $6
 )
-RETURNING id, type, created_at, updated_at, title, creator, release_year, image_url, metadata
+RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
 `
 
 type CreateMediumParams struct {
-	Type        string
+	MediaType   string
 	Title       string
 	Creator     string
 	ReleaseYear int32
@@ -38,7 +38,7 @@ type CreateMediumParams struct {
 
 func (q *Queries) CreateMedium(ctx context.Context, arg CreateMediumParams) (Medium, error) {
 	row := q.db.QueryRow(ctx, createMedium,
-		arg.Type,
+		arg.MediaType,
 		arg.Title,
 		arg.Creator,
 		arg.ReleaseYear,
@@ -48,7 +48,7 @@ func (q *Queries) CreateMedium(ctx context.Context, arg CreateMediumParams) (Med
 	var i Medium
 	err := row.Scan(
 		&i.ID,
-		&i.Type,
+		&i.MediaType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
@@ -76,12 +76,12 @@ func (q *Queries) DeleteMedium(ctx context.Context, id pgtype.UUID) (int64, erro
 }
 
 const getMediaByType = `-- name: GetMediaByType :many
-SELECT id, type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
-WHERE type = $1
+SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+WHERE LOWER(media_type) = LOWER($1)
 `
 
-func (q *Queries) GetMediaByType(ctx context.Context, type_ string) ([]Medium, error) {
-	rows, err := q.db.Query(ctx, getMediaByType, type_)
+func (q *Queries) GetMediaByType(ctx context.Context, lower string) ([]Medium, error) {
+	rows, err := q.db.Query(ctx, getMediaByType, lower)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (q *Queries) GetMediaByType(ctx context.Context, type_ string) ([]Medium, e
 		var i Medium
 		if err := rows.Scan(
 			&i.ID,
-			&i.Type,
+			&i.MediaType,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Title,
@@ -111,16 +111,16 @@ func (q *Queries) GetMediaByType(ctx context.Context, type_ string) ([]Medium, e
 }
 
 const getMediumByTitle = `-- name: GetMediumByTitle :one
-SELECT id, type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
-WHERE title = $1
+SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+WHERE LOWER(title) = LOWER($1)
 `
 
-func (q *Queries) GetMediumByTitle(ctx context.Context, title string) (Medium, error) {
-	row := q.db.QueryRow(ctx, getMediumByTitle, title)
+func (q *Queries) GetMediumByTitle(ctx context.Context, lower string) (Medium, error) {
+	row := q.db.QueryRow(ctx, getMediumByTitle, lower)
 	var i Medium
 	err := row.Scan(
 		&i.ID,
-		&i.Type,
+		&i.MediaType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
@@ -145,7 +145,7 @@ const updateMedium = `-- name: UpdateMedium :one
 UPDATE media
 SET title = $2, creator = $3, release_year = $4, image_url = $5, metadata = $6, updated_at = NOW()
 WHERE id = $1
-RETURNING id, type, created_at, updated_at, title, creator, release_year, image_url, metadata
+RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
 `
 
 type UpdateMediumParams struct {
@@ -169,7 +169,7 @@ func (q *Queries) UpdateMedium(ctx context.Context, arg UpdateMediumParams) (Med
 	var i Medium
 	err := row.Scan(
 		&i.ID,
-		&i.Type,
+		&i.MediaType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,

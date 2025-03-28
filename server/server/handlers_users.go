@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// POST /api/users
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	// Parameters struct match what we'll get from request
 	type parameters struct {
@@ -88,6 +89,41 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// GET /api/users
+func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		User
+	}
+
+	// Get user's ID from context
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Call query function
+	user, err := cfg.db.GetUserByID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Means that user doesn't exist which shouldn't happen if the JWT is valid
+			respondWithError(w, 500, "server error: user record inconsistency", err)
+			return
+		}
+		respondWithError(w, 500, "couldn't get user by ID in DB", err)
+		return
+	}
+
+	// Respond
+	respondWithJson(w, 200, response{
+		User: User{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Username:  user.Username,
+			Email:     user.Email,
+		},
+	})
+
+}
+
+// PUT /api/users
 func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Parameters struct match what we'll get from request
 	type parameters struct {
@@ -174,6 +210,7 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// DELETE /api/users
 func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(userIDKey).(pgtype.UUID)
 	count, err := cfg.db.DeleteUser(r.Context(), userID)
@@ -182,7 +219,8 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if count == 0 {
-		respondWithError(w, 404, "No user with given ID", nil)
+		// Means that user doesn't exist which shouldn't happen if the JWT is valid
+		respondWithError(w, 500, "server error: user record inconsistency", err)
 		return
 	}
 

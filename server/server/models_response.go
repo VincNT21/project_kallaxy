@@ -21,7 +21,7 @@ type Tokens struct {
 
 type Medium struct {
 	ID          pgtype.UUID      `json:"id"`
-	Type        string           `json:"type"`
+	MediaType   string           `json:"media_type"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 	Title       string           `json:"title"`
