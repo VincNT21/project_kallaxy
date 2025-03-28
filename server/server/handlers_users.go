@@ -173,3 +173,19 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 		},
 	})
 }
+
+func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+	count, err := cfg.db.DeleteUser(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, 500, "couldn't delete user with given ID", err)
+		return
+	}
+	if count == 0 {
+		respondWithError(w, 404, "No user with given ID", nil)
+		return
+	}
+
+	// Respond
+	w.WriteHeader(200)
+}

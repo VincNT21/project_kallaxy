@@ -30,5 +30,12 @@ SET hashed_password = $2, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 
+-- name: DeleteUser :one
+WITH deleted AS (
+    DELETE FROM users
+    WHERE id = $1
+)
+SELECT count(*) FROM deleted;
+
 -- name: ResetUsers :exec
 DELETE FROM users;

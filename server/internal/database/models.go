@@ -8,6 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Medium struct {
+	ID          pgtype.UUID
+	Type        string
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
+	Title       string
+	Creator     string
+	ReleaseYear int32
+	ImageUrl    string
+	Metadata    []byte
+}
+
 type PasswordResetToken struct {
 	Token     string
 	UserID    pgtype.UUID
