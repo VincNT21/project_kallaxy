@@ -11,6 +11,7 @@ import (
 type PasswordResetToken struct {
 	Token     string
 	UserID    pgtype.UUID
+	UserEmail string
 	CreatedAt pgtype.Timestamp
 	ExpiresAt pgtype.Timestamp
 	UsedAt    pgtype.Timestamp

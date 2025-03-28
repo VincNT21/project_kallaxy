@@ -11,29 +11,67 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getPasswordResetToken = `-- name: GetPasswordResetToken :one
+SELECT token, user_id, user_email, created_at, expires_at, used_at FROM password_reset_tokens
+WHERE token = $1
+`
+
+func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (PasswordResetToken, error) {
+	row := q.db.QueryRow(ctx, getPasswordResetToken, token)
+	var i PasswordResetToken
+	err := row.Scan(
+		&i.Token,
+		&i.UserID,
+		&i.UserEmail,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.UsedAt,
+	)
+	return i, err
+}
+
+const invalidateResetTokensByUserId = `-- name: InvalidateResetTokensByUserId :exec
+UPDATE password_reset_tokens 
+SET used_at = NOW()
+WHERE user_id = $1
+`
+
+func (q *Queries) InvalidateResetTokensByUserId(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, invalidateResetTokensByUserId, userID)
+	return err
+}
+
 const storePasswordToken = `-- name: StorePasswordToken :one
-INSERT INTO password_reset_tokens (token, user_id, created_at, expires_at)
+INSERT INTO password_reset_tokens (token, user_id, user_email, created_at, expires_at)
 VALUES (
     $1,
     $2,
+    $3,
     NOW(),
-    $3
+    $4
 )
-RETURNING token, user_id, created_at, expires_at, used_at
+RETURNING token, user_id, user_email, created_at, expires_at, used_at
 `
 
 type StorePasswordTokenParams struct {
 	Token     string
 	UserID    pgtype.UUID
+	UserEmail string
 	ExpiresAt pgtype.Timestamp
 }
 
 func (q *Queries) StorePasswordToken(ctx context.Context, arg StorePasswordTokenParams) (PasswordResetToken, error) {
-	row := q.db.QueryRow(ctx, storePasswordToken, arg.Token, arg.UserID, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, storePasswordToken,
+		arg.Token,
+		arg.UserID,
+		arg.UserEmail,
+		arg.ExpiresAt,
+	)
 	var i PasswordResetToken
 	err := row.Scan(
 		&i.Token,
 		&i.UserID,
+		&i.UserEmail,
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.UsedAt,

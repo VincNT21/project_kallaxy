@@ -97,6 +97,10 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
 	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 
+	mux.HandleFunc("POST /auth/password-reset", apiCfg.handlerPasswordResetRequest)
+	mux.HandleFunc("GET /auth/password-reset", apiCfg.handlerVerifyResetToken)
+	mux.HandleFunc("PUT /auth/password-reset", apiCfg.handlerResetPassword)
+
 	// Create a http server with our multiplexer
 	server := &http.Server{
 		Handler: mux,

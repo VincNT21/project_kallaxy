@@ -91,6 +91,32 @@ func (q *Queries) ResetUsers(ctx context.Context) error {
 	return err
 }
 
+const updatePassword = `-- name: UpdatePassword :one
+UPDATE users
+SET hashed_password = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, username, hashed_password, email
+`
+
+type UpdatePasswordParams struct {
+	ID             pgtype.UUID
+	HashedPassword string
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error) {
+	row := q.db.QueryRow(ctx, updatePassword, arg.ID, arg.HashedPassword)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.HashedPassword,
+		&i.Email,
+	)
+	return i, err
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET username = $2, hashed_password = $3, email = $4, updated_at = NOW()
