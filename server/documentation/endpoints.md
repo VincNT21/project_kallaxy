@@ -261,7 +261,8 @@
 
 -> *Request body* :
 >Title, type, creator (string), release year (int32), image URL (string), some metadata according to media type (see resources documentation)
-All fields required, "type" field should be unique across database.
+All fields required except for *image URL* which can be an empty string
+*type* field should be unique across database.
 
 *Example*:
 ```json
@@ -277,8 +278,9 @@ All fields required, "type" field should be unique across database.
 
 -> *Error Response status code to handle* : 
 
-    - 400 Bad Request - A medium with the exact same title already exists in database
+    - 400 Bad Request - One to many required fields are missing in request's body
     - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 409 Conflict - A medium with the exact same title already exists in database
 
 -> *OK Response status code expected* :
 
@@ -298,11 +300,11 @@ All fields required, "type" field should be unique across database.
 
 -> *Request query parameters* :
 >"?title=<medium_title>"  
-Note that medium title is case insensitive (lowered before database query) BUT spaces (encoded with %20 or +) and special characters matters for server search
+Note that medium title is case insensitive (lowered before database query) BUT spaces (encoded with + or %20) and special characters matters for server search
 
 *Example*:
 ```
-/api/media?title=Fellowship%20Of%20The%20Ring
+/api/media?title=The+Fellowship+Of+The+Ring
 ```
 -> *Error Response status code to handle* : 
 
@@ -328,7 +330,7 @@ Note that medium title is case insensitive (lowered before database query) BUT s
 
 -> *Request query parameters* :
 >"?type=<media_type>"  
-Note that media type is case insensitive (lowered before database query) BUT spaces (encoded with %20 or +) and special characters matters for server search
+Note that media type is case insensitive (lowered before database query) BUT spaces (encoded with + or %20) and special characters matters for server search
 
 *Example*:
 ```
@@ -377,9 +379,9 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 
 -> *Error Response status code to handle* : 
 
-    - 400 Bad Request - A medium with the exact same title already exists in database
     - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
     - 404 Not Found - No medium with given ID found in database
+    - 409 Conflict - A medium with the exact same title already exists in database
 
 -> *OK Response status code expected* :
 
@@ -403,7 +405,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 *Example*:
 ```json
 {
-    "id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
+    "medium_id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
 }
 ```
 -> *Error Response status code to handle* : 

@@ -32,7 +32,7 @@ type CreateMediumParams struct {
 	Title       string
 	Creator     string
 	ReleaseYear int32
-	ImageUrl    string
+	ImageUrl    pgtype.Text
 	Metadata    []byte
 }
 
@@ -64,6 +64,7 @@ const deleteMedium = `-- name: DeleteMedium :one
 WITH deleted AS (
     DELETE FROM media
     WHERE id = $1
+    RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
 )
 SELECT count(*) FROM deleted
 `
@@ -110,6 +111,28 @@ func (q *Queries) GetMediaByType(ctx context.Context, lower string) ([]Medium, e
 	return items, nil
 }
 
+const getMediumByID = `-- name: GetMediumByID :one
+SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+WHERE id = $1
+`
+
+func (q *Queries) GetMediumByID(ctx context.Context, id pgtype.UUID) (Medium, error) {
+	row := q.db.QueryRow(ctx, getMediumByID, id)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.MediaType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Title,
+		&i.Creator,
+		&i.ReleaseYear,
+		&i.ImageUrl,
+		&i.Metadata,
+	)
+	return i, err
+}
+
 const getMediumByTitle = `-- name: GetMediumByTitle :one
 SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
 WHERE LOWER(title) = LOWER($1)
@@ -153,7 +176,7 @@ type UpdateMediumParams struct {
 	Title       string
 	Creator     string
 	ReleaseYear int32
-	ImageUrl    string
+	ImageUrl    pgtype.Text
 	Metadata    []byte
 }
 

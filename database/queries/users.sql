@@ -38,6 +38,7 @@ RETURNING *;
 WITH deleted AS (
     DELETE FROM users
     WHERE id = $1
+    RETURNING *
 )
 SELECT count(*) FROM deleted;
 

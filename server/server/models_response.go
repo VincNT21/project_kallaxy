@@ -27,6 +27,6 @@ type Medium struct {
 	Title       string           `json:"title"`
 	Creator     string           `json:"creator"`
 	ReleaseYear int32            `json:"release_year"`
-	ImageUrl    string           `json:"image_url"`
+	ImageUrl    pgtype.Text      `json:"image_url"`
 	Metadata    json.RawMessage  `json:"metadata"`
 }

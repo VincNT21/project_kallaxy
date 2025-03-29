@@ -7,7 +7,7 @@ CREATE TABLE media (
     title TEXT NOT NULL UNIQUE,
     creator TEXT NOT NULL,
     release_year INTEGER NOT NULL,
-    image_url TEXT NOT NULL,
+    image_url TEXT,
     metadata JSONB NOT NULL
 );
 

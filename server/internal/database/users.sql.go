@@ -48,6 +48,7 @@ const deleteUser = `-- name: DeleteUser :one
 WITH deleted AS (
     DELETE FROM users
     WHERE id = $1
+    RETURNING id, created_at, updated_at, username, hashed_password, email
 )
 SELECT count(*) FROM deleted
 `

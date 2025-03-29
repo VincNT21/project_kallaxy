@@ -2,16 +2,13 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/VincNT21/kallaxy/server/internal/auth"
 	"github.com/VincNT21/kallaxy/server/internal/database"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,6 +18,7 @@ type TestContext struct {
 	BaseURL          string
 	UserAcessToken   string
 	UserRefreshToken string
+	UserID           string
 	UserUsername     string
 	UserPassword     string
 	UserEmail        string
@@ -63,7 +61,7 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 
 	// Set up test environnement variables
 	testEnv := map[string]string{
-		"DB_URL": "postgresql://postgres:postgres@localhost:5432/kallaxytestdb",
+		"DB_URL": "postgresql://postgres:postgres@localhost:5432/kallaxytest",
 		"SECRET": "test-jwt-secret",
 	}
 
@@ -86,20 +84,34 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux := http.NewServeMux()
 
 	// Register handlers
-	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset) // Reset handler is only used on test server
 
+	// Users endpoints
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.Handle("GET /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetUserByID)))
 	mux.Handle("PUT /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateUser)))
+	mux.Handle("DELETE /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteUser)))
 
+	// Media endpoints
+	mux.Handle("POST /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateMedium)))
+	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMedia)))
+	mux.Handle("PUT /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateMedium)))
+	mux.Handle("DELETE /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteMedium)))
+
+	// Authentification endpoints
+	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
+	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
 
-	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
-	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
-
+	// Reset Password endpoints
 	mux.HandleFunc("POST /auth/password-reset", apiCfg.handlerPasswordResetRequest)
 	mux.HandleFunc("GET /auth/password-reset", apiCfg.handlerVerifyResetToken)
 	mux.HandleFunc("PUT /auth/password-reset", apiCfg.handlerResetPassword)
+
+	// Admin endpoint (only used on test server)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
+	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
 
 	// Create a http server with our multiplexer
 	server := &http.Server{
@@ -118,75 +130,4 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 
 	// return server and URL so tests can use it
 	return server, serverURL
-}
-
-// ResetDatabase sends a request to the admin Reset endpoint
-func (ctx *TestContext) ResetDatabase(t *testing.T) {
-	req, err := http.NewRequest("POST", ctx.BaseURL+"/admin/reset", nil)
-	if err != nil {
-		t.Fatalf("Failed to create reset request: %v", err)
-	}
-	resp, err := ctx.Client.Do(req)
-	if err != nil {
-		t.Fatalf("Failed to reset database: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		t.Fatalf("Failed to reset database. Status: %d", resp.StatusCode)
-	}
-}
-
-// CreateTestUser creates a user
-func (ctx *TestContext) CreateTestUser(t *testing.T) {
-	// Create user via API request
-	payload := fmt.Sprintf(`{"username":"%s", "password":"%s", "email":"%s"}`, ctx.UserUsername, ctx.UserPassword, ctx.UserEmail)
-	resp, err := ctx.Client.Post(ctx.BaseURL+"/api/users", "application/json", strings.NewReader(payload))
-	if err != nil {
-		t.Fatalf("Failed to create test user: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 201 {
-		t.Fatalf("Failed to create test user. Status: %d", resp.StatusCode)
-	}
-}
-
-// LoginTestUser logs in a user and stores tokens in context variables
-func (ctx *TestContext) LoginTestUser(t *testing.T) {
-	// Login via API request
-	payload := fmt.Sprintf(`{"username":"%s", "password":"%s"}`, ctx.UserUsername, ctx.UserPassword)
-	resp, err := ctx.Client.Post(ctx.BaseURL+"/auth/login", "application/json", strings.NewReader(payload))
-	if err != nil {
-		t.Fatalf("Failed to login test user: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 201 {
-		t.Fatalf("Failed to login test user. Status: %d", resp.StatusCode)
-	}
-	var tokens map[string]string
-	err = json.NewDecoder(resp.Body).Decode(&tokens)
-	if err != nil {
-		t.Fatalf("Failed to decode login response body: %v", err)
-	}
-	ctx.UserAcessToken = tokens["access_token"]
-	ctx.UserRefreshToken = tokens["refresh_token"]
-}
-
-func TestValidateAccessToken(token string) bool {
-	_, err := auth.ValidateJWT(token, "test-jwt-secret")
-	return err == nil
-}
-
-func (ctx *TestContext) TestValidateRefreshToken(token string) bool {
-	// To check if validate, make a request to Refresh endpoint
-	req, err := http.NewRequest("POST", ctx.BaseURL+"/auth/refresh", nil)
-	if err != nil {
-		log.Printf("ERROR with TestValidateRefreshToken() create request: %v\n", err)
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	resp, err := ctx.Client.Do(req)
-	if err != nil {
-		log.Printf("ERROR with TestValidateRefreshToken() do request: %v\n", err)
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == 201
 }

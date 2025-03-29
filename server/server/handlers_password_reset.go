@@ -44,7 +44,7 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 	// Generate reset token (valid for 6 hour)
 	token := auth.GenerateResetToken()
 	if token == "" {
-		respondWithError(w, 500, "couldn't generate a reset token", errors.New("Error with GenerateResetToken(): returning an empty string"))
+		respondWithError(w, 500, "couldn't generate a reset token", errors.New("error with GenerateResetToken(): returning an empty string"))
 		return
 	}
 	expiry := pgtype.Timestamp{

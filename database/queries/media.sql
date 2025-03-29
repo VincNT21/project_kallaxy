@@ -27,10 +27,15 @@ WHERE LOWER(title) = LOWER($1);
 SELECT * FROM media
 WHERE LOWER(media_type) = LOWER($1);
 
+-- name: GetMediumByID :one
+SELECT * FROM media
+WHERE id = $1;
+
 -- name: DeleteMedium :one
 WITH deleted AS (
     DELETE FROM media
     WHERE id = $1
+    RETURNING *
 )
 SELECT count(*) FROM deleted;
 

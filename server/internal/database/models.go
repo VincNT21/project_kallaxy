@@ -16,7 +16,7 @@ type Medium struct {
 	Title       string
 	Creator     string
 	ReleaseYear int32
-	ImageUrl    string
+	ImageUrl    pgtype.Text
 	Metadata    []byte
 }
 
