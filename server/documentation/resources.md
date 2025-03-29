@@ -59,3 +59,30 @@ This token must be set in an "Authorization" header.
     "metadata": ""
 }
 ```
+
+## Record resource (//TO DO)
+
+### Structure
+- `id`: string - Record's unique identifier
+- `created_at`: string (ISO 8601 datetime) - When the user was created
+- `updated_at`: string (ISO 8601 datetime) - Last time the user info was updated
+- `user_id`: string - Medium's title
+- `creator`: string - Medium's creator (author, director...)
+- `release_year`: int32 - Medium's year of publication
+- `image_url`: string - a link to medium's cover
+- `metadata`: json.RawMessage - a json object, according to media type (see below)
+
+### Example
+```json
+{
+    "id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc",
+    "type": "book",
+    "created_at": "2025-03-26T14:20:23.525332",
+    "updated_at": "2025-03-26T14:20:23.525332",
+    "title": "The Fellowship of the ring",
+    "creator": "J.R.R. Tolkien",
+    "release_year": "1954",
+    "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
+    "metadata": ""
+}
+```

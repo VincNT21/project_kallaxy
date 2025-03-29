@@ -46,3 +46,15 @@ type User struct {
 	HashedPassword string
 	Email          string
 }
+
+type UsersMediaRecord struct {
+	ID         pgtype.UUID
+	CreatedAt  pgtype.Timestamp
+	UpdatedAt  pgtype.Timestamp
+	UserID     pgtype.UUID
+	MediaID    pgtype.UUID
+	IsFinished pgtype.Bool
+	StartDate  pgtype.Timestamp
+	EndDate    pgtype.Timestamp
+	Duration   pgtype.Interval
+}

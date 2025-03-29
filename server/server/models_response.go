@@ -30,3 +30,15 @@ type Medium struct {
 	ImageUrl    pgtype.Text      `json:"image_url"`
 	Metadata    json.RawMessage  `json:"metadata"`
 }
+
+type Record struct {
+	ID         pgtype.UUID      `json:"id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+	UserID     pgtype.UUID      `json:"user_id"`
+	MediaID    pgtype.UUID      `json:"media_id"`
+	IsFinished pgtype.Bool      `json:"is_finished"`
+	StartDate  pgtype.Timestamp `json:"start_date"`
+	EndDate    pgtype.Timestamp `json:"end_date"`
+	Duration   pgtype.Interval  `json:"duration"`
+}

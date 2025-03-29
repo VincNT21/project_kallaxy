@@ -21,15 +21,6 @@ type parametersCreateMedium struct {
 	Metadata    json.RawMessage `json:"metadata"`
 }
 
-type responseCreateMedium struct {
-	Medium
-}
-
-type parametersGetMedia struct {
-	Title     string
-	MediaType string
-}
-
 // POST /api/media
 func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request) {
 
@@ -51,7 +42,7 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 
 	// Check if all required fields are provided
 	if params.Title == "" || params.MediaType == "" || params.Creator == "" || params.ReleaseYear == 0 {
-		respondWithError(w, 400, "Some required field is missing in request body", err)
+		respondWithError(w, 400, "Some required field is missing in request body", errors.New("a imperative field is missing in request's body"))
 		return
 	}
 
@@ -76,18 +67,22 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	}
 
 	// Respond
-	respondWithJson(w, 201, responseCreateMedium{
-		Medium: Medium{
-			ID:          medium.ID,
-			MediaType:   medium.MediaType,
-			CreatedAt:   medium.CreatedAt,
-			UpdatedAt:   medium.UpdatedAt,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
-		}})
+	respondWithJson(w, 201, Medium{
+		ID:          medium.ID,
+		MediaType:   medium.MediaType,
+		CreatedAt:   medium.CreatedAt,
+		UpdatedAt:   medium.UpdatedAt,
+		Title:       medium.Title,
+		Creator:     medium.Creator,
+		ReleaseYear: medium.ReleaseYear,
+		ImageUrl:    medium.ImageUrl,
+		Metadata:    medium.Metadata,
+	})
+}
+
+type parametersGetMedia struct {
+	Title     string
+	MediaType string
 }
 
 // GET /api/media (query parameters: "?title=xxx" / "?type=xxx"
@@ -115,9 +110,6 @@ func (cfg *apiConfig) handlerGetMedia(w http.ResponseWriter, r *http.Request) {
 
 // Sub-function for handlerGetMedia
 func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, title string) {
-	type response struct {
-		Medium
-	}
 
 	// Call query function
 	medium, err := cfg.db.GetMediumByTitle(r.Context(), title)
@@ -131,18 +123,17 @@ func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, t
 	}
 
 	// Respond
-	respondWithJson(w, 200, response{
-		Medium: Medium{
-			ID:          medium.ID,
-			MediaType:   medium.MediaType,
-			CreatedAt:   medium.CreatedAt,
-			UpdatedAt:   medium.UpdatedAt,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
-		}})
+	respondWithJson(w, 200, Medium{
+		ID:          medium.ID,
+		MediaType:   medium.MediaType,
+		CreatedAt:   medium.CreatedAt,
+		UpdatedAt:   medium.UpdatedAt,
+		Title:       medium.Title,
+		Creator:     medium.Creator,
+		ReleaseYear: medium.ReleaseYear,
+		ImageUrl:    medium.ImageUrl,
+		Metadata:    medium.Metadata,
+	})
 
 }
 
