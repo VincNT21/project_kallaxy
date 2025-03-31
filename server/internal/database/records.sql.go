@@ -76,6 +76,46 @@ func (q *Queries) DeleteRecord(ctx context.Context, id pgtype.UUID) (int64, erro
 	return count, err
 }
 
+const getDatesFromRecord = `-- name: GetDatesFromRecord :one
+SELECT start_date, end_date
+FROM users_media_records
+WHERE id = $1
+`
+
+type GetDatesFromRecordRow struct {
+	StartDate pgtype.Timestamp
+	EndDate   pgtype.Timestamp
+}
+
+func (q *Queries) GetDatesFromRecord(ctx context.Context, id pgtype.UUID) (GetDatesFromRecordRow, error) {
+	row := q.db.QueryRow(ctx, getDatesFromRecord, id)
+	var i GetDatesFromRecordRow
+	err := row.Scan(&i.StartDate, &i.EndDate)
+	return i, err
+}
+
+const getRecordByID = `-- name: GetRecordByID :one
+SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration FROM users_media_records
+WHERE id = $1
+`
+
+func (q *Queries) GetRecordByID(ctx context.Context, id pgtype.UUID) (UsersMediaRecord, error) {
+	row := q.db.QueryRow(ctx, getRecordByID, id)
+	var i UsersMediaRecord
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.MediaID,
+		&i.IsFinished,
+		&i.StartDate,
+		&i.EndDate,
+		&i.Duration,
+	)
+	return i, err
+}
+
 const getRecordsByUserID = `-- name: GetRecordsByUserID :many
 SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration FROM users_media_records
 WHERE user_id = $1
@@ -109,6 +149,15 @@ func (q *Queries) GetRecordsByUserID(ctx context.Context, userID pgtype.UUID) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const resetRecords = `-- name: ResetRecords :exec
+DELETE FROM users_media_records
+`
+
+func (q *Queries) ResetRecords(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetRecords)
+	return err
 }
 
 const updateRecord = `-- name: UpdateRecord :one

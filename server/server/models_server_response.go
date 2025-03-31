@@ -40,5 +40,5 @@ type Record struct {
 	IsFinished pgtype.Bool      `json:"is_finished"`
 	StartDate  pgtype.Timestamp `json:"start_date"`
 	EndDate    pgtype.Timestamp `json:"end_date"`
-	Duration   pgtype.Interval  `json:"duration"`
+	Duration   int32            `json:"duration"`
 }

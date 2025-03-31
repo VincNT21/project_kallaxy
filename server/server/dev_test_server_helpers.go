@@ -2,12 +2,14 @@ package server
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/VincNT21/kallaxy/server/internal/auth"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -55,14 +57,22 @@ func (ctx *TestContext) LoginTestUser(t *testing.T) {
 	if resp.StatusCode != 201 {
 		t.Fatalf("Failed to login test user. Status: %d", resp.StatusCode)
 	}
-	var response map[string]string
-	err = json.NewDecoder(resp.Body).Decode(&response)
+
+	type response struct {
+		ID           pgtype.UUID `json:"id"`
+		AccessToken  string      `json:"access_token"`
+		RefreshToken string      `json:"refresh_token"`
+	}
+	var data response
+
+	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		t.Fatalf("Failed to decode login response body: %v", err)
 	}
-	ctx.UserAcessToken = response["access_token"]
-	ctx.UserRefreshToken = response["refresh_token"]
-	ctx.UserID = response["id"]
+	ctx.UserAcessToken = data.AccessToken
+	ctx.UserRefreshToken = data.RefreshToken
+
+	ctx.UserID = data.ID
 }
 
 // Call auth.ValidateJWT
@@ -90,9 +100,14 @@ func (ctx *TestContext) TestValidateRefreshToken(token string) bool {
 // Check if logged user exist by reaching admin/user endpoint
 func (ctx *TestContext) TestIfUserExist() bool {
 	// To check if a user still exists in DB, make a request to GET /api/users
-	body := map[string]string{
-		"user_id": ctx.UserID,
+	type parameters struct {
+		UserID pgtype.UUID `json:"user_id"`
 	}
+
+	body := parameters{
+		UserID: ctx.UserID,
+	}
+
 	requestBody, err := json.Marshal(body)
 	if err != nil {
 		log.Printf("ERROR with TestIfUserExist() Marshal request body: %v\n", err)
@@ -110,8 +125,51 @@ func (ctx *TestContext) TestIfUserExist() bool {
 	return resp.StatusCode == 200
 }
 
-// Create a medium for testing use, return medium ID if needed
-func (ctx *TestContext) CreateTestMedium(t *testing.T, testBook parametersCreateMedium) pgtype.UUID {
+// Create a medium (with custom fields) for testing use, return medium ID if needed
+func (ctx *TestContext) CreateTestMediumCustom(t *testing.T, testBook parametersCreateMedium) pgtype.UUID {
+	// Create medium via API request
+	reqBody, err := json.Marshal(testBook)
+	if err != nil {
+		t.Fatalf("Failed to marshal body request for test medium: %v", err)
+	}
+	req, err := http.NewRequest("POST", ctx.BaseURL+"/api/media", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatalf("Failed to create test medium request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ctx.UserAcessToken))
+	resp, err := ctx.Client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to create test medium: %v", err)
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != 201 {
+		t.Fatalf("Failed to create test medium. Status: %d", resp.StatusCode)
+	}
+
+	// Parse response
+	var responseBody Medium
+	err = json.NewDecoder(resp.Body).Decode(&responseBody)
+	if err != nil {
+		t.Fatalf("Failed to decode response body for test medium: %v", err)
+	}
+
+	return responseBody.ID
+}
+
+// Create a pre-set medium for testing use, return medium ID if needed
+func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) pgtype.UUID {
+	randTitle := rand.Text()
+
+	testBook := parametersCreateMedium{
+		Title:       randTitle,
+		MediaType:   "book",
+		Creator:     "Test",
+		ReleaseYear: 2025,
+		ImageUrl:    "",
+	}
+
 	// Create medium via API request
 	reqBody, err := json.Marshal(testBook)
 	if err != nil {
@@ -145,7 +203,7 @@ func (ctx *TestContext) CreateTestMedium(t *testing.T, testBook parametersCreate
 
 // Check if a medium exist by reaching admin/medium endpoint
 func (ctx *TestContext) TestIfMediumExist(mediumID pgtype.UUID) bool {
-	// To check if a user still exists in DB, make a request to GET /api/users
+	// To check if a user still exists in DB, make a request to GET /api/medium
 	body := parametersCheckMediumExists{
 		MediumID: mediumID,
 	}
@@ -161,6 +219,89 @@ func (ctx *TestContext) TestIfMediumExist(mediumID pgtype.UUID) bool {
 	resp, err := ctx.Client.Do(req)
 	if err != nil {
 		log.Printf("ERROR with TestIfMediumExists() do request: %v\n", err)
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == 200
+}
+
+// Create a record for testing use (start date = NOW, end date = NOW + 21 days)
+func (ctx *TestContext) CreateTestRecord(t *testing.T, mediumID pgtype.UUID) pgtype.UUID {
+	startDate := pgtype.Timestamp{
+		Time:  time.Now().UTC(),
+		Valid: true,
+	}
+	endDate := pgtype.Timestamp{
+		Time:  time.Now().UTC().AddDate(0, 0, 21),
+		Valid: true,
+	}
+
+	// Create Record via API request
+	request := parametersCreateUserMediumRecord{
+		MediaID:   mediumID,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	reqBody, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("Failed to marshal body request for test create record: %v", err)
+	}
+	req, err := http.NewRequest("POST", ctx.BaseURL+"/api/records", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatalf("Failed to create test record request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ctx.UserAcessToken))
+	resp, err := ctx.Client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to create test record: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 201 {
+		t.Fatalf("Failed to create test record. Status: %d", resp.StatusCode)
+	}
+
+	// Parse response
+	type TestRecord struct {
+		ID         pgtype.UUID `json:"id"`
+		CreatedAt  string      `json:"created_at"`
+		UpdatedAt  string      `json:"updated_at"`
+		UserID     string      `json:"user_id"`
+		MediaID    string      `json:"media_id"`
+		IsFinished bool        `json:"is_finished"`
+		StartDate  string      `json:"start_date"`
+		EndDate    string      `json:"end_date"`
+		Duration   int32       `json:"duration"`
+	}
+
+	var responseBody TestRecord
+	err = json.NewDecoder(resp.Body).Decode(&responseBody)
+	if err != nil {
+		t.Fatalf("Failed to decode response body for test create records: %v", err)
+	}
+
+	return responseBody.ID
+
+}
+
+// Check if a record exist by reaching admin/record endpoint
+func (ctx *TestContext) TestIfRecordExist(recordID pgtype.UUID) bool {
+	// To check if a user still exists in DB, make a request to GET /api/medium
+	body := parametersCheckRecordExists{
+		RecordID: recordID,
+	}
+	requestBody, err := json.Marshal(body)
+	if err != nil {
+		log.Printf("ERROR with TestIfRecordExists() Marshal request body: %v\n", err)
+	}
+	req, err := http.NewRequest("GET", ctx.BaseURL+"/admin/record", bytes.NewBuffer(requestBody))
+	if err != nil {
+		log.Printf("ERROR with TestIfRecordExists() create request: %v\n", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := ctx.Client.Do(req)
+	if err != nil {
+		log.Printf("ERROR with TestIfRecordExists() do request: %v\n", err)
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode == 200

@@ -17,6 +17,10 @@ RETURNING *;
 SELECT * FROM users_media_records
 WHERE user_id = $1;
 
+-- name: GetRecordByID :one
+SELECT * FROM users_media_records
+WHERE id = $1;
+
 -- name: UpdateRecord :one
 UPDATE users_media_records
 SET is_finished = $2, start_date = $3, end_date = $4, duration = $5, updated_at = NOW()
@@ -30,3 +34,11 @@ WITH deleted AS (
     RETURNING *
 )
 SELECT count(*) FROM deleted;
+
+-- name: GetDatesFromRecord :one
+SELECT start_date, end_date
+FROM users_media_records
+WHERE id = $1;
+
+-- name: ResetRecords :exec
+DELETE FROM users_media_records;

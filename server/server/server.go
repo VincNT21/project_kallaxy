@@ -60,14 +60,34 @@ func Start(envVars ...map[string]string) {
 
 	// Register handlers
 
+	// Users endpoints
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.Handle("GET /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetUserByID)))
 	mux.Handle("PUT /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateUser)))
+	mux.Handle("DELETE /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteUser)))
 
+	// Media endpoints
+	mux.Handle("POST /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateMedium)))
+	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMedia)))
+	mux.Handle("PUT /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateMedium)))
+	mux.Handle("DELETE /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteMedium)))
+
+	// Records endpoints
+	mux.Handle("POST /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateUserMediumRecord)))
+	mux.Handle("GET /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsByUserID)))
+	mux.Handle("PUT /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateRecord)))
+	mux.Handle("DELETE /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteRecord)))
+
+	// Authentification endpoints
+	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
+	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
 
-	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
-	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
+	// Reset Password endpoints
+	mux.HandleFunc("POST /auth/password-reset", apiCfg.handlerPasswordResetRequest)
+	mux.HandleFunc("GET /auth/password-reset", apiCfg.handlerVerifyResetToken)
+	mux.HandleFunc("PUT /auth/password-reset", apiCfg.handlerResetPassword)
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{

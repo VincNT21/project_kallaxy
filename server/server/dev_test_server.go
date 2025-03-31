@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/VincNT21/kallaxy/server/internal/database"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,7 +19,7 @@ type TestContext struct {
 	BaseURL          string
 	UserAcessToken   string
 	UserRefreshToken string
-	UserID           string
+	UserID           pgtype.UUID
 	UserUsername     string
 	UserPassword     string
 	UserEmail        string
@@ -97,6 +98,12 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.Handle("PUT /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateMedium)))
 	mux.Handle("DELETE /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteMedium)))
 
+	// Records endpoints
+	mux.Handle("POST /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateUserMediumRecord)))
+	mux.Handle("GET /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsByUserID)))
+	mux.Handle("PUT /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateRecord)))
+	mux.Handle("DELETE /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteRecord)))
+
 	// Authentification endpoints
 	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
 	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
@@ -112,6 +119,7 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
 	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
+	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
 
 	// Create a http server with our multiplexer
 	server := &http.Server{

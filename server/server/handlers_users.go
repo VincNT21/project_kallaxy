@@ -13,22 +13,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type parametersCreateUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
+
 // POST /api/users
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	// Parameters struct match what we'll get from request
-	type parameters struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
-	}
-	// Response struct match what we'll use for response
 	type response struct {
 		User
 	}
 
 	// Get body from request
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := parametersCreateUser{}
 
 	err := decoder.Decode(&params)
 	if err != nil {
@@ -125,20 +124,13 @@ func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request)
 
 // PUT /api/users
 func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
-	// Parameters struct match what we'll get from request
-	type parameters struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
-	}
-	// Response struct match what we'll use for response
 	type response struct {
 		User
 	}
 
 	// Get body from request
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := parametersCreateUser{}
 
 	err := decoder.Decode(&params)
 	if err != nil {

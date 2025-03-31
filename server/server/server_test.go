@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// Tests use dev_test_server, which is a updated copy of production server
 
 // All comments are on the first test only
 
@@ -28,6 +31,116 @@ TESTS FOR USERS ENDPOINTS
 =========================*/
 
 func TestCreateUser(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+
+	testMethod := "POST"
+	testEndpoint := ctx.BaseURL + "/api/users"
+
+	testUser := parametersCreateUser{
+		Username: "TestUser1",
+		Password: "12345678",
+		Email: "Test123@example.com",
+	}
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersCreateUser
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, User)
+	}{
+		{
+			name: "Valid user creation",
+			requestBody: testUser,
+			expectedStatus: 201,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, u User) {
+				if u.ID
+				if _, exists := body["id"]; !exists {
+					t.Error("Response missing 'id' field")
+				}
+				if _, exists := body["created_at"]; !exists {
+					t.Error("Response missing 'created_at' field")
+				}
+				if _, exists := body["updated_at"]; !exists {
+					t.Error("Response missing 'updated_at' field")
+				}
+				if username, exists := body["username"]; !exists || username != "Testuser1" {
+					t.Error("Response have incorrect 'username' field")
+				}
+				if email, exists := body["email"]; !exists || email != "Test123@example.com" {
+					t.Error("Response have incorrect 'email' field")
+				}
+			},
+		},
+		{
+			name: "Duplicate user's username",
+			requestBody: map[string]string{
+				"username": "Testuser1",
+				"password": "hjldsfoeri",
+				"email":    "Test123@example2.com",
+			},
+			expectedStatus: 409,
+		},
+		{
+			name: "Duplicate user's email",
+			requestBody: map[string]string{
+				"username": "Testuser2",
+				"password": "hjldsfoeri",
+				"email":    "Test123@example.com",
+			},
+			expectedStatus: 409,
+		},
+		{
+			name: "Missing a field",
+			requestBody: map[string]string{
+				"username": "Testuser2",
+				"password": "",
+				"email":    "Test123@example.com",
+			},
+			expectedStatus: 400,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody User
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+		})
+	}
+}
+
+func TestCreateUserOld(t *testing.T) {
 	// Setup test environnement
 	ctx := SetupTestContext(t)
 	defer ctx.Server.Shutdown(context.Background()) // Clean shutdown when test ends
@@ -868,7 +981,7 @@ func TestGetMediaByTitle(t *testing.T) {
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 	}
 
-	ctx.CreateTestMedium(t, testBook)
+	ctx.CreateTestMediumCustom(t, testBook)
 
 	testMethod := "GET"
 	testEndpoint := ctx.BaseURL + "/api/media"
@@ -1001,8 +1114,8 @@ func TestGetMediaByType(t *testing.T) {
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/a/a1/The_Two_Towers_cover.gif",
 	}
 
-	ctx.CreateTestMedium(t, testBook)
-	ctx.CreateTestMedium(t, testBook2)
+	ctx.CreateTestMediumCustom(t, testBook)
+	ctx.CreateTestMediumCustom(t, testBook2)
 
 	testMethod := "GET"
 	testEndpoint := ctx.BaseURL + "/api/media"
@@ -1139,9 +1252,9 @@ func TestUpdateMedium(t *testing.T) {
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/a/a1/The_Two_Towers_cover.gif",
 	}
 
-	mediumId := ctx.CreateTestMedium(t, testBook)
+	mediumId := ctx.CreateTestMediumCustom(t, testBook)
 	wrongID := pgtype.UUID{Valid: false}
-	ctx.CreateTestMedium(t, testBook2)
+	ctx.CreateTestMediumCustom(t, testBook2)
 
 	testMethod := "PUT"
 	testEndpoint := ctx.BaseURL + "/api/media"
@@ -1268,7 +1381,7 @@ func TestDeleteMedium(t *testing.T) {
 		ReleaseYear: 1954,
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/8/8e/The_Fellowship_of_the_Ring_cover.gif",
 	}
-	mediumID := ctx.CreateTestMedium(t, testBook)
+	mediumID := ctx.CreateTestMediumCustom(t, testBook)
 
 	testMethod := "DELETE"
 	testEndpoint := ctx.BaseURL + "/api/media"
@@ -1308,6 +1421,575 @@ func TestDeleteMedium(t *testing.T) {
 			},
 			requestBody: parametersDeleteMedium{
 				MediumID: mediumID,
+			},
+			expectedStatus: 404,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody map[string]string
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+			if tc.checkAfter != nil {
+				tc.checkAfter(t)
+			}
+		})
+	}
+}
+
+/*
+============================
+TESTS FOR RECORDS ENDPOINTS
+============================
+*/
+
+func TestCreateRecord(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+
+	medium1Id := ctx.CreateTestMediumRandom(t)
+	medium2Id := ctx.CreateTestMediumRandom(t)
+	medium3Id := ctx.CreateTestMediumRandom(t)
+	medium4Id := ctx.CreateTestMediumRandom(t)
+	medium5Id := ctx.CreateTestMediumRandom(t)
+
+	dateNow := pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now().UTC(),
+	}
+	dateFuture := pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now().UTC().AddDate(0, 0, 21),
+	}
+	datePast := pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now().UTC().AddDate(0, 0, -21),
+	}
+	dateInvalid := pgtype.Timestamp{
+		Valid: false,
+	}
+
+	testMethod := "POST"
+	testEndpoint := ctx.BaseURL + "/api/records"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersCreateUserMediumRecord
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientRecord)
+		checkAfter     func(*testing.T)
+	}{
+		{
+			name: "Valid, start date and end date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium1Id,
+				StartDate: dateNow,
+				EndDate:   dateFuture,
+			},
+			expectedStatus: 201,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, r ClientRecord) {
+				if r.ID == "" {
+					t.Error("'id' response field missing")
+				}
+				if r.CreatedAt == "" {
+					t.Error("'created_at' response field missing")
+				}
+				if r.UpdatedAt == "" {
+					t.Error("'updated_at' response field missing")
+				}
+				if r.UserID != ctx.UserID.String() {
+					t.Error("'user_id' response field incorrect")
+				}
+				if r.MediaID != medium1Id.String() {
+					t.Error("'media_id' response field incorrect")
+				}
+				if !r.IsFinished {
+					t.Error("'is_finished' response field incorrect")
+				}
+				if r.StartDate == "" {
+					t.Error("'start_date' response field missing")
+				}
+				if r.EndDate == "" {
+					t.Error("'end_date_date' response field missing")
+				}
+				if r.Duration != 21 {
+					t.Error("'duration' response field incorrect")
+				}
+			},
+		},
+		{
+			name: "Valid, no end date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium2Id,
+				StartDate: dateNow,
+				EndDate:   dateInvalid,
+			},
+			expectedStatus: 201,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, r ClientRecord) {
+				if r.ID == "" {
+					t.Error("'id' response field missing")
+				}
+				if r.StartDate == "" {
+					t.Error("'start_date' response field missing")
+				}
+				if r.EndDate != "" {
+					t.Error("'end_date' response field incorrect")
+				}
+				if r.IsFinished {
+					t.Error("'is_finished' response field incorrect")
+				}
+				if r.Duration != 0 {
+					t.Error("'duration' response field incorrect")
+				}
+			},
+		},
+		{
+			name: "Valid, no start date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium3Id,
+				StartDate: dateInvalid,
+				EndDate:   dateNow,
+			},
+			expectedStatus: 201,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, r ClientRecord) {
+				if r.ID == "" {
+					t.Error("'id' response field missing")
+				}
+				if r.StartDate != "" {
+					t.Error("'start_date' response field incorrect")
+				}
+				if r.EndDate == "" {
+					t.Error("'end_date' response field missing")
+				}
+				if r.IsFinished {
+					t.Error("'is_finished' response field incorrect")
+				}
+				if r.Duration != 0 {
+					t.Error("'duration' response field incorrect")
+				}
+			},
+		},
+		{
+			name: "Valid, no date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium4Id,
+				StartDate: dateInvalid,
+				EndDate:   dateInvalid,
+			},
+			expectedStatus: 201,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, r ClientRecord) {
+				if r.ID == "" {
+					t.Error("'id' response field missing")
+				}
+				if r.StartDate != "" {
+					t.Error("'start_date' response field incorrect")
+				}
+				if r.EndDate != "" {
+					t.Error("'end_date' response field incorrect")
+				}
+				if r.IsFinished {
+					t.Error("'is_finished' response field incorrect")
+				}
+				if r.Duration != 0 {
+					t.Error("'duration' response field incorrect")
+				}
+			},
+		},
+		{
+			name:           "No access_token",
+			expectedStatus: 401,
+		},
+		{
+			name: "Invalid, end date in past",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium5Id,
+				StartDate: dateNow,
+				EndDate:   datePast,
+			},
+			expectedStatus: 400,
+		},
+		{
+			name: "Conflict, try to create Record with same user-medium couple",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediaID:   medium1Id,
+				StartDate: dateNow,
+				EndDate:   dateFuture,
+			},
+			expectedStatus: 409,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody ClientRecord
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+			if tc.checkAfter != nil {
+				tc.checkAfter(t)
+			}
+		})
+	}
+}
+
+func TestGetRecordsByUserID(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+	medium1Id := ctx.CreateTestMediumRandom(t)
+	medium2Id := ctx.CreateTestMediumRandom(t)
+	record1ID := ctx.CreateTestRecord(t, medium1Id)
+	record2ID := ctx.CreateTestRecord(t, medium2Id)
+
+	testMethod := "GET"
+	testEndpoint := ctx.BaseURL + "/api/records"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientRecords)
+		checkAfter     func(*testing.T)
+	}{
+		{
+			name: "Valid, with two records",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, cr ClientRecords) {
+				for _, r := range cr.Records {
+					if r.ID != record1ID.String() && r.ID != record2ID.String() {
+						t.Error("'id' response field missing")
+					}
+					if r.CreatedAt == "" {
+						t.Error("'created_at' response field missing")
+					}
+					if r.UpdatedAt == "" {
+						t.Error("'updated_at' response field missing")
+					}
+					if r.UserID != ctx.UserID.String() {
+						t.Error("'user_id' response field incorrect")
+					}
+					if r.MediaID != medium1Id.String() && r.MediaID != medium2Id.String() {
+						t.Error("'media_id' response field incorrect")
+					}
+					if !r.IsFinished {
+						t.Error("'is_finished' response field incorrect")
+					}
+					if r.StartDate == "" {
+						t.Error("'start_date' response field missing")
+					}
+					if r.EndDate == "" {
+						t.Error("'end_date_date' response field missing")
+					}
+					if r.Duration != 21 {
+						t.Error("'duration' response field incorrect")
+					}
+				}
+			},
+		},
+		{
+			name:           "No access_token",
+			expectedStatus: 401,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody ClientRecords
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+			if tc.checkAfter != nil {
+				tc.checkAfter(t)
+			}
+		})
+	}
+}
+
+func TestUpdateRecord(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+	medium1ID := ctx.CreateTestMediumRandom(t)
+	record1ID := ctx.CreateTestRecord(t, medium1ID)
+
+	testMethod := "PUT"
+	testEndpoint := ctx.BaseURL + "/api/records"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersUpdateRecord
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientRecord)
+		checkAfter     func(*testing.T)
+	}{
+		{
+			name: "Valid, changed start date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersUpdateRecord{
+				RecordID: record1ID,
+				StartDate: pgtype.Timestamp{
+					Time:  time.Now().AddDate(0, 0, 11),
+					Valid: true,
+				},
+			},
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, cr ClientRecord) {
+				if cr.ID == "" {
+					t.Error("'id' response field missing")
+				}
+				if cr.CreatedAt == "" {
+					t.Error("'created_at' response field missing")
+				}
+				if cr.UpdatedAt == "" {
+					t.Error("'updated_at' response field missing")
+				}
+				if cr.UserID != ctx.UserID.String() {
+					t.Error("'user_id' response field incorrect")
+				}
+				if cr.MediaID != medium1ID.String() {
+					t.Error("'media_id' response field incorrect")
+				}
+				if !cr.IsFinished {
+					t.Error("'is_finished' response field incorrect")
+				}
+				if cr.StartDate == "" {
+					t.Error("'start_date' response field missing")
+				}
+				if cr.EndDate == "" {
+					t.Error("'end_date_date' response field missing")
+				}
+				if cr.Duration != 9 {
+					t.Error("'duration' response field incorrect.")
+				}
+			},
+		},
+		{
+			name:           "No access_token",
+			expectedStatus: 401,
+		},
+		{
+			name: "New start date is after end date",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersUpdateRecord{
+				RecordID: record1ID,
+				StartDate: pgtype.Timestamp{
+					Time:  time.Now().AddDate(0, 0, 30),
+					Valid: true,
+				},
+			},
+			expectedStatus: 400,
+		},
+		{
+			name: "Invalid record ID",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersUpdateRecord{
+				RecordID: pgtype.UUID{Valid: false},
+			},
+			expectedStatus: 404,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody ClientRecord
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+			if tc.checkAfter != nil {
+				tc.checkAfter(t)
+			}
+		})
+	}
+}
+
+func TestDeleteRecord(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+	mediumID := ctx.CreateTestMediumRandom(t)
+	recordID := ctx.CreateTestRecord(t, mediumID)
+
+	testMethod := "DELETE"
+	testEndpoint := ctx.BaseURL + "/api/records"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersDeleteRecord
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, map[string]string)
+		checkAfter     func(*testing.T)
+	}{
+		{
+			name: "Valid",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersDeleteRecord{
+				RecordID: recordID,
+			},
+			expectedStatus: 200,
+			expectResponse: false,
+			checkAfter: func(t *testing.T) {
+				if ctx.TestIfRecordExist(recordID) {
+					t.Error("record still exists")
+				}
+			},
+		},
+		{
+			name:           "No access_token",
+			expectedStatus: 401,
+		},
+		{
+			name: "Invalid record ID",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersDeleteRecord{
+				RecordID: pgtype.UUID{Valid: false},
 			},
 			expectedStatus: 404,
 		},

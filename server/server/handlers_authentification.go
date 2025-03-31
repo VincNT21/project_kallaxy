@@ -12,19 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type parametersLogin struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // POST /auth/login
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
 	type response struct {
 		User
 		Tokens
 	}
 
 	// Decode request body
-	params := parameters{}
+	params := parametersLogin{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&params)
 	if err != nil {

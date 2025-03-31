@@ -23,6 +23,9 @@ type parametersCreateMedium struct {
 
 // POST /api/media
 func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		Medium
+	}
 
 	// Parse data from request body
 	var params parametersCreateMedium
@@ -67,16 +70,18 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	}
 
 	// Respond
-	respondWithJson(w, 201, Medium{
-		ID:          medium.ID,
-		MediaType:   medium.MediaType,
-		CreatedAt:   medium.CreatedAt,
-		UpdatedAt:   medium.UpdatedAt,
-		Title:       medium.Title,
-		Creator:     medium.Creator,
-		ReleaseYear: medium.ReleaseYear,
-		ImageUrl:    medium.ImageUrl,
-		Metadata:    medium.Metadata,
+	respondWithJson(w, 201, response{
+		Medium: Medium{
+			ID:          medium.ID,
+			MediaType:   medium.MediaType,
+			CreatedAt:   medium.CreatedAt,
+			UpdatedAt:   medium.UpdatedAt,
+			Title:       medium.Title,
+			Creator:     medium.Creator,
+			ReleaseYear: medium.ReleaseYear,
+			ImageUrl:    medium.ImageUrl,
+			Metadata:    medium.Metadata,
+		},
 	})
 }
 
@@ -110,7 +115,9 @@ func (cfg *apiConfig) handlerGetMedia(w http.ResponseWriter, r *http.Request) {
 
 // Sub-function for handlerGetMedia
 func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, title string) {
-
+	type response struct {
+		Medium
+	}
 	// Call query function
 	medium, err := cfg.db.GetMediumByTitle(r.Context(), title)
 	if err != nil {
@@ -123,16 +130,18 @@ func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, t
 	}
 
 	// Respond
-	respondWithJson(w, 200, Medium{
-		ID:          medium.ID,
-		MediaType:   medium.MediaType,
-		CreatedAt:   medium.CreatedAt,
-		UpdatedAt:   medium.UpdatedAt,
-		Title:       medium.Title,
-		Creator:     medium.Creator,
-		ReleaseYear: medium.ReleaseYear,
-		ImageUrl:    medium.ImageUrl,
-		Metadata:    medium.Metadata,
+	respondWithJson(w, 200, response{
+		Medium: Medium{
+			ID:          medium.ID,
+			MediaType:   medium.MediaType,
+			CreatedAt:   medium.CreatedAt,
+			UpdatedAt:   medium.UpdatedAt,
+			Title:       medium.Title,
+			Creator:     medium.Creator,
+			ReleaseYear: medium.ReleaseYear,
+			ImageUrl:    medium.ImageUrl,
+			Metadata:    medium.Metadata,
+		},
 	})
 
 }
@@ -176,9 +185,8 @@ func (cfg *apiConfig) getMediaByType(w http.ResponseWriter, r *http.Request, med
 }
 
 type parametersUpdateMedium struct {
-	ID          pgtype.UUID     `json:"id"`
+	MediumID    string          `json:"medium_id"`
 	Title       string          `json:"title"`
-	MediaType   string          `json:"media_type"`
 	Creator     string          `json:"creator"`
 	ReleaseYear int32           `json:"release_year"`
 	ImageUrl    string          `json:"image_url"`
@@ -196,6 +204,13 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Convert MediumID to pgtype.UUID
+	mediumID, err := convertIdToPgtype(params.MediumID)
+	if err != nil {
+		respondWithError(w, 400, "medium_id not in good format", err)
+		return
+	}
+
 	// Check if image_url was provided or not and parse it properly
 	var imageUrl pgtype.Text
 	if params.ImageUrl == "" {
@@ -206,7 +221,7 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 
 	// Call query function
 	medium, err := cfg.db.UpdateMedium(r.Context(), database.UpdateMediumParams{
-		ID:          params.ID,
+		ID:          mediumID,
 		Title:       params.Title,
 		Creator:     params.Creator,
 		ReleaseYear: params.ReleaseYear,
@@ -243,7 +258,7 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 }
 
 type parametersDeleteMedium struct {
-	MediumID pgtype.UUID `json:"medium_id"`
+	MediumID string `json:"medium_id"`
 }
 
 // DELETE /api/media
@@ -257,8 +272,15 @@ func (cfg *apiConfig) handlerDeleteMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Convert MediumID to pgtype.UUID
+	mediumID, err := convertIdToPgtype(params.MediumID)
+	if err != nil {
+		respondWithError(w, 400, "medium_id not in good format", err)
+		return
+	}
+
 	// Call query function
-	count, err := cfg.db.DeleteMedium(r.Context(), params.MediumID)
+	count, err := cfg.db.DeleteMedium(r.Context(), mediumID)
 	if err != nil {
 		respondWithError(w, 500, "couldn't delete medium with id on database", err)
 		return

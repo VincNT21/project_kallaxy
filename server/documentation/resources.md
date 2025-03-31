@@ -6,6 +6,9 @@
 Most endpoint needs a valid access token, some needs a valid refresh token.
 This token must be set in an "Authorization" header.
 
+Access token is in format 
+Refresh token is in format 
+
 ```json
 {
     "Authorization": "Bearer <token>"
@@ -15,11 +18,11 @@ This token must be set in an "Authorization" header.
 ## User resource
 
 ### Structure
-- `id`: string - User's unique identifier
-- `created_at`: string (ISO 8601 datetime) - When the user was created
-- `updated_at`: string (ISO 8601 datetime) - Last time the user's info was updated
-- `username`: string - User's chosen username
-- `email`: string - User's email adress
+- `id`:         *string* (UUIDv4 format) - User's unique identifier
+- `created_at`: *string* (ISO 8601 datetime) - When the user was created
+- `updated_at`: *string* (ISO 8601 datetime) - Last time the user's info was updated
+- `username`:   *string* - User's chosen username
+- `email`:      *string* - User's email adress
   
 ### Example
 ```json
@@ -35,15 +38,15 @@ This token must be set in an "Authorization" header.
 ## Media resource
 
 ### Structure
-- `id`: string - Medium's unique identifier
-- `type`: string - Medium's type (book, movie, serie...)
-- `created_at`: string (ISO 8601 datetime) - When the user was created
-- `updated_at`: string (ISO 8601 datetime) - Last time the user info was updated
-- `title`: string - Medium's title
-- `creator`: string - Medium's creator (author, director...)
-- `release_year`: int32 - Medium's year of publication
-- `image_url`: string - a link to medium's cover
-- `metadata`: json.RawMessage - a json object, according to media type (see below)
+- `id`:             *string* (UUIDv4 format) - Medium's unique identifier
+- `media_type`:     *string* - Medium's type (book, movie, serie...)
+- `created_at`:     *string* (ISO 8601 datetime format) - When the medium was first created
+- `updated_at`:     *string* (ISO 8601 datetime format) - Last time the medium's info was updated
+- `title`:          *string* - Medium's title
+- `creator`:        *string* - Medium's creator (author, director...)
+- `release_year`:   *int32* - Medium's year of publication
+- `image_url`:      *string* - A link to medium's cover
+- `metadata`:       *json.RawMessage* - A json object containing metatadata about the medium, according to media type (see below)
 
 ### Example
 ```json
@@ -54,35 +57,73 @@ This token must be set in an "Authorization" header.
     "updated_at": "2025-03-26T14:20:23.525332",
     "title": "The Fellowship of the ring",
     "creator": "J.R.R. Tolkien",
-    "release_year": "1954",
+    "release_year": 1954,
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }
 ```
 
-## Record resource (//TO DO)
+## Metadata for media
+
+
+## Record resource 
 
 ### Structure
-- `id`: string - Record's unique identifier
-- `created_at`: string (ISO 8601 datetime) - When the user was created
-- `updated_at`: string (ISO 8601 datetime) - Last time the user info was updated
-- `user_id`: string - Medium's title
-- `creator`: string - Medium's creator (author, director...)
-- `release_year`: int32 - Medium's year of publication
-- `image_url`: string - a link to medium's cover
-- `metadata`: json.RawMessage - a json object, according to media type (see below)
+- `id`:             *string* (UUIDv4 format) - Record's unique identifier
+- `created_at`:     *string* (ISO 8601 datetime) - When the record was first created
+- `updated_at`:     *string* (ISO 8601 datetime) - Last time the user info was updated
+- `user_id`:        *string* (UUIDv4 format) - User concerned by the record
+- `media_id`:       *string* (UUIDv4 format) - Medium concerned by the record
+- `is_finished`:    *boolean* - Does user have finished reading/watching/playing the medium
+- `start_date`:     *string* (ISO 8601 datetime) - When user started to read/watch/play the medium
+- `end_date`:       *string* (ISO 8601 datetime) - When user finished reading/watching/playing the medium
+- `duration`:       *int32* - Auto-calculated days interval between start and end dates
 
 ### Example
 ```json
 {
-    "id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc",
-    "type": "book",
-    "created_at": "2025-03-26T14:20:23.525332",
-    "updated_at": "2025-03-26T14:20:23.525332",
-    "title": "The Fellowship of the ring",
-    "creator": "J.R.R. Tolkien",
-    "release_year": "1954",
-    "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
-    "metadata": ""
+    "id": "4aea83e5-36e2-47c3-a121-7e3db9ac72d1",
+    "created_at": "2025-03-31T08:59:09.523473",
+    "updated_at": "2025-03-31T08:59:09.523473",
+    "user_id": "2a0d54f8-37b8-4e51-826d-6f9632c374a4",
+    "media_id": "3b75af06-e596-42ce-a953-bf235dfc9102",
+    "is_finished": true,
+    "start_date": "2025-03-26T14:20:23.525332",
+    "end_date": "2025-03-31T08:47:29.205805",
+    "duration": 4
 }
 ```
+
+## Specific formats
+### Tokens
+#### Access token
+A JSON Web Token consisting of three parts separated by dots (header.payload.signature)
+Example: 
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrYWxsYXh5Iiwic3ViIjoiODFjMWNiMGQtYmJkYi00ZmFhLWFlZGUtYmQzNzFhNGFiNzIyIiwiZXhwIjoxNzQzMDIxMTMyLCJpYXQiOjE3NDMwMTc1MzJ9.1PUE_93e6pXaLwjZiMIfr5DAcxTxE4jEIiRftQuJptI"
+}
+
+```
+
+Access token expiration time : 1 hour
+
+#### Refresh token
+A 64-character hexadecimal string used to obtain a new access token
+Example: "176ddabd5f4c932b8cda583e00b620a05242187680002a071e8a13c4e2b0b14f"
+
+Refresh token lifspan : 30 days
+
+### UUID
+A UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" where x is a hexadecimal digit.
+Example: "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
+
+### ISO 8601 datetime
+A timestamp string in ISO 8601 format: YYYY-MM-DDThh:mm:ss.sssZ
+Where:
+- YYYY-MM-DD is the date portion
+- T is a literal character separating date and time
+- hh:mm:ss.sss is the time with optional microsecond precision
+- Z indicates UTC timezone (can be replaced with +/-hh:mm offset)
+
+Example: "2025-03-26T14:20:23.525332"

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -17,7 +18,7 @@ func calculateDuration(startDate, endDate pgtype.Timestamp) (pgtype.Interval, er
 
 	// Check if startDate is before endDate
 	if !startDate.Time.Before(endDate.Time) {
-		return interval, fmt.Errorf("End date: %v is after Start date: %v", endDate.Time, startDate.Time)
+		return interval, fmt.Errorf("end date: %v is after Start date: %v", endDate.Time, startDate.Time)
 	}
 
 	// Calculate the duration in days
@@ -27,8 +28,27 @@ func calculateDuration(startDate, endDate pgtype.Timestamp) (pgtype.Interval, er
 	// Set up the interval
 	interval.Valid = true
 	interval.Days = days
-	interval.Months = 0
-	interval.Microseconds = 0
 
 	return interval, nil
+}
+
+func convertIdToPgtype(stringID string) (pgtype.UUID, error) {
+	var id pgtype.UUID
+	err := id.Scan(stringID)
+	if err != nil {
+		return id, errors.New("invalid string id format")
+	}
+	return id, nil
+}
+
+func convertDateToPgtype(stringdate string) (pgtype.Timestamp, error) {
+	var date pgtype.Timestamp
+	if stringdate == "" {
+		return date, nil
+	}
+	err := date.Scan(stringdate)
+	if err != nil {
+		return date, errors.New("invalid string date format")
+	}
+	return date, nil
 }
