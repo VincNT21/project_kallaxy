@@ -85,16 +85,14 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	})
 }
 
-type parametersGetMedia struct {
-	Title     string
-	MediaType string
-}
-
 // GET /api/media (query parameters: "?title=xxx" / "?type=xxx"
 func (cfg *apiConfig) handlerGetMedia(w http.ResponseWriter, r *http.Request) {
-
+	type parameters struct {
+		Title     string
+		MediaType string
+	}
 	// Get parameters from request query parameters
-	p := parametersGetMedia{}
+	p := parameters{}
 	p.Title = r.URL.Query().Get("title")
 	p.MediaType = r.URL.Query().Get("type")
 

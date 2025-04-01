@@ -76,7 +76,7 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	db := database.New(dbConnection)
 
 	// Init apiCfg
-	apiCfg := newAPIConfig(db, testEnv["SECRET"])
+	apiCfg := newAPIConfig(db, testEnv["SECRET"], "", "", "")
 
 	// Delete revoked refresh token in database
 	apiCfg.CleanRefreshTokens()
@@ -120,6 +120,11 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
 	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
 	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
+
+	// Proxy endpoints (for external 3rd party API)
+	mux.HandleFunc("GET /external_api/book/search", apiCfg.handlerBookSearch)
+	mux.HandleFunc("GET /external_api/book/isbn", apiCfg.handlerBookByISBN)
+	mux.HandleFunc("GET /external_api/book/author", apiCfg.handlerBookAuthor)
 
 	// Create a http server with our multiplexer
 	server := &http.Server{

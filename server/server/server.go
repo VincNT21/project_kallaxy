@@ -38,6 +38,18 @@ func Start(envVars ...map[string]string) {
 	if jwtsecret == "" {
 		log.Fatal("--FATAL ERROR-- SECRET env. variable must be set")
 	}
+	openLibraryUA := os.Getenv("OPEN_LIBRARY_USER_AGENT")
+	if openLibraryUA == "" {
+		log.Fatal("--FATAL ERROR-- OPEN LIBRARY USER AGENT env. variable must be set")
+	}
+	moviedbAPIKey := os.Getenv("MOVIEDB_KEY")
+	if moviedbAPIKey == "" {
+		log.Fatal("--FATAL ERROR-- MOVIE DB KEY env. variable must be set")
+	}
+	rawgKey := os.Getenv("RAWG_KEY")
+	if rawgKey == "" {
+		log.Fatal("--FATAL ERROR-- RAWG_KEY env. variable must be set")
+	}
 
 	// Open a connection to database
 	dbConnection, err := pgxpool.New(context.Background(), dbUrl)
@@ -50,7 +62,7 @@ func Start(envVars ...map[string]string) {
 	db := database.New(dbConnection)
 
 	// Init apiCfg
-	apiCfg := newAPIConfig(db, jwtsecret)
+	apiCfg := newAPIConfig(db, jwtsecret, openLibraryUA, moviedbAPIKey, rawgKey)
 
 	// Delete revoked refresh token in database
 	apiCfg.CleanRefreshTokens()
@@ -94,6 +106,23 @@ func Start(envVars ...map[string]string) {
 	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
 	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
 	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
+
+	// Proxy endpoints (for external 3rd party API)
+	// Books
+	mux.Handle("GET /external_api/book/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookSearch)))
+	mux.Handle("GET /external_api/book/isbn", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookByISBN)))
+	mux.Handle("GET /external_api/book/author", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookAuthor)))
+	// Movies and TV shows
+	mux.Handle("GET /external_api/movie_tv/search_movie", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieSearch)))
+	mux.Handle("GET /external_api/movie_tv/search_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerTVSearch)))
+	mux.Handle("GET /external_api/movie_tv/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMultiSearch)))
+	mux.Handle("GET /external_api/movie_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieTvDetails)))
+	// Videogames
+	mux.Handle("GET /external_api/videogame/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameSearch)))
+	mux.Handle("GET /external_api/videogame", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameDetails)))
+	// Boardgmes
+	mux.Handle("GET /external_api/boardgame/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBoardgameSearch)))
+	mux.Handle("GET /external_api/boardgame", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBoardgameDetails)))
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{
