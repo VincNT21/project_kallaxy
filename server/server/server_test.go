@@ -8,23 +8,11 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// Tests use dev_test_server, which is a updated copy of production server
+// Tests use dev_test_server, which is a copy of production server (keeped up to date)
 
 // All comments are on the first test only
-
-type testCase struct {
-	name           string
-	requestHeaders map[string]string
-	requestBody    map[string]string
-	expectedStatus int
-	expectResponse bool
-	checkResponse  func(*testing.T, map[string]string)
-	checkAfter     func(*testing.T)
-}
 
 /*=========================
 TESTS FOR USERS ENDPOINTS
@@ -43,7 +31,7 @@ func TestCreateUser(t *testing.T) {
 	testUser := parametersCreateUser{
 		Username: "TestUser1",
 		Password: "12345678",
-		Email: "Test123@example.com",
+		Email:    "Test123@example.com",
 	}
 
 	tests := []struct {
@@ -52,56 +40,54 @@ func TestCreateUser(t *testing.T) {
 		requestBody    parametersCreateUser
 		expectedStatus int
 		expectResponse bool
-		checkResponse  func(*testing.T, User)
+		checkResponse  func(*testing.T, ClientUser)
 	}{
 		{
-			name: "Valid user creation",
-			requestBody: testUser,
+			name:           "Valid user creation",
+			requestBody:    testUser,
 			expectedStatus: 201,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, u User) {
-				if u.ID
-				if _, exists := body["id"]; !exists {
+			checkResponse: func(t *testing.T, u ClientUser) {
+				if u.ID == "" {
 					t.Error("Response missing 'id' field")
 				}
-				if _, exists := body["created_at"]; !exists {
+				if u.CreatedAt == "" {
 					t.Error("Response missing 'created_at' field")
 				}
-				if _, exists := body["updated_at"]; !exists {
+				if u.UpdatedAt == "" {
 					t.Error("Response missing 'updated_at' field")
 				}
-				if username, exists := body["username"]; !exists || username != "Testuser1" {
+				if u.Username != "TestUser1" {
 					t.Error("Response have incorrect 'username' field")
 				}
-				if email, exists := body["email"]; !exists || email != "Test123@example.com" {
+				if u.Email != "Test123@example.com" {
 					t.Error("Response have incorrect 'email' field")
 				}
 			},
 		},
 		{
 			name: "Duplicate user's username",
-			requestBody: map[string]string{
-				"username": "Testuser1",
-				"password": "hjldsfoeri",
-				"email":    "Test123@example2.com",
+			requestBody: parametersCreateUser{
+				Username: "TestUser1",
+				Password: "hjldsfoeri",
+				Email:    "Test123@example2.com",
 			},
 			expectedStatus: 409,
 		},
 		{
 			name: "Duplicate user's email",
-			requestBody: map[string]string{
-				"username": "Testuser2",
-				"password": "hjldsfoeri",
-				"email":    "Test123@example.com",
+			requestBody: parametersCreateUser{
+				Username: "Testuser2",
+				Password: "hjldsfoeri",
+				Email:    "Test123@example.com",
 			},
 			expectedStatus: 409,
 		},
 		{
 			name: "Missing a field",
-			requestBody: map[string]string{
-				"username": "Testuser2",
-				"password": "",
-				"email":    "Test123@example.com",
+			requestBody: parametersCreateUser{
+				Username: "Testuser2",
+				Email:    "Test123@example.com",
 			},
 			expectedStatus: 400,
 		},
@@ -127,7 +113,7 @@ func TestCreateUser(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody User
+				var responseBody ClientUser
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -135,113 +121,6 @@ func TestCreateUser(t *testing.T) {
 				if tc.checkResponse != nil {
 					tc.checkResponse(t, responseBody)
 				}
-			}
-		})
-	}
-}
-
-func TestCreateUserOld(t *testing.T) {
-	// Setup test environnement
-	ctx := SetupTestContext(t)
-	defer ctx.Server.Shutdown(context.Background()) // Clean shutdown when test ends
-
-	// Define test method and endpoint
-	testMethod := "POST"
-	testEndpoint := ctx.BaseURL + "/api/users"
-
-	// Create tests table
-	tests := []testCase{
-		{
-			name: "Valid user creation",
-			requestBody: map[string]string{
-				"username": "Testuser1",
-				"password": "12345678",
-				"email":    "Test123@example.com",
-			},
-			expectedStatus: 201,
-			expectResponse: true,
-			checkResponse: func(t *testing.T, body map[string]string) {
-				if _, exists := body["id"]; !exists {
-					t.Error("Response missing 'id' field")
-				}
-				if _, exists := body["created_at"]; !exists {
-					t.Error("Response missing 'created_at' field")
-				}
-				if _, exists := body["updated_at"]; !exists {
-					t.Error("Response missing 'updated_at' field")
-				}
-				if username, exists := body["username"]; !exists || username != "Testuser1" {
-					t.Error("Response have incorrect 'username' field")
-				}
-				if email, exists := body["email"]; !exists || email != "Test123@example.com" {
-					t.Error("Response have incorrect 'email' field")
-				}
-			},
-		},
-		{
-			name: "Duplicate user's username",
-			requestBody: map[string]string{
-				"username": "Testuser1",
-				"password": "hjldsfoeri",
-				"email":    "Test123@example2.com",
-			},
-			expectedStatus: 409,
-		},
-		{
-			name: "Duplicate user's email",
-			requestBody: map[string]string{
-				"username": "Testuser2",
-				"password": "hjldsfoeri",
-				"email":    "Test123@example.com",
-			},
-			expectedStatus: 409,
-		},
-		{
-			name: "Missing a field",
-			requestBody: map[string]string{
-				"username": "Testuser2",
-				"password": "",
-				"email":    "Test123@example.com",
-			},
-			expectedStatus: 400,
-		},
-	}
-
-	// Test loop
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// Create request body
-			requestBody, _ := json.Marshal(tc.requestBody)
-
-			// Create HTTP request
-			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
-			req.Header.Set("Content-Type", "application/json")
-
-			// Send the request
-			resp, err := ctx.Client.Do(req)
-			if err != nil {
-				t.Fatalf("Failed to send request: %v", err)
-			}
-			defer resp.Body.Close()
-
-			// Check status code
-			if resp.StatusCode != tc.expectedStatus {
-				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
-			}
-
-			// If JSON response expected, check the response body
-			if tc.expectResponse {
-				var responseBody map[string]string
-				err := json.NewDecoder(resp.Body).Decode(&responseBody)
-				if err != nil {
-					t.Fatalf("Failed to decode response: %v", err)
-				}
-				if tc.checkResponse != nil {
-					tc.checkResponse(t, responseBody)
-				}
-			}
-			if tc.checkAfter != nil {
-				tc.checkAfter(t)
 			}
 		})
 	}
@@ -257,7 +136,14 @@ func TestGetUser(t *testing.T) {
 	testMethod := "GET"
 	testEndpoint := ctx.BaseURL + "/api/users"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientUser)
+	}{
 		{
 			name: "Valid",
 			requestHeaders: map[string]string{
@@ -265,14 +151,20 @@ func TestGetUser(t *testing.T) {
 			},
 			expectedStatus: 200,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m map[string]string) {
-				if _, exists := m["id"]; !exists {
+			checkResponse: func(t *testing.T, u ClientUser) {
+				if u.ID == "" {
 					t.Error("Response missing 'id' field")
 				}
-				if username, exists := m["username"]; !exists || username != ctx.UserUsername {
-					t.Error("Response field 'username' incorrect")
+				if u.CreatedAt == "" {
+					t.Error("Response missing 'created_at' field")
 				}
-				if email, exists := m["email"]; !exists || email != ctx.UserEmail {
+				if u.UpdatedAt == "" {
+					t.Error("Response missing 'updated_at' field")
+				}
+				if u.Username != ctx.UserUsername {
+					t.Error("Response have incorrect 'username' field")
+				}
+				if u.Email != ctx.UserEmail {
 					t.Error("Response have incorrect 'email' field")
 				}
 			},
@@ -303,7 +195,7 @@ func TestGetUser(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody map[string]string
+				var responseBody ClientUser
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -311,9 +203,6 @@ func TestGetUser(t *testing.T) {
 				if tc.checkResponse != nil {
 					tc.checkResponse(t, responseBody)
 				}
-			}
-			if tc.checkAfter != nil {
-				tc.checkAfter(t)
 			}
 		})
 	}
@@ -329,33 +218,41 @@ func TestUpdateUser(t *testing.T) {
 	testMethod := "PUT"
 	testEndpoint := ctx.BaseURL + "/api/users"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersCreateUser
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientUser)
+		checkAfter     func(*testing.T)
+	}{
 		{
 			name: "Valid token and valid data",
 			requestHeaders: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": ctx.UserPassword,
-				"email":    "newemail@example.com",
+			requestBody: parametersCreateUser{
+				Username: ctx.UserUsername,
+				Password: ctx.UserPassword,
+				Email:    "newemail@example.com",
 			},
 			expectedStatus: 200,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m map[string]string) {
-				if _, exists := m["id"]; !exists {
+			checkResponse: func(t *testing.T, u ClientUser) {
+				if u.ID == "" {
 					t.Error("Response missing 'id' field")
 				}
-				if _, exists := m["updated_at"]; !exists {
-					t.Error("Response missing 'updated_at' field")
+				if u.CreatedAt == "" {
+					t.Error("Response field 'created_at_at' was not updated")
 				}
-				if m["updated_at"] == m["created_at"] {
-					t.Error("Response field 'updated_at' was not updated")
+				if u.UpdatedAt == "" || u.UpdatedAt == u.CreatedAt {
+					t.Error("Response field 'updated_at' missing or not updated")
 				}
-				if username, exists := m["username"]; !exists || username != ctx.UserUsername {
+				if u.Username != ctx.UserUsername {
 					t.Error("Response have incorrect 'username' field")
 				}
-				if email, exists := m["email"]; !exists || email != "newemail@example.com" {
+				if u.Email != "newemail@example.com" {
 					t.Error("Response have incorrect 'email' field")
 				}
 			},
@@ -370,31 +267,20 @@ func TestUpdateUser(t *testing.T) {
 			requestHeaders: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": ctx.UserPassword,
-				"email":    "",
+			requestBody: parametersCreateUser{
+				Username: ctx.UserUsername,
+				Password: ctx.UserPassword,
 			},
 			expectedStatus: 400,
 		},
 		{
-			name: "Missing token",
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": ctx.UserPassword,
-				"email":    "newemail@example.com",
-			},
+			name:           "Missing token",
 			expectedStatus: 401,
 		},
 		{
 			name: "Invalid token",
 			requestHeaders: map[string]string{
 				"Authorization": "Bearer badaccesstoken",
-			},
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": ctx.UserPassword,
-				"email":    "newemail@example.com",
 			},
 			expectedStatus: 401,
 		},
@@ -420,7 +306,7 @@ func TestUpdateUser(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody map[string]string
+				var responseBody ClientUser
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -446,7 +332,15 @@ func TestDeleteUser(t *testing.T) {
 	testMethod := "DELETE"
 	testEndpoint := ctx.BaseURL + "/api/users"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, map[string]string)
+		checkAfter     func(*testing.T)
+	}{
 		{
 			name: "Valid",
 			requestHeaders: map[string]string{
@@ -514,51 +408,56 @@ func TestLogin(t *testing.T) {
 	testMethod := "POST"
 	testEndpoint := ctx.BaseURL + "/auth/login"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersLogin
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientTokensAndUser)
+	}{
 		{
 			name: "Valid login",
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": ctx.UserPassword,
+			requestBody: parametersLogin{
+				Username: ctx.UserUsername,
+				Password: ctx.UserPassword,
 			},
 			expectedStatus: 201,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m map[string]string) {
-				if _, exists := m["id"]; !exists {
+			checkResponse: func(t *testing.T, r ClientTokensAndUser) {
+				if r.ID == "" {
 					t.Error("Response missing 'id' field")
 				}
-				if username, exists := m["username"]; !exists || username != ctx.UserUsername {
+				if r.Username != ctx.UserUsername {
 					t.Error("Response have incorrect 'username' field")
 				}
-				access_token, exists := m["access_token"]
-				if !exists {
+				if r.AccessToken == "" {
 					t.Error("Response missing 'access_token' field")
 				}
-				if !TestValidateAccessToken(access_token) {
+				if !TestValidateAccessToken(r.AccessToken) {
 					t.Error("Response's access_token is invalid")
 				}
-				refreshToken, exists := m["refresh_token"]
-				if !exists {
+				if r.RefreshToken == "" {
 					t.Error("Response missing 'refresh_token' field")
 				}
-				if !ctx.TestValidateRefreshToken(refreshToken) {
+				if !ctx.TestValidateRefreshToken(r.RefreshToken) {
 					t.Error("Response's refresh_token is invalid")
 				}
 			},
 		},
 		{
 			name: "Invalid password",
-			requestBody: map[string]string{
-				"username": ctx.UserUsername,
-				"password": "12345",
+			requestBody: parametersLogin{
+				Username: ctx.UserUsername,
+				Password: "12345",
 			},
 			expectedStatus: 401,
 		},
 		{
 			name: "Invalid username",
-			requestBody: map[string]string{
-				"username": "Testtest12",
-				"password": ctx.UserPassword,
+			requestBody: parametersLogin{
+				Username: "Testtest12",
+				Password: ctx.UserPassword,
 			},
 			expectedStatus: 401,
 		},
@@ -579,7 +478,7 @@ func TestLogin(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody map[string]string
+				var responseBody ClientTokensAndUser
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -587,9 +486,6 @@ func TestLogin(t *testing.T) {
 				if tc.checkResponse != nil {
 					tc.checkResponse(t, responseBody)
 				}
-			}
-			if tc.checkAfter != nil {
-				tc.checkAfter(t)
 			}
 		})
 	}
@@ -606,7 +502,15 @@ func TestLogout(t *testing.T) {
 	testMethod := "POST"
 	testEndpoint := ctx.BaseURL + "/auth/logout"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, map[string]string)
+		checkAfter     func(*testing.T)
+	}{
 		{
 			name: "Logout ok",
 			requestHeaders: map[string]string{
@@ -678,7 +582,14 @@ func TestRefreshTokens(t *testing.T) {
 	testMethod := "POST"
 	testEndpoint := ctx.BaseURL + "/auth/refresh"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientTokens)
+	}{
 		{
 			name: "Valid Refresh Token",
 			requestHeaders: map[string]string{
@@ -686,19 +597,17 @@ func TestRefreshTokens(t *testing.T) {
 			},
 			expectedStatus: 201,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m map[string]string) {
-				access_token, exists := m["access_token"]
-				if !exists {
+			checkResponse: func(t *testing.T, ct ClientTokens) {
+				if ct.AccessToken == "" {
 					t.Error("Response missing 'access_token' field")
 				}
-				if !TestValidateAccessToken(access_token) {
+				if !TestValidateAccessToken(ct.AccessToken) {
 					t.Error("Response's access_token is invalid")
 				}
-				refreshToken, exists := m["refresh_token"]
-				if !exists {
+				if ct.RefreshToken == "" {
 					t.Error("Response missing 'refresh_token' field")
 				}
-				if !ctx.TestValidateRefreshToken(refreshToken) {
+				if !ctx.TestValidateRefreshToken(ct.RefreshToken) {
 					t.Error("Response's refresh_token is invalid")
 				}
 			},
@@ -736,7 +645,7 @@ func TestRefreshTokens(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody map[string]string
+				var responseBody ClientTokens
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -759,7 +668,15 @@ func TestRevokeToken(t *testing.T) {
 	testMethod := "POST"
 	testEndpoint := ctx.BaseURL + "/auth/revoke"
 
-	tests := []testCase{
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, map[string]string)
+		checkAfter     func(*testing.T)
+	}{
 		{
 			name: "Revoke ok",
 			requestHeaders: map[string]string{
@@ -851,7 +768,7 @@ func TestCreateMedium(t *testing.T) {
 		requestBody    parametersCreateMedium
 		expectedStatus int
 		expectResponse bool
-		checkResponse  func(*testing.T, Medium)
+		checkResponse  func(*testing.T, ClientMedium)
 		checkAfter     func(*testing.T)
 	}{
 		{
@@ -862,16 +779,14 @@ func TestCreateMedium(t *testing.T) {
 			requestBody:    testBook,
 			expectedStatus: 201,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, r Medium) {
-				nilID := pgtype.UUID{}
-				if r.ID == nilID {
+			checkResponse: func(t *testing.T, r ClientMedium) {
+				if r.ID == "" {
 					t.Error("'id' response field missing")
 				}
-				nilTime := pgtype.Timestamp{}
-				if r.CreatedAt == nilTime {
+				if r.CreatedAt == "" {
 					t.Error("'created_at' response field missing")
 				}
-				if r.UpdatedAt == nilTime {
+				if r.UpdatedAt == "" {
 					t.Error("'updated_at' response field missing")
 				}
 				if r.Title != testBook.Title {
@@ -886,8 +801,7 @@ func TestCreateMedium(t *testing.T) {
 				if r.ReleaseYear != testBook.ReleaseYear {
 					t.Error("'release_year' response field incorrect")
 				}
-				imageUrl := pgtype.Text{String: testBook.ImageUrl, Valid: true}
-				if r.ImageUrl != imageUrl {
+				if r.ImageUrl != testBook.ImageUrl {
 					t.Error("'image_url' response field incorrect")
 				}
 			},
@@ -927,7 +841,6 @@ func TestCreateMedium(t *testing.T) {
 				MediaType:   "book",
 				Creator:     "J.R.R Tolkien",
 				ReleaseYear: 1954,
-				ImageUrl:    "",
 			},
 			expectedStatus: 201,
 		},
@@ -953,7 +866,7 @@ func TestCreateMedium(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody Medium
+				var responseBody ClientMedium
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -993,7 +906,7 @@ func TestGetMediaByTitle(t *testing.T) {
 		requestBody    map[string]string
 		expectedStatus int
 		expectResponse bool
-		checkResponse  func(*testing.T, Medium)
+		checkResponse  func(*testing.T, ClientMedium)
 		checkAfter     func(*testing.T)
 	}{
 		{
@@ -1004,7 +917,7 @@ func TestGetMediaByTitle(t *testing.T) {
 			queryParameter: "?title=The+Fellowship+Of+The+Ring",
 			expectedStatus: 200,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m Medium) {
+			checkResponse: func(t *testing.T, m ClientMedium) {
 				if m.Title != testBook.Title {
 					t.Error("incorrect Title")
 				}
@@ -1017,19 +930,16 @@ func TestGetMediaByTitle(t *testing.T) {
 				if m.ReleaseYear != testBook.ReleaseYear {
 					t.Error("incorrect ReleaseYear")
 				}
-				imageUrl := pgtype.Text{String: testBook.ImageUrl, Valid: true}
-				if m.ImageUrl != imageUrl {
+				if m.ImageUrl != testBook.ImageUrl {
 					t.Error("incorrect ImageUrl")
 				}
-				nilID := pgtype.UUID{}
-				if m.ID == nilID {
+				if m.ID == "" {
 					t.Error("'id' response field missing")
 				}
-				nilTime := pgtype.Timestamp{}
-				if m.CreatedAt == nilTime {
+				if m.CreatedAt == "" {
 					t.Error("'created_at' response field missing")
 				}
-				if m.UpdatedAt == nilTime {
+				if m.UpdatedAt == "" {
 					t.Error("'updated_at' response field missing")
 				}
 			},
@@ -1076,7 +986,7 @@ func TestGetMediaByTitle(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody Medium
+				var responseBody ClientMedium
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -1127,7 +1037,7 @@ func TestGetMediaByType(t *testing.T) {
 		requestBody    map[string]string
 		expectedStatus int
 		expectResponse bool
-		checkResponse  func(*testing.T, responseGetMediaByType)
+		checkResponse  func(*testing.T, ClientListMedia)
 		checkAfter     func(*testing.T)
 	}{
 		{
@@ -1138,7 +1048,7 @@ func TestGetMediaByType(t *testing.T) {
 			queryParameter: "?type=book",
 			expectedStatus: 200,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, r responseGetMediaByType) {
+			checkResponse: func(t *testing.T, r ClientListMedia) {
 				for _, m := range r.Media {
 					if m.Title != testBook.Title && m.Title != testBook2.Title {
 						t.Error("incorrect Title")
@@ -1152,20 +1062,16 @@ func TestGetMediaByType(t *testing.T) {
 					if m.ReleaseYear != testBook.ReleaseYear && m.ReleaseYear != testBook2.ReleaseYear {
 						t.Error("incorrect ReleaseYear")
 					}
-					imageUrl1 := pgtype.Text{String: testBook.ImageUrl, Valid: true}
-					imageUrl2 := pgtype.Text{String: testBook2.ImageUrl, Valid: true}
-					if m.ImageUrl != imageUrl1 && m.ImageUrl != imageUrl2 {
+					if m.ImageUrl != testBook.ImageUrl && m.ImageUrl != testBook2.ImageUrl {
 						t.Error("incorrect ImageUrl")
 					}
-					nilID := pgtype.UUID{}
-					if m.ID == nilID {
+					if m.ID == "" {
 						t.Error("'id' response field missing")
 					}
-					nilTime := pgtype.Timestamp{}
-					if m.CreatedAt == nilTime {
+					if m.CreatedAt == "" {
 						t.Error("'created_at' response field missing")
 					}
-					if m.UpdatedAt == nilTime {
+					if m.UpdatedAt == "" {
 						t.Error("'updated_at' response field missing")
 					}
 				}
@@ -1214,7 +1120,7 @@ func TestGetMediaByType(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody responseGetMediaByType
+				var responseBody ClientListMedia
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -1253,7 +1159,6 @@ func TestUpdateMedium(t *testing.T) {
 	}
 
 	mediumId := ctx.CreateTestMediumCustom(t, testBook)
-	wrongID := pgtype.UUID{Valid: false}
 	ctx.CreateTestMediumCustom(t, testBook2)
 
 	testMethod := "PUT"
@@ -1265,7 +1170,7 @@ func TestUpdateMedium(t *testing.T) {
 		requestBody    parametersUpdateMedium
 		expectedStatus int
 		expectResponse bool
-		checkResponse  func(*testing.T, Medium)
+		checkResponse  func(*testing.T, ClientMedium)
 		checkAfter     func(*testing.T)
 	}{
 		{
@@ -1274,16 +1179,15 @@ func TestUpdateMedium(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateMedium{
-				ID:          mediumId,
+				MediumID:    mediumId,
 				Title:       "The Fellowship of the Ring",
-				MediaType:   "book",
 				Creator:     "John Ronald Reuel Tolkien",
 				ReleaseYear: 1954,
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 200,
 			expectResponse: true,
-			checkResponse: func(t *testing.T, m Medium) {
+			checkResponse: func(t *testing.T, m ClientMedium) {
 				if m.Title != testBook.Title {
 					t.Error("Invalid 'title' field")
 				}
@@ -1305,9 +1209,8 @@ func TestUpdateMedium(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateMedium{
-				ID:          mediumId,
+				MediumID:    mediumId,
 				Title:       "The Two Towers",
-				MediaType:   "book",
 				Creator:     "John Ronald Reuel Tolkien",
 				ReleaseYear: 1954,
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
@@ -1320,14 +1223,27 @@ func TestUpdateMedium(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateMedium{
-				ID:          wrongID,
+				MediumID:    "ba983bd8-36ce-4d1b-ad24-2b65269f9921",
 				Title:       "The Fellowship of the Ring",
-				MediaType:   "book",
 				Creator:     "John Ronald Reuel Tolkien",
 				ReleaseYear: 1954,
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 404,
+		},
+		{
+			name: "Malformed medium ID",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersUpdateMedium{
+				MediumID:    "ba983bd8-2b65269f9921",
+				Title:       "The Fellowship of the Ring",
+				Creator:     "John Ronald Reuel Tolkien",
+				ReleaseYear: 1954,
+				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
+			},
+			expectedStatus: 400,
 		},
 	}
 	for _, tc := range tests {
@@ -1351,7 +1267,7 @@ func TestUpdateMedium(t *testing.T) {
 			}
 
 			if tc.expectResponse {
-				var responseBody Medium
+				var responseBody ClientMedium
 				err := json.NewDecoder(resp.Body).Decode(&responseBody)
 				if err != nil {
 					t.Fatalf("Failed to decode response: %v", err)
@@ -1481,21 +1397,11 @@ func TestCreateRecord(t *testing.T) {
 	medium4Id := ctx.CreateTestMediumRandom(t)
 	medium5Id := ctx.CreateTestMediumRandom(t)
 
-	dateNow := pgtype.Timestamp{
-		Valid: true,
-		Time:  time.Now().UTC(),
-	}
-	dateFuture := pgtype.Timestamp{
-		Valid: true,
-		Time:  time.Now().UTC().AddDate(0, 0, 21),
-	}
-	datePast := pgtype.Timestamp{
-		Valid: true,
-		Time:  time.Now().UTC().AddDate(0, 0, -21),
-	}
-	dateInvalid := pgtype.Timestamp{
-		Valid: false,
-	}
+	dateNow := time.Now().UTC().Format(time.RFC3339)
+	dateFuture := time.Now().UTC().AddDate(0, 0, 21).Format(time.RFC3339)
+
+	datePast := time.Now().UTC().AddDate(0, 0, -21).Format(time.RFC3339)
+	dateInvalid := "2024_01_01:21:21:21"
 
 	testMethod := "POST"
 	testEndpoint := ctx.BaseURL + "/api/records"
@@ -1515,7 +1421,7 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium1Id,
+				MediumID:  medium1Id,
 				StartDate: dateNow,
 				EndDate:   dateFuture,
 			},
@@ -1534,7 +1440,7 @@ func TestCreateRecord(t *testing.T) {
 				if r.UserID != ctx.UserID.String() {
 					t.Error("'user_id' response field incorrect")
 				}
-				if r.MediaID != medium1Id.String() {
+				if r.MediaID != medium1Id {
 					t.Error("'media_id' response field incorrect")
 				}
 				if !r.IsFinished {
@@ -1557,9 +1463,9 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium2Id,
+				MediumID:  medium2Id,
 				StartDate: dateNow,
-				EndDate:   dateInvalid,
+				EndDate:   "",
 			},
 			expectedStatus: 201,
 			expectResponse: true,
@@ -1587,8 +1493,8 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium3Id,
-				StartDate: dateInvalid,
+				MediumID:  medium3Id,
+				StartDate: "",
 				EndDate:   dateNow,
 			},
 			expectedStatus: 201,
@@ -1617,9 +1523,9 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium4Id,
-				StartDate: dateInvalid,
-				EndDate:   dateInvalid,
+				MediumID:  medium4Id,
+				StartDate: "",
+				EndDate:   "",
 			},
 			expectedStatus: 201,
 			expectResponse: true,
@@ -1651,9 +1557,21 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium5Id,
+				MediumID:  medium5Id,
 				StartDate: dateNow,
 				EndDate:   datePast,
+			},
+			expectedStatus: 400,
+		},
+		{
+			name: "Invalid, end date malformed",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersCreateUserMediumRecord{
+				MediumID:  medium5Id,
+				StartDate: dateNow,
+				EndDate:   dateInvalid,
 			},
 			expectedStatus: 400,
 		},
@@ -1663,7 +1581,7 @@ func TestCreateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersCreateUserMediumRecord{
-				MediaID:   medium1Id,
+				MediumID:  medium1Id,
 				StartDate: dateNow,
 				EndDate:   dateFuture,
 			},
@@ -1739,7 +1657,7 @@ func TestGetRecordsByUserID(t *testing.T) {
 			expectResponse: true,
 			checkResponse: func(t *testing.T, cr ClientRecords) {
 				for _, r := range cr.Records {
-					if r.ID != record1ID.String() && r.ID != record2ID.String() {
+					if r.ID != record1ID && r.ID != record2ID {
 						t.Error("'id' response field missing")
 					}
 					if r.CreatedAt == "" {
@@ -1751,7 +1669,7 @@ func TestGetRecordsByUserID(t *testing.T) {
 					if r.UserID != ctx.UserID.String() {
 						t.Error("'user_id' response field incorrect")
 					}
-					if r.MediaID != medium1Id.String() && r.MediaID != medium2Id.String() {
+					if r.MediaID != medium1Id && r.MediaID != medium2Id {
 						t.Error("'media_id' response field incorrect")
 					}
 					if !r.IsFinished {
@@ -1838,11 +1756,8 @@ func TestUpdateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateRecord{
-				RecordID: record1ID,
-				StartDate: pgtype.Timestamp{
-					Time:  time.Now().AddDate(0, 0, 11),
-					Valid: true,
-				},
+				RecordID:  record1ID,
+				StartDate: time.Now().AddDate(0, 0, 11).Format(time.RFC3339),
 			},
 			expectedStatus: 200,
 			expectResponse: true,
@@ -1859,7 +1774,7 @@ func TestUpdateRecord(t *testing.T) {
 				if cr.UserID != ctx.UserID.String() {
 					t.Error("'user_id' response field incorrect")
 				}
-				if cr.MediaID != medium1ID.String() {
+				if cr.MediaID != medium1ID {
 					t.Error("'media_id' response field incorrect")
 				}
 				if !cr.IsFinished {
@@ -1871,7 +1786,7 @@ func TestUpdateRecord(t *testing.T) {
 				if cr.EndDate == "" {
 					t.Error("'end_date_date' response field missing")
 				}
-				if cr.Duration != 9 {
+				if cr.Duration != 10 {
 					t.Error("'duration' response field incorrect.")
 				}
 			},
@@ -1886,21 +1801,28 @@ func TestUpdateRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateRecord{
-				RecordID: record1ID,
-				StartDate: pgtype.Timestamp{
-					Time:  time.Now().AddDate(0, 0, 30),
-					Valid: true,
-				},
+				RecordID:  record1ID,
+				StartDate: time.Now().AddDate(0, 0, 30).Format(time.RFC3339),
 			},
 			expectedStatus: 400,
 		},
 		{
-			name: "Invalid record ID",
+			name: "Malformed record ID",
 			requestHeaders: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersUpdateRecord{
-				RecordID: pgtype.UUID{Valid: false},
+				RecordID: "wrongID",
+			},
+			expectedStatus: 400,
+		},
+		{
+			name: "Unknown record ID",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersUpdateRecord{
+				RecordID: "ba983bd8-36ce-4d1b-ad24-2b65240f9921",
 			},
 			expectedStatus: 404,
 		},
@@ -1984,14 +1906,24 @@ func TestDeleteRecord(t *testing.T) {
 			expectedStatus: 401,
 		},
 		{
-			name: "Invalid record ID",
+			name: "Unknown record ID",
 			requestHeaders: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersDeleteRecord{
-				RecordID: pgtype.UUID{Valid: false},
+				RecordID: "ba983bd8-36ce-4d1b-ad24-2b65240f9921",
 			},
 			expectedStatus: 404,
+		},
+		{
+			name: "Malformed record ID",
+			requestHeaders: map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
+			},
+			requestBody: parametersDeleteRecord{
+				RecordID: "wrongID",
+			},
+			expectedStatus: 400,
 		},
 	}
 	for _, tc := range tests {
@@ -2026,6 +1958,279 @@ func TestDeleteRecord(t *testing.T) {
 			}
 			if tc.checkAfter != nil {
 				tc.checkAfter(t)
+			}
+		})
+	}
+}
+
+/*
+==================================
+TESTS FOR PASSWORD RESET ENDPOINTS
+==================================
+*/
+
+func TestPasswordResetStep1(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+
+	testMethod := "POST"
+	testEndpoint := ctx.BaseURL + "/auth/password_reset"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersPasswordResetRequest
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, responsePasswordResetRequest)
+	}{
+		{
+			name: "Valid",
+			requestBody: parametersPasswordResetRequest{
+				Email: ctx.UserEmail,
+			},
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, rprr responsePasswordResetRequest) {
+				if rprr.ResetLink == "" {
+					t.Error("invalid 'reset_link' field")
+				}
+				if rprr.ResetToken == "" {
+					t.Error("invalid 'reset_token' field")
+				}
+				if rprr.Message != "Password reset initiated" {
+					t.Error("invalid 'message'")
+				}
+			},
+		},
+		{
+			name: "Wrong email",
+			requestBody: parametersPasswordResetRequest{
+				Email: "fakeemail@example.com",
+			},
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, rprr responsePasswordResetRequest) {
+				if rprr.Message != "If your email exists in our system, you'll receive reset instruction" {
+					t.Error("invalid 'message'")
+				}
+				if rprr.ResetLink != "" {
+					t.Error("invalid 'reset_link'")
+				}
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody responsePasswordResetRequest
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+		})
+	}
+}
+
+func TestPasswordResetStep2(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+
+	resetToken := ctx.GetPasswordResetToken(t)
+
+	testMethod := "GET"
+	testEndpoint := ctx.BaseURL + "/auth/password_reset"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		queryParameter string
+		requestBody    map[string]string
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, responseVerifyResetToken)
+	}{
+		{
+			name:           "Valid",
+			queryParameter: fmt.Sprintf("?token=%s", resetToken),
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, r responseVerifyResetToken) {
+				if r.Email != ctx.UserEmail {
+					t.Error("invalid 'email'")
+				}
+				if !r.Valid {
+					t.Error("reset token invalid")
+				}
+			},
+		},
+		{
+			name:           "Invalid token",
+			queryParameter: "?token=wrongtoken",
+			expectedStatus: 400,
+		},
+		{
+			name:           "No queryParameter",
+			expectedStatus: 400,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint+tc.queryParameter, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody responseVerifyResetToken
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
+			}
+		})
+	}
+}
+
+func TestPasswordResetStep3(t *testing.T) {
+	ctx := SetupTestContext(t)
+	defer ctx.Server.Shutdown(context.Background())
+
+	ctx.CreateTestUser(t)
+	ctx.LoginTestUser(t)
+
+	resetToken := ctx.GetPasswordResetToken(t)
+
+	testMethod := "PUT"
+	testEndpoint := ctx.BaseURL + "/auth/password_reset"
+
+	tests := []struct {
+		name           string
+		requestHeaders map[string]string
+		requestBody    parametersResetPassword
+		expectedStatus int
+		expectResponse bool
+		checkResponse  func(*testing.T, ClientUser)
+		checkAfter     func(*testing.T)
+	}{
+		{
+			name: "Valid",
+			requestBody: parametersResetPassword{
+				Token:       resetToken,
+				NewPassword: "cvbn7890",
+			},
+			expectedStatus: 200,
+			expectResponse: true,
+			checkResponse: func(t *testing.T, cu ClientUser) {
+				if cu.ID == "" {
+					t.Error("invalid 'id' field")
+				}
+				if cu.CreatedAt == "" {
+					t.Error("invalid 'created_at' field")
+				}
+				if cu.UpdatedAt == "" || cu.UpdatedAt == cu.CreatedAt {
+					t.Error("invalid 'updated_at' field")
+				}
+				if cu.Username != ctx.UserUsername {
+					t.Error("invalid 'username' field")
+				}
+				if cu.Email != ctx.UserEmail {
+					t.Error("invalid 'email' field")
+				}
+			},
+			checkAfter: func(t *testing.T) {
+				if !ctx.TestLoginAfterPasswordReset(t, "cvbn7890") {
+					t.Error("new password doesn't work")
+				}
+			},
+		},
+		{
+			name: "Invalid reset token",
+			requestBody: parametersResetPassword{
+				Token:       "faketoken",
+				NewPassword: "12345678",
+			},
+			expectedStatus: 400,
+			checkAfter: func(t *testing.T) {
+				if ctx.TestLoginAfterPasswordReset(t, "12345678") {
+					t.Error("password shouldn't have changed")
+				}
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestBody, _ := json.Marshal(tc.requestBody)
+			req, _ := http.NewRequest(testMethod, testEndpoint, bytes.NewBuffer(requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tc.requestHeaders != nil {
+				for headerKey, headerValue := range tc.requestHeaders {
+					req.Header.Set(headerKey, headerValue)
+				}
+			}
+			resp, err := ctx.Client.Do(req)
+			if err != nil {
+				t.Fatalf("Failed to send request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tc.expectedStatus {
+				t.Errorf("Expected status code %d, got %d", tc.expectedStatus, resp.StatusCode)
+			}
+
+			if tc.expectResponse {
+				var responseBody ClientUser
+				err := json.NewDecoder(resp.Body).Decode(&responseBody)
+				if err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if tc.checkResponse != nil {
+					tc.checkResponse(t, responseBody)
+				}
 			}
 		})
 	}

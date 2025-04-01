@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -43,10 +44,17 @@ func convertIdToPgtype(stringID string) (pgtype.UUID, error) {
 
 func convertDateToPgtype(stringdate string) (pgtype.Timestamp, error) {
 	var date pgtype.Timestamp
+
 	if stringdate == "" {
 		return date, nil
 	}
-	err := date.Scan(stringdate)
+
+	formatDate, err := time.Parse(time.RFC3339, stringdate)
+	if err != nil {
+		return date, errors.New("invalid string date format")
+	}
+
+	err = date.Scan(formatDate)
 	if err != nil {
 		return date, errors.New("invalid string date format")
 	}

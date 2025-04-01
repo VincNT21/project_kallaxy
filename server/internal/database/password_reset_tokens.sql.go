@@ -41,6 +41,15 @@ func (q *Queries) InvalidateResetTokensByUserId(ctx context.Context, userID pgty
 	return err
 }
 
+const resetPasswordResetTable = `-- name: ResetPasswordResetTable :exec
+DELETE FROM password_reset_tokens
+`
+
+func (q *Queries) ResetPasswordResetTable(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetPasswordResetTable)
+	return err
+}
+
 const storePasswordToken = `-- name: StorePasswordToken :one
 INSERT INTO password_reset_tokens (token, user_id, user_email, created_at, expires_at)
 VALUES (

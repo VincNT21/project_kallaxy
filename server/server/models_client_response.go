@@ -17,6 +17,16 @@ type ClientTokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type ClientTokensAndUser struct {
+	ID           string `json:"id"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type ClientMedium struct {
 	ID          string          `json:"id"`
 	MediaType   string          `json:"media_type"`
@@ -27,6 +37,10 @@ type ClientMedium struct {
 	ReleaseYear int32           `json:"release_year"`
 	ImageUrl    string          `json:"image_url"`
 	Metadata    json.RawMessage `json:"metadata"`
+}
+
+type ClientListMedia struct {
+	Media []ClientMedium `json:"media"`
 }
 
 type ClientRecord struct {
@@ -44,3 +58,5 @@ type ClientRecord struct {
 type ClientRecords struct {
 	Records []ClientRecord `json:"records"`
 }
+
+// isoFormat := time.Now().UTC().Format("2006-01-02T15:04:05.999999")

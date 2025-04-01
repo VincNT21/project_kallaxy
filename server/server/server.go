@@ -85,9 +85,15 @@ func Start(envVars ...map[string]string) {
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
 
 	// Reset Password endpoints
-	mux.HandleFunc("POST /auth/password-reset", apiCfg.handlerPasswordResetRequest)
-	mux.HandleFunc("GET /auth/password-reset", apiCfg.handlerVerifyResetToken)
-	mux.HandleFunc("PUT /auth/password-reset", apiCfg.handlerResetPassword)
+	mux.HandleFunc("POST /auth/password_reset", apiCfg.handlerPasswordResetRequest)
+	mux.HandleFunc("GET /auth/password_reset", apiCfg.handlerVerifyResetToken)
+	mux.HandleFunc("PUT /auth/password_reset", apiCfg.handlerResetPassword)
+
+	// Admin endpoint (only used on test server)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
+	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
+	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
 
 	// Create a http server that listens on defined port and use multiplexer
 	srv := &http.Server{

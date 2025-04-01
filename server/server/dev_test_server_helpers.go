@@ -125,8 +125,42 @@ func (ctx *TestContext) TestIfUserExist() bool {
 	return resp.StatusCode == 200
 }
 
+// Create a Password Reset Token (based on ctx user's data)
+func (ctx *TestContext) GetPasswordResetToken(t *testing.T) string {
+	payload := fmt.Sprintf(`{"email":"%s"}`, ctx.UserEmail)
+	resp, err := ctx.Client.Post(ctx.BaseURL+"/auth/password_reset", "application/json", strings.NewReader(payload))
+	if err != nil {
+		t.Fatalf("Failed to get test password reset token: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Fatalf("Failed to get test password reset token. Status: %d", resp.StatusCode)
+	}
+
+	var data responsePasswordResetRequest
+
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		t.Fatalf("Failed to decode login response body: %v", err)
+	}
+	return data.ResetToken
+}
+
+// Check if Reset password worked
+func (ctx *TestContext) TestLoginAfterPasswordReset(t *testing.T, newPassword string) bool {
+	// Login via API request
+	payload := fmt.Sprintf(`{"username":"%s", "password":"%s"}`, ctx.UserUsername, newPassword)
+	resp, err := ctx.Client.Post(ctx.BaseURL+"/auth/login", "application/json", strings.NewReader(payload))
+	if err != nil {
+		t.Fatalf("Failed to login test user: %v", err)
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == 201
+
+}
+
 // Create a medium (with custom fields) for testing use, return medium ID if needed
-func (ctx *TestContext) CreateTestMediumCustom(t *testing.T, testBook parametersCreateMedium) pgtype.UUID {
+func (ctx *TestContext) CreateTestMediumCustom(t *testing.T, testBook parametersCreateMedium) string {
 	// Create medium via API request
 	reqBody, err := json.Marshal(testBook)
 	if err != nil {
@@ -149,7 +183,7 @@ func (ctx *TestContext) CreateTestMediumCustom(t *testing.T, testBook parameters
 	}
 
 	// Parse response
-	var responseBody Medium
+	var responseBody ClientMedium
 	err = json.NewDecoder(resp.Body).Decode(&responseBody)
 	if err != nil {
 		t.Fatalf("Failed to decode response body for test medium: %v", err)
@@ -159,7 +193,7 @@ func (ctx *TestContext) CreateTestMediumCustom(t *testing.T, testBook parameters
 }
 
 // Create a pre-set medium for testing use, return medium ID if needed
-func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) pgtype.UUID {
+func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) string {
 	randTitle := rand.Text()
 
 	testBook := parametersCreateMedium{
@@ -167,7 +201,6 @@ func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) pgtype.UUID {
 		MediaType:   "book",
 		Creator:     "Test",
 		ReleaseYear: 2025,
-		ImageUrl:    "",
 	}
 
 	// Create medium via API request
@@ -192,7 +225,7 @@ func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) pgtype.UUID {
 	}
 
 	// Parse response
-	var responseBody Medium
+	var responseBody ClientMedium
 	err = json.NewDecoder(resp.Body).Decode(&responseBody)
 	if err != nil {
 		t.Fatalf("Failed to decode response body for test medium: %v", err)
@@ -202,7 +235,7 @@ func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) pgtype.UUID {
 }
 
 // Check if a medium exist by reaching admin/medium endpoint
-func (ctx *TestContext) TestIfMediumExist(mediumID pgtype.UUID) bool {
+func (ctx *TestContext) TestIfMediumExist(mediumID string) bool {
 	// To check if a user still exists in DB, make a request to GET /api/medium
 	body := parametersCheckMediumExists{
 		MediumID: mediumID,
@@ -225,19 +258,14 @@ func (ctx *TestContext) TestIfMediumExist(mediumID pgtype.UUID) bool {
 }
 
 // Create a record for testing use (start date = NOW, end date = NOW + 21 days)
-func (ctx *TestContext) CreateTestRecord(t *testing.T, mediumID pgtype.UUID) pgtype.UUID {
-	startDate := pgtype.Timestamp{
-		Time:  time.Now().UTC(),
-		Valid: true,
-	}
-	endDate := pgtype.Timestamp{
-		Time:  time.Now().UTC().AddDate(0, 0, 21),
-		Valid: true,
-	}
+func (ctx *TestContext) CreateTestRecord(t *testing.T, mediumID string) string {
+	startDate := time.Now().UTC().Format(time.RFC3339)
+
+	endDate := time.Now().UTC().AddDate(0, 0, 21).Format(time.RFC3339)
 
 	// Create Record via API request
 	request := parametersCreateUserMediumRecord{
-		MediaID:   mediumID,
+		MediumID:  mediumID,
 		StartDate: startDate,
 		EndDate:   endDate,
 	}
@@ -262,19 +290,8 @@ func (ctx *TestContext) CreateTestRecord(t *testing.T, mediumID pgtype.UUID) pgt
 	}
 
 	// Parse response
-	type TestRecord struct {
-		ID         pgtype.UUID `json:"id"`
-		CreatedAt  string      `json:"created_at"`
-		UpdatedAt  string      `json:"updated_at"`
-		UserID     string      `json:"user_id"`
-		MediaID    string      `json:"media_id"`
-		IsFinished bool        `json:"is_finished"`
-		StartDate  string      `json:"start_date"`
-		EndDate    string      `json:"end_date"`
-		Duration   int32       `json:"duration"`
-	}
 
-	var responseBody TestRecord
+	var responseBody ClientRecord
 	err = json.NewDecoder(resp.Body).Decode(&responseBody)
 	if err != nil {
 		t.Fatalf("Failed to decode response body for test create records: %v", err)
@@ -285,7 +302,7 @@ func (ctx *TestContext) CreateTestRecord(t *testing.T, mediumID pgtype.UUID) pgt
 }
 
 // Check if a record exist by reaching admin/record endpoint
-func (ctx *TestContext) TestIfRecordExist(recordID pgtype.UUID) bool {
+func (ctx *TestContext) TestIfRecordExist(recordID string) bool {
 	// To check if a user still exists in DB, make a request to GET /api/medium
 	body := parametersCheckRecordExists{
 		RecordID: recordID,

@@ -62,7 +62,7 @@
 -> *Description* : 
 > Update username/password/email for a logged-in user.  
 > Respond with a User struct
-> **WARNING : User's refresh tokens will be revoked and they need to login again.**
+> **WARNING : User's refresh tokens will be revoked and they need to login again to get new tokens.**
 
 -> *Request headers* : 
 >A valid Bearer access token in "Authorization" header 
@@ -100,7 +100,7 @@
 ### 1.4. DELETE /api/users -- Delete all user's info (need a valid access token)
 -> *Description* :
 >Delete logged user's row in server's database
->Response body empty
+>Empty response's body
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
@@ -122,7 +122,7 @@
 
 
 ## 2. Authentification endpoints
-### 2.1. POST /auth/login -- Authentification
+### 2.1. POST /auth/login -- Get access token and refresh token
 -> *Description* : 
 > Login user by checking given email/password, create Refresh Token (valid for 60 days) stored in server's database and a Access Token (valid for 1 hour) not stored. 
 > Respond with both tokens and the logged user's info.
@@ -165,7 +165,7 @@
 ### 2.2. POST /auth/logout -- Logout a user
 -> *Description* : 
 > Logout a logged user by revoking all their refresh tokens
->Response body empty
+>Empty response's body
 
 -> *Request headers* : 
 > A valid access token in "Authorization" header
@@ -216,7 +216,7 @@
 ### 2.4. POST /auth/revoke -- Revoke a refresh token
 -> *Description* : 
 >Revoke a refresh token in server's database
->Response body empty
+>Empty response's body
 
 -> *Request headers* : 
 >A valid refresh token (string) in "Authorization" header
@@ -404,7 +404,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 ### 3.5. DELETE /api/media -- Delete a medium
 -> *Description* :
 >Delete a medium's info in database, based on given medium's ID
->Response body empty
+>Empty response's body
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
@@ -539,7 +539,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 ### 4.4. DELETE /api/records -- Delete a record
 -> *Description* :
 >Delete a record based on given record's ID  
->No response
+>Empty response's body
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
@@ -566,3 +566,110 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 
 -> *OK Response body example* :
 >Empty
+
+
+## Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
+
+### POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
+-> *Description* :
+>Based on given user's email
+* Server generates a unique, time-limited reset token (6h)
+* Server stores token in database with user ID and expiration
+* In production, server would emails the reset link to user
+* In test, server responds with reset link
+
+-> *Request headers* :
+>None
+
+-> *Request body* :
+>**REQUIRED**:
+* `email` - string
+
+*Example*:
+```json
+{
+     "email": "vincnt21@example.com"
+}
+```
+-> *Error Response status code to handle* : 
+
+    - None, client won't know if email exists in server's database
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* **(IN TEST MODE ONLY)**:
+```json
+{
+    "message": "Password reset initiated",
+    "reset_link": "/auth/password_reset?token=vdsfsfe23456dfs",
+    "token": "vdsfsfe23456dfs"
+}
+```
+
+### GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
+-> *Description* :
+>Server verify if the token from query parameter exists, hasn't expired and hasn't already been used
+> Respond with `valid` (*bool*) and `email` (*string*)
+
+-> *Request headers* :
+>None
+
+-> *Request body* :
+>**REQUIRED**:
+* `email` - string
+
+*Example*:
+```json
+{
+     "email": "vincnt21@example.com"
+}
+```
+-> *Error Response status code to handle* : 
+
+    - 400 Bad Request - Missing token in query parameters OR invalid / expired reset token
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* :
+```json
+{
+    "valid": true,
+    "email": "vincnt21@example.com"
+}
+```
+
+### PUT /auth/password_reset -- Step 3 : Set a new password
+-> *Description* :
+>New password is set for user (based on given reset token)
+> All refresh token linked to user's ID will be revoked, user will need to login again to get new tokens.
+>Respond with updated User
+
+-> *Request headers* :
+>None
+
+-> *Request body* :
+>**REQUIRED**:
+* `token` - *string*
+* `new_password` - *string*
+
+*Example*:
+```json
+{
+     "token": "KBTVMH4IAVEET7P6GIPUDKTYPS",
+     "new_password": "qsdf5678"
+}
+```
+-> *Error Response status code to handle* : 
+
+    - 400 Bad Request - invalid or expired reset token
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* :
+>See resource [User](resources.md#user-resource)

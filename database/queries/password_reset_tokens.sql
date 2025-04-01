@@ -17,3 +17,6 @@ WHERE token = $1;
 UPDATE password_reset_tokens 
 SET used_at = NOW()
 WHERE user_id = $1;
+
+-- name: ResetPasswordResetTable :exec
+DELETE FROM password_reset_tokens;

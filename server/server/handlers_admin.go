@@ -34,6 +34,13 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reset password reset table
+	err = cfg.db.ResetPasswordResetTable(r.Context())
+	if err != nil {
+		respondWithError(w, 500, "couldn't reset table password_reset", err)
+		return
+	}
+
 	w.WriteHeader(200)
 }
 
@@ -66,7 +73,7 @@ func (cfg *apiConfig) handlerCheckUserExists(w http.ResponseWriter, r *http.Requ
 // This handler is only used for integration tests
 // No endpoint for it exists in production server
 type parametersCheckMediumExists struct {
-	MediumID pgtype.UUID `json:"medium_id"`
+	MediumID string `json:"medium_id"`
 }
 
 // GET /admin/medium
@@ -80,8 +87,14 @@ func (cfg *apiConfig) handlerCheckMediumExists(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	mediumID, err := convertIdToPgtype(params.MediumID)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
 	// Try to get User by ID
-	_, err = cfg.db.GetMediumByID(r.Context(), params.MediumID)
+	_, err = cfg.db.GetMediumByID(r.Context(), mediumID)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(404)
 		return
@@ -93,7 +106,7 @@ func (cfg *apiConfig) handlerCheckMediumExists(w http.ResponseWriter, r *http.Re
 // This handler is only used for integration tests
 // No endpoint for it exists in production server
 type parametersCheckRecordExists struct {
-	RecordID pgtype.UUID `json:"record_id"`
+	RecordID string `json:"record_id"`
 }
 
 // GET /admin/medium
@@ -107,8 +120,14 @@ func (cfg *apiConfig) handlerCheckRecordExists(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	recordID, err := convertIdToPgtype(params.RecordID)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
 	// Try to get User by ID
-	_, err = cfg.db.GetRecordByID(r.Context(), params.RecordID)
+	_, err = cfg.db.GetRecordByID(r.Context(), recordID)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(404)
 		return

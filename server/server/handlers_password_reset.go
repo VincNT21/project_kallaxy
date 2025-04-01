@@ -12,20 +12,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// POST /auth/reset-password
-func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email string `json:"email"`
-	}
+type parametersPasswordResetRequest struct {
+	Email string `json:"email"`
+}
 
-	type response struct {
-		Message   string `json:"message"`
-		ResetLink string `json:"reset_link"`
-		Token     string `json:"token"`
-	}
+type responsePasswordResetRequest struct {
+	Message    string `json:"message"`
+	ResetLink  string `json:"reset_link"`
+	ResetToken string `json:"reset_token"`
+}
+
+// POST /auth/password_reset
+func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Parse email from request
-	var params parameters
+	var params parametersPasswordResetRequest
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "couldn't decode body from request", err)
@@ -36,9 +37,10 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 	user, err := cfg.db.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
 		// Client won't know if email exists, for security
-		respondWithJson(w, 200, response{
+		respondWithJson(w, 200, responsePasswordResetRequest{
 			Message: "If your email exists in our system, you'll receive reset instruction",
 		})
+		return
 	}
 
 	// Generate reset token (valid for 6 hour)
@@ -60,15 +62,15 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 		ExpiresAt: expiry,
 	})
 
-	// For loca development, just creating the path portion
+	// For local development, just creating the path portion
 	// instead of full URL
-	resetLink := fmt.Sprintf("/reset-password?token=%s", token)
+	resetLink := fmt.Sprintf("/auth/password_reset?token=%s", token)
 
 	// In dev mode, return link in response
-	respondWithJson(w, 200, response{
-		Message:   "Password reset initiated",
-		ResetLink: resetLink,
-		Token:     token,
+	respondWithJson(w, 200, responsePasswordResetRequest{
+		Message:    "Password reset initiated",
+		ResetLink:  resetLink,
+		ResetToken: token,
 	})
 
 	// In production, this would send an email instead
@@ -78,12 +80,13 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 
 }
 
-// GET /auth/resest-password?token=xxxxxxx
+type responseVerifyResetToken struct {
+	Valid bool   `json:"valid"`
+	Email string `json:"email"`
+}
+
+// GET /auth/password_reset?token=xxxxxxx
 func (cfg *apiConfig) handlerVerifyResetToken(w http.ResponseWriter, r *http.Request) {
-	type response struct {
-		Valid bool   `json:"valid"`
-		Email string `json:"email"`
-	}
 
 	// Get token from URL query parameters
 	token := r.URL.Query().Get("token")
@@ -100,26 +103,27 @@ func (cfg *apiConfig) handlerVerifyResetToken(w http.ResponseWriter, r *http.Req
 	}
 
 	// If valid, respond
-	respondWithJson(w, 200, response{
+	respondWithJson(w, 200, responseVerifyResetToken{
 		Valid: true,
 		Email: resetToken.UserEmail,
 	})
 
 }
 
-// PUT /auth/reset-password
+type parametersResetPassword struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+// PUT /auth/password_reset
 func (cfg *apiConfig) handlerResetPassword(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Token       string `json:"token"`
-		NewPassword string `json:"new_password"`
-	}
 
 	type response struct {
 		User
 	}
 
 	// Parse data from request body
-	var params parameters
+	var params parametersResetPassword
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "couldn't decode body from request", err)

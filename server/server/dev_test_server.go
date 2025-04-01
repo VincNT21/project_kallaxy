@@ -111,9 +111,9 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
 
 	// Reset Password endpoints
-	mux.HandleFunc("POST /auth/password-reset", apiCfg.handlerPasswordResetRequest)
-	mux.HandleFunc("GET /auth/password-reset", apiCfg.handlerVerifyResetToken)
-	mux.HandleFunc("PUT /auth/password-reset", apiCfg.handlerResetPassword)
+	mux.HandleFunc("POST /auth/password_reset", apiCfg.handlerPasswordResetRequest)
+	mux.HandleFunc("GET /auth/password_reset", apiCfg.handlerVerifyResetToken)
+	mux.HandleFunc("PUT /auth/password_reset", apiCfg.handlerResetPassword)
 
 	// Admin endpoint (only used on test server)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)

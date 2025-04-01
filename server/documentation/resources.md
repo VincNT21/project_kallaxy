@@ -118,12 +118,21 @@ Refresh token lifspan : 30 days
 A UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" where x is a hexadecimal digit.
 Example: "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
 
-### ISO 8601 datetime
-A timestamp string in ISO 8601 format: YYYY-MM-DDThh:mm:ss.sssZ
+### Datetime
+A timestamp string in RFC3339 format: YYYY-MM-DDThh:mm:ssZ
 Where:
 - YYYY-MM-DD is the date portion
 - T is a literal character separating date and time
 - hh:mm:ss.sss is the time with optional microsecond precision
 - Z indicates UTC timezone (can be replaced with +/-hh:mm offset)
 
-Example: "2025-03-26T14:20:23.525332"
+Examples:
+  - "2025-04-01T07:58:56Z" (basic format)
+  - "2025-04-01T07:58:56.827795Z" (with microsecond precision)
+
+All timestamps should be in UTC timezone (indicated by the 'Z' suffix).
+
+In Go, you can use 
+````go
+time.Now().UTC().Format(time.RFC3339)
+```
