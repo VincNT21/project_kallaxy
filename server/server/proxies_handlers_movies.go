@@ -104,7 +104,7 @@ func (cfg *apiConfig) handlerMultiSearch(w http.ResponseWriter, r *http.Request)
 
 type parametersMovieDetails struct {
 	MovieID  string `json:"movie_id"`
-	TvID     string `json:"tv_id`
+	TvID     string `json:"tv_id"`
 	Language string `json:"language"`
 }
 

@@ -84,4 +84,154 @@ type BoardgamesProxy struct {
 	GetDetails Endpoint
 }
 
-// func InitApiConfig
+// Initialize the API config struct, with all endpoints
+func initApiConfig(baseURL string) *APIConfig {
+	apiCfg := &APIConfig{
+		BaseURL:   baseURL,
+		AuthToken: "",
+		Endpoints: Endpoints{
+			Users: UsersEndpoints{
+				CreateUser: Endpoint{
+					Method: "POST",
+					Path:   "/api/users",
+				},
+				GetUser: Endpoint{
+					Method: "GET",
+					Path:   "/api/users",
+				},
+				UpdateUser: Endpoint{
+					Method: "PUT",
+					Path:   "/api/users",
+				},
+				DeleteUser: Endpoint{
+					Method: "DELETE",
+					Path:   "/api/users",
+				},
+			},
+			Media: MediaEndpoints{
+				CreateMedia: Endpoint{
+					Method: "POST",
+					Path:   "/api/media",
+				},
+				GetMedia: Endpoint{
+					Method: "GET",
+					Path:   "/api/media",
+				},
+				UpdateMedia: Endpoint{
+					Method: "PUT",
+					Path:   "/api/media",
+				},
+				DeleteMedia: Endpoint{
+					Method: "DELETE",
+					Path:   "/api/media",
+				},
+			},
+			Records: RecordsEndpoints{
+				CreateRecord: Endpoint{
+					Method: "POST",
+					Path:   "/api/records",
+				},
+				GetRecord: Endpoint{
+					Method: "GET",
+					Path:   "/api/records",
+				},
+				UpdateRecord: Endpoint{
+					Method: "PUT",
+					Path:   "/api/records",
+				},
+				DeleteRecord: Endpoint{
+					Method: "DELETE",
+					Path:   "/api/records",
+				},
+			},
+			Auth: AuthEndpoints{
+				Login: Endpoint{
+					Method: "POST",
+					Path:   "/auth/login",
+				},
+				Logout: Endpoint{
+					Method: "POST",
+					Path:   "/auth/logout",
+				},
+				Refresh: Endpoint{
+					Method: "POST",
+					Path:   "/auth/refresh",
+				},
+				RevokeRefreshToken: Endpoint{
+					Method: "POST",
+					Path:   "/auth/revoke",
+				},
+			},
+			PasswordReset: PasswordResetEndpoints{
+				RequestToken: Endpoint{
+					Method: "POST",
+					Path:   "/auth/password_reset",
+				},
+				VerifyToken: Endpoint{
+					Method: "GET",
+					Path:   "/auth/password_reset",
+				},
+				CreateNewPassword: Endpoint{
+					Method: "PUT",
+					Path:   "/auth/password_reset",
+				},
+			},
+			ExternalAPI: ExternalApiEndpoints{
+				Books: BooksProxy{
+					Search: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/book/search",
+					},
+					ISBN: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/book/isbn",
+					},
+					Author: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/book/author",
+					},
+				},
+				MoviesTV: MoviesTvProxy{
+					SearchMovie: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/movie_tv/search_movie",
+					},
+					SearchTV: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/movie_tv/search_tv",
+					},
+					Search: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/movie_tv/search",
+					},
+					GetDetails: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/movie_tv/",
+					},
+				},
+				Videogames: VideogamesProxy{
+					Search: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/videogame/search",
+					},
+					GetDetails: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/videogame/",
+					},
+				},
+				Boardgames: BoardgamesProxy{
+					Search: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/boardgame/search",
+					},
+					GetDetails: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/boardgame",
+					},
+				},
+			},
+		},
+	}
+
+	return apiCfg
+}

@@ -35,6 +35,17 @@ Refresh token is in format
 }
 ```
 
+### GO
+```go
+type User struct {
+	ID        pgtype.UUID      `json:"id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Username  string           `json:"username"`
+	Email     string           `json:"email"`
+}
+```
+
 ## Media resource
 
 ### Structure
@@ -133,6 +144,182 @@ Examples:
 All timestamps should be in UTC timezone (indicated by the 'Z' suffix).
 
 In Go, you can use 
-````go
+```go
 time.Now().UTC().Format(time.RFC3339)
+```
+
+## Go models
+
+### For client's requests
+
+#### Users
+```go
+type parametersCreateUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
+```
+
+```go
+type parametersUpdateUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
+```
+
+#### Media
+```go
+type parametersCreateMedium struct {
+	Title       string          `json:"title"`
+	MediaType   string          `json:"media_type"`
+	Creator     string          `json:"creator"`
+	ReleaseYear int32           `json:"release_year"`
+	ImageUrl    string          `json:"image_url"`
+	Metadata    json.RawMessage `json:"metadata"`
+}
+```
+
+```go
+type parametersUpdateMedium struct {
+	MediumID    string          `json:"medium_id"`
+	Title       string          `json:"title"`
+	Creator     string          `json:"creator"`
+	ReleaseYear int32           `json:"release_year"`
+	ImageUrl    string          `json:"image_url"`
+	Metadata    json.RawMessage `json:"metadata"`
+}
+```
+
+```go
+type parametersDeleteMedium struct {
+	MediumID string `json:"medium_id"`
+}
+```
+
+#### Records
+```go
+type parametersCreateUserMediumRecord struct {
+	MediumID  string `json:"medium_id"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+```
+
+```go
+type parametersUpdateRecord struct {
+	RecordID  string `json:"record_id"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+```
+
+```go
+type parametersDeleteRecord struct {
+	RecordID string `json:"record_id"`
+}
+```
+
+#### Authentification
+
+```go
+type parametersLogin struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+```
+
+#### Admin/Password Reset
+```go
+type parametersPasswordResetRequest struct {
+	Email string `json:"email"`
+}
+```
+
+
+### For server's responses
+```go
+type User struct {
+	ID        string `json:"id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+}
+```
+
+```go
+type Tokens struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+```
+
+```go
+type TokensAndUser struct {
+	ID           string `json:"id"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+```
+
+```go
+type Medium struct {
+	ID          string          `json:"id"`
+	MediaType   string          `json:"media_type"`
+	CreatedAt   string          `json:"created_at"`
+	UpdatedAt   string          `json:"updated_at"`
+	Title       string          `json:"title"`
+	Creator     string          `json:"creator"`
+	ReleaseYear int32           `json:"release_year"`
+	ImageUrl    string          `json:"image_url"`
+	Metadata    json.RawMessage `json:"metadata"`
+}
+```
+
+```go
+type ListMedia struct {
+	Media []Medium `json:"media"`
+}
+```
+
+```go
+type Record struct {
+	ID         string `json:"id"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+	UserID     string `json:"user_id"`
+	MediaID    string `json:"media_id"`
+	IsFinished bool   `json:"is_finished"`
+	StartDate  string `json:"start_date"`
+	EndDate    string `json:"end_date"`
+	Duration   int32  `json:"duration"`
+}
+```
+
+```go
+type Records struct {
+	Records []Record `json:"records"`
+}
+```
+
+#### Admin-Password Reset
+```go
+type PasswordResetRequest struct {
+	Message    string `json:"message"`
+	ResetLink  string `json:"reset_link"`
+	ResetToken string `json:"reset_token"`
+}
+```
+
+```go
+type responseVerifyResetToken struct {
+	Valid bool   `json:"valid"`
+	Email string `json:"email"`
+}
 ```

@@ -1,5 +1,31 @@
 # Project Kallaxy Endpoints <!-- omit from toc -->
 
+- [1. Users endpoints](#1-users-endpoints)
+  - [1.1. POST /api/users -- User creation](#11-post-apiusers----user-creation)
+  - [1.2. GET /api/users -- Get user info by ID (need an valid access token)](#12-get-apiusers----get-user-info-by-id-need-an-valid-access-token)
+  - [1.3. PUT /api/users -- User info update](#13-put-apiusers----user-info-update)
+  - [1.4. DELETE /api/users -- Delete all user's info (need a valid access token)](#14-delete-apiusers----delete-all-users-info-need-a-valid-access-token)
+- [2. Authentification endpoints](#2-authentification-endpoints)
+  - [2.1. POST /auth/login -- Get access token and refresh token](#21-post-authlogin----get-access-token-and-refresh-token)
+  - [2.2. POST /auth/logout -- Logout a user](#22-post-authlogout----logout-a-user)
+  - [2.3. POST /auth/refresh -- Refresh access token](#23-post-authrefresh----refresh-access-token)
+  - [2.4. POST /auth/revoke -- Revoke a refresh token](#24-post-authrevoke----revoke-a-refresh-token)
+- [3. Media endpoints](#3-media-endpoints)
+  - [3.1. POST /api/media -- Create a new medium](#31-post-apimedia----create-a-new-medium)
+  - [3.2. GET /api/media?title=*xxx* -- Get a medium's info by its title](#32-get-apimediatitlexxx----get-a-mediums-info-by-its-title)
+  - [3.3. GET /api/media?type=*xxx* -- Get all media based on given type](#33-get-apimediatypexxx----get-all-media-based-on-given-type)
+  - [3.4. PUT /api/media -- Update a medium's info](#34-put-apimedia----update-a-mediums-info)
+  - [3.5. DELETE /api/media -- Delete a medium](#35-delete-apimedia----delete-a-medium)
+- [4. Records endpoints](#4-records-endpoints)
+  - [4.1. POST /api/records -- Create a new User-Medium Record](#41-post-apirecords----create-a-new-user-medium-record)
+  - [4.2. GET /api/records -- Get all records by user's ID](#42-get-apirecords----get-all-records-by-users-id)
+  - [4.3. PUT /api/records -- Update a record's start and/ord end date](#43-put-apirecords----update-a-records-start-andord-end-date)
+  - [4.4. DELETE /api/records -- Delete a record](#44-delete-apirecords----delete-a-record)
+- [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
+  - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
+  - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
+  - [5.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#53-put-authpassword_reset----step-3--set-a-new-password)
+
 
 ## 1. Users endpoints
 
@@ -161,6 +187,7 @@
     "refresh_token": "176ddabd5f4c932b8cda583e00b620a05242187680002a071e8a13c4e2b0b14"
 }
 ```
+>See resource [User](resources.md#user-resource) and resource [Tokens](resources.md#tokens)
 
 ### 2.2. POST /auth/logout -- Logout a user
 -> *Description* : 
@@ -568,9 +595,9 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 >Empty
 
 
-## Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
+## 5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
 
-### POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
+### 5.1. POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
 -> *Description* :
 >Based on given user's email
 * Server generates a unique, time-limited reset token (6h)
@@ -608,7 +635,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 }
 ```
 
-### GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
+### 5.2. GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
 -> *Description* :
 >Server verify if the token from query parameter exists, hasn't expired and hasn't already been used
 > Respond with `valid` (*bool*) and `email` (*string*)
@@ -642,7 +669,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 }
 ```
 
-### PUT /auth/password_reset -- Step 3 : Set a new password
+### 5.3. PUT /auth/password_reset -- Step 3 : Set a new password
 -> *Description* :
 >New password is set for user (based on given reset token)
 > All refresh token linked to user's ID will be revoked, user will need to login again to get new tokens.
