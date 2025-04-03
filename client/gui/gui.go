@@ -8,13 +8,31 @@ import (
 )
 
 func StartGui(appCtxt *context.AppContext) {
-	a := app.New()
-	appCtxt.LoadsAppstate()
-	if appCtxt.APIClient.LastUser.Username == "" {
-		getLoginWindow(a, appCtxt)
+	// Create a New App
+	appGui := app.New()
+	log.Print("--INFO-- Client GUI started")
+
+	// Initialize Page Manager
+	pageManager := GuiPageManager{
+		appCtxt: appCtxt,
+		appGui:  appGui,
 	}
 
-	a.Run()
-	log.Print("--DEBUG-- Client GUI exited")
-	// appCtxt.DumpAppstate()
+	// Assign the PageManager to the appContext's pageManager field
+	appCtxt.PageManager = &pageManager
+
+	appCtxt.LoadsAppstate()
+	if appCtxt.APIClient.LastUser.Username != "" {
+		pageManager.GetBackWindow()
+	} else {
+		pageManager.GetLoginWindow()
+	}
+
+	appGui.Run()
+	exitGui(appCtxt)
+}
+
+func exitGui(appCtxt *context.AppContext) {
+	log.Print("--INFO-- Client GUI exited")
+	appCtxt.DumpAppstate()
 }

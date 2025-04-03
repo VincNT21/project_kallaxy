@@ -8,3 +8,4 @@ start_server.sh
 spellbook.md
 sqlc.yaml
 start_client.sh
+client/config/appstate.json

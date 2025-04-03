@@ -10,9 +10,17 @@ import (
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
+type PageManager interface {
+	GetBackWindow()
+	GetLoginWindow()
+	GetCreateUserWindow()
+	GetHomeWindow()
+}
+
 type AppContext struct {
-	Cache     string // To be implemented
-	APIClient *kallaxyapi.APIClient
+	Cache       string // To be implemented
+	APIClient   *kallaxyapi.APIClient
+	PageManager PageManager
 }
 
 // Create and configured the shared AppContext
@@ -38,11 +46,13 @@ func getClientConfigDir() string {
 
 // Check if appstate data exists and loads it
 func (c *AppContext) LoadsAppstate() {
-	configDir := getClientConfigDir()
+	/*
+		configDir := getClientConfigDir()
 
-	filepath := filepath.Join(configDir, "appstate.json")
+		filepath := filepath.Join(configDir, "appstate.json")
 
-	f, err := os.Open(filepath)
+	*/
+	f, err := os.Open("/home/vincnt/workspace/project_kallaxy/client/config/appstate.json")
 	if err != nil {
 		log.Printf("couldn't open appstate.json: %v", err)
 		return
@@ -63,18 +73,20 @@ func (c *AppContext) LoadsAppstate() {
 
 // Store appstate data in local file
 func (c *AppContext) DumpAppstate() {
-	configDir := getClientConfigDir()
+	/*
+		configDir := getClientConfigDir()
 
-	// Ensure directory exists
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		log.Printf("--ERROR-- couldn't create client config directory: %v", err)
-		return
-	}
+		// Ensure directory exists
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			log.Printf("--ERROR-- couldn't create client config directory: %v", err)
+			return
+		}
 
-	filepath := filepath.Join(configDir, "appstate.json")
+		filepath := filepath.Join(configDir, "appstate.json")
+	*/
 
 	// Create/erase local appstate file
-	f, err := os.Create(filepath)
+	f, err := os.Create("/home/vincnt/workspace/project_kallaxy/client/config/appstate.json")
 	if err != nil {
 		log.Printf("couldn't create appstate.json: %v", err)
 		return
