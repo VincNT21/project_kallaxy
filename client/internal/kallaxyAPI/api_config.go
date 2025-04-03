@@ -46,6 +46,7 @@ type AuthEndpoints struct {
 	Logout             Endpoint
 	Refresh            Endpoint
 	RevokeRefreshToken Endpoint
+	ConfirmPassword    Endpoint
 }
 
 type PasswordResetEndpoints struct {
@@ -160,6 +161,10 @@ func initApiConfig(baseURL string) *APIConfig {
 				RevokeRefreshToken: Endpoint{
 					Method: "POST",
 					Path:   "/auth/revoke",
+				},
+				ConfirmPassword: Endpoint{
+					Method: "GET",
+					Path:   "/auth/login",
 				},
 			},
 			PasswordReset: PasswordResetEndpoints{

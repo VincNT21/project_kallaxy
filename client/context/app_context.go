@@ -68,7 +68,7 @@ func (c *AppContext) LoadsAppstate() {
 	}
 
 	// Load data into APIClient
-	c.APIClient.LastUser = user
+	c.APIClient.CurrentUser = user
 }
 
 // Store appstate data in local file
@@ -94,7 +94,7 @@ func (c *AppContext) DumpAppstate() {
 	defer f.Close()
 
 	// Get data from APIClient
-	data, err := json.Marshal(c.APIClient.LastUser)
+	data, err := json.Marshal(c.APIClient.CurrentUser)
 	if err != nil {
 		log.Printf("couldn't json.Marshal data for appstate.json: %v", err)
 		return

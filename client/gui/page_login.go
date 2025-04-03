@@ -2,10 +2,13 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"log"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -14,12 +17,15 @@ import (
 
 func (pm *GuiPageManager) GetLoginWindow() {
 	// Create the window
-	w := pm.appGui.NewWindow("Welcome")
+	w := pm.appGui.NewWindow("Kallaxy Login")
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(400, 300))
 
 	// Create objects
-	titleLabel := widget.NewLabelWithStyle("Welcome to Project Kallaxy App !", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	titleText := canvas.NewText("Please login", color.White)
+	titleText.Alignment = fyne.TextAlignCenter
+	titleText.TextSize = 20
+	titleText.TextStyle.Bold = true
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 
 	usernameEntry := widget.NewEntry()
@@ -36,7 +42,7 @@ func (pm *GuiPageManager) GetLoginWindow() {
 			case models.ErrServerIssue:
 				statusLabel.SetText("Error with server, please retry later")
 			default:
-				statusLabel.SetText("Couldn't login: unknown error")
+				dialog.ShowError(err, w)
 			}
 		}
 
@@ -55,14 +61,16 @@ func (pm *GuiPageManager) GetLoginWindow() {
 		statusLabel.SetText("New user created, please login")
 	})
 
+	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
+		w.Close()
+	})
+
 	// Group objects in VBox container
 	objectsContainer := container.NewVBox(usernameEntry, passwordEntry, loginButton, createNewUserButton)
-
-	// Create the center row
 	centerRow := container.NewHBox(layout.NewSpacer(), objectsContainer, layout.NewSpacer())
 
 	// Create the global frame
-	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), centerRow, layout.NewSpacer(), statusLabel, layout.NewSpacer())
+	globalContainer := container.NewVBox(layout.NewSpacer(), titleText, layout.NewSpacer(), centerRow, layout.NewSpacer(), statusLabel, layout.NewSpacer(), exitButton)
 
 	// Set container to window
 	w.SetContent(globalContainer)
@@ -71,14 +79,26 @@ func (pm *GuiPageManager) GetLoginWindow() {
 
 func (pm *GuiPageManager) GetBackWindow() {
 	// Create the window
-	w := pm.appGui.NewWindow("Welcome back")
+	w := pm.appGui.NewWindow("Kallaxy back")
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(400, 300))
 
 	// Create objects
-	titleLabel := widget.NewLabelWithStyle(fmt.Sprintf("Welcome back %s !", pm.appCtxt.APIClient.LastUser.Username), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	titleLabel := widget.NewLabelWithStyle(fmt.Sprintf("Welcome back %s !", pm.appCtxt.APIClient.CurrentUser.Username), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	enterButton := widget.NewButtonWithIcon("Enter app", theme.HomeIcon(), func() {
+	enterButton := widget.NewButtonWithIcon("Enter app", theme.LoginIcon(), func() {
+		_, err := pm.appCtxt.APIClient.Auth.RefreshTokens()
+		if err != nil {
+			log.Println("--GUI-- Error with RefeshTokens")
+			switch err {
+			case models.ErrUnauthorized:
+				dialog.ShowInformation("Error", "You need to login", w)
+			case models.ErrServerIssue:
+				dialog.ShowInformation("Error", "Error with server, please retry later", w)
+			default:
+				dialog.ShowError(err, w)
+			}
+		}
 		pm.GetHomeWindow()
 		w.Close()
 	})
@@ -87,12 +107,16 @@ func (pm *GuiPageManager) GetBackWindow() {
 		w.Close()
 	})
 
+	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
+		w.Close()
+	})
+
 	// Group Buttons
-	buttonRow := container.NewHBox(layout.NewSpacer(), enterButton, notMeButton, layout.NewSpacer())
+	buttonRow := container.NewHBox(layout.NewSpacer(), notMeButton, enterButton, layout.NewSpacer())
 
 	// Create the global frame
 
-	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), buttonRow, layout.NewSpacer())
+	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), buttonRow, layout.NewSpacer(), exitButton)
 
 	// Set container to window
 	w.SetContent(globalContainer)

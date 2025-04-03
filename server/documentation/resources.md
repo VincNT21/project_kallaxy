@@ -230,6 +230,12 @@ type parametersLogin struct {
 }
 ```
 
+```go
+type parametersConfirmPassword struct {
+	Password string `json:"password"`
+}
+```
+
 #### Admin/Password Reset
 ```go
 type parametersPasswordResetRequest struct {

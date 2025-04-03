@@ -95,6 +95,7 @@ func Start(envVars ...map[string]string) {
 	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
+	mux.Handle("GET /auth/login", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerConfirmPassword)))
 
 	// Reset Password endpoints
 	mux.HandleFunc("POST /auth/password_reset", apiCfg.handlerPasswordResetRequest)

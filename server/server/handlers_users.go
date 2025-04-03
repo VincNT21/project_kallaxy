@@ -170,11 +170,17 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 		Email:          params.Email,
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			// This is a unique constraint violation
+			respondWithError(w, 409, "A user with same username or email already exists in database", err)
+			return
+		} else if errors.Is(err, sql.ErrNoRows) {
 			// Means that user doesn't exist which shouldn't happen if the JWT is valid
 			respondWithError(w, 500, "server error: user record inconsistency", err)
 			return
 		}
+
 		respondWithError(w, 500, "couldn't update user info in DB", err)
 		return
 	}

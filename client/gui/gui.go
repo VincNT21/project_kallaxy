@@ -22,7 +22,7 @@ func StartGui(appCtxt *context.AppContext) {
 	appCtxt.PageManager = &pageManager
 
 	appCtxt.LoadsAppstate()
-	if appCtxt.APIClient.LastUser.Username != "" {
+	if appCtxt.APIClient.CurrentUser.Username != "" {
 		pageManager.GetBackWindow()
 	} else {
 		pageManager.GetLoginWindow()

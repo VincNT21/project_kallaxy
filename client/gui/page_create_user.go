@@ -14,7 +14,7 @@ import (
 
 func (pm *GuiPageManager) GetCreateUserWindow() {
 	// Create the window
-	w := pm.appGui.NewWindow("Create User")
+	w := pm.appGui.NewWindow("Kallaxy New User")
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(500, 200))
 
@@ -54,7 +54,6 @@ func (pm *GuiPageManager) GetCreateUserWindow() {
 						} else {
 							w.Close()
 						}
-
 					}
 				},
 				w,

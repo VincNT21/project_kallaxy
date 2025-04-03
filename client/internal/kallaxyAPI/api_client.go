@@ -8,9 +8,9 @@ import (
 )
 
 type APIClient struct {
-	HttpClient *http.Client
-	Config     *APIConfig
-	LastUser   models.ClientUser
+	HttpClient  *http.Client
+	Config      *APIConfig
+	CurrentUser models.ClientUser
 
 	Users    *UsersClient
 	Media    *MediaClient

@@ -10,6 +10,7 @@
   - [2.2. POST /auth/logout -- Logout a user](#22-post-authlogout----logout-a-user)
   - [2.3. POST /auth/refresh -- Refresh access token](#23-post-authrefresh----refresh-access-token)
   - [2.4. POST /auth/revoke -- Revoke a refresh token](#24-post-authrevoke----revoke-a-refresh-token)
+  - [GET /auth/login -- Confirm user password](#get-authlogin----confirm-user-password)
 - [3. Media endpoints](#3-media-endpoints)
   - [3.1. POST /api/media -- Create a new medium](#31-post-apimedia----create-a-new-medium)
   - [3.2. GET /api/media?title=*xxx* -- Get a medium's info by its title](#32-get-apimediatitlexxx----get-a-mediums-info-by-its-title)
@@ -113,7 +114,8 @@
 -> *Error Response status code to handle* : 
 
     - 400 Bad Request - One to many fields are missing in request
-    - 401 Unauthorized - Means that access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 409 Conflict - username or email is already used by another user
 
 -> *OK Response status code expected* : 
 
@@ -264,6 +266,7 @@
 -> *Response body example* :
 >None
 
+### GET /auth/login -- Confirm user password
 
 ## 3. Media endpoints
 

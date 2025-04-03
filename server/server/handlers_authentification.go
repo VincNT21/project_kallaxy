@@ -188,6 +188,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// POST /auth/revoke
 func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 	// Get the Refresh Token bearer from header
 	refreshTokenStr, err := auth.GetBearerToken(r.Header)
@@ -210,4 +211,40 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 
 	// If ok, respond
 	w.WriteHeader(204)
+}
+
+type parametersConfirmPassword struct {
+	Password string `json:"password"`
+}
+
+// GET /auth/login
+func (cfg *apiConfig) handlerConfirmPassword(w http.ResponseWriter, r *http.Request) {
+
+	// Parse data from request body
+	var params parametersConfirmPassword
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "couldn't decode body from request", err)
+		return
+	}
+
+	// Get user ID
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Get user Info
+	user, err := cfg.db.GetUserByID(r.Context(), userID)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(500)
+		return
+	}
+
+	// Check password validity
+	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
+	if err != nil {
+		respondWithError(w, 401, "invalid password", err)
+		return
+	}
+
+	w.WriteHeader(200)
+
 }
