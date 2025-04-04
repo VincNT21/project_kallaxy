@@ -6,6 +6,7 @@ import (
 )
 
 type GuiPageManager struct {
-	appCtxt *context.AppContext
-	appGui  fyne.App
+	appCtxt   *context.AppContext
+	appGui    fyne.App
+	mediaType string
 }

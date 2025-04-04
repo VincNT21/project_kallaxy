@@ -30,7 +30,56 @@ func (pm *GuiPageManager) GetHomeWindow() {
 	usernameText.Alignment = fyne.TextAlignCenter
 	usernameText.TextStyle.Bold = true
 
-	addMediaButton := widget.NewButton("Add New Media", func() {})
+	addMediaButton := widget.NewButton("Add New Media", func() {
+		// Create the custom dialog box to choose media_type
+		mediaTypeQuestion := canvas.NewText("Which type of media ?", color.White)
+
+		// Create a button for each media Type + an "other" button
+		buttonBook := widget.NewButtonWithIcon("Book", theme.DocumentIcon(), func() {
+			pm.mediaType = "book"
+			pm.GetCreateMediaWindow()
+			w.Close()
+		})
+		buttonMovie := widget.NewButtonWithIcon("Movie", theme.MediaVideoIcon(), func() {
+			pm.mediaType = "movie"
+			pm.GetCreateMediaWindow()
+			w.Close()
+		})
+		buttonSeries := widget.NewButtonWithIcon("Series", theme.MediaPlayIcon(), func() {
+			pm.mediaType = "series"
+			pm.GetCreateMediaWindow()
+			w.Close()
+		})
+		buttonVideogame := widget.NewButtonWithIcon("Videogame", theme.ComputerIcon(), func() {
+			pm.mediaType = "videogame"
+			pm.GetCreateMediaWindow()
+			w.Close()
+		})
+		buttonBoardgame := widget.NewButtonWithIcon("Boardgame", theme.SettingsIcon(), func() {
+			pm.mediaType = "boardgame"
+			pm.GetCreateMediaWindow()
+			w.Close()
+		})
+		buttonOther := widget.NewButtonWithIcon("Other", theme.MoreHorizontalIcon(), func() {
+			otherInput := widget.NewEntry()
+			otherForm := widget.NewFormItem("Media Type", otherInput)
+			dialog.ShowForm("Other media type", "Confirm", "Dismiss", []*widget.FormItem{otherForm}, func(b bool) {
+				if b {
+					pm.mediaType = otherInput.Text
+					pm.GetCreateMediaWindow()
+					w.Close()
+				}
+			}, w)
+		})
+
+		// Groups buttons
+		groupButtons := container.NewVBox(buttonBook, buttonMovie, buttonSeries, buttonVideogame, buttonBoardgame, buttonOther)
+		globalContainer := container.NewHBox(layout.NewSpacer(), groupButtons, layout.NewSpacer())
+
+		// Display custom dialog
+		dialog.ShowCustomWithoutButtons("Kallaxy", container.NewBorder(mediaTypeQuestion, nil, nil, nil, globalContainer), w)
+
+	})
 	showShelfButton := widget.NewButton("Show My Shelf", func() {})
 	manageButton := widget.NewButtonWithIcon("Manage\nUser Parameters", theme.AccountIcon(), func() {
 		pm.GetUserParametersWindow()
@@ -65,7 +114,11 @@ func (pm *GuiPageManager) GetHomeWindow() {
 		}
 	})
 	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
-		w.Close()
+		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
+			if b {
+				w.Close()
+			}
+		}, w)
 	})
 
 	// Create rows

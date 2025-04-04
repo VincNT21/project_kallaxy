@@ -58,6 +58,7 @@ func (c *AuthClient) LoginUser(username, password string) (models.TokensAndUser,
 	c.apiClient.CurrentUser.Email = tokensUser.Email
 
 	// Return data
+	log.Println("--DEBUG-- LoginUser() OK")
 	return tokensUser, nil
 }
 
@@ -93,6 +94,7 @@ func (c *AuthClient) LogoutUser() error {
 	c.apiClient.CurrentUser.Email = ""
 
 	// Return error
+	log.Println("--DEBUG-- LogoutUser() OK")
 	return nil
 }
 
@@ -132,6 +134,7 @@ func (c *AuthClient) RefreshTokens() (models.Tokens, error) {
 	c.apiClient.CurrentUser.RefreshToken = tokens.RefreshToken
 
 	// Return data
+	log.Println("--DEBUG-- RefreshTokens() OK")
 	return tokens, nil
 }
 
@@ -171,5 +174,6 @@ func (c *AuthClient) ConfirmPassword(password string) error {
 	}
 
 	// Return error
+	log.Println("--DEBUG-- ConfirmPassword() OK")
 	return nil
 }

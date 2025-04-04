@@ -89,8 +89,12 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 		}, w)
 	})
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
-		pm.GetHomeWindow()
-		w.Close()
+		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\nAll unsubmitted changes will be lost!", func(b bool) {
+			if b {
+				pm.GetHomeWindow()
+				w.Close()
+			}
+		}, w)
 	})
 
 	// Group objects

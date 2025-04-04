@@ -30,8 +30,10 @@ func (pm *GuiPageManager) GetLoginWindow() {
 
 	usernameEntry := widget.NewEntry()
 	usernameEntry.SetPlaceHolder("Username")
+
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("Pasword")
+
 	loginButton := widget.NewButtonWithIcon("Login", theme.ConfirmIcon(), func() {
 		_, err := pm.appCtxt.APIClient.Auth.LoginUser(usernameEntry.Text, passwordEntry.Text)
 		if err != nil {
@@ -55,6 +57,9 @@ func (pm *GuiPageManager) GetLoginWindow() {
 		}
 
 	})
+
+	passwordLostButton := widget.NewButtonWithIcon("Password lost", theme.QuestionIcon(), func() {})
+
 	createNewUserButton := widget.NewButtonWithIcon("Create New User", theme.ContentAddIcon(), func() {
 		log.Printf("--GUI-- User %v wants to create a new user\n", usernameEntry.Text)
 		pm.GetCreateUserWindow()
@@ -66,7 +71,7 @@ func (pm *GuiPageManager) GetLoginWindow() {
 	})
 
 	// Group objects in VBox container
-	objectsContainer := container.NewVBox(usernameEntry, passwordEntry, loginButton, createNewUserButton)
+	objectsContainer := container.NewVBox(usernameEntry, passwordEntry, loginButton, passwordLostButton, createNewUserButton)
 	centerRow := container.NewHBox(layout.NewSpacer(), objectsContainer, layout.NewSpacer())
 
 	// Create the global frame

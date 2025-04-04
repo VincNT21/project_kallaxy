@@ -281,8 +281,9 @@
 
 -> *Request body* :
 >**REQUIRED**:
-* unique `title` - *string*
-* `media_type` - *string*
+* `title` - *string*
+* `media_type` - *string*  
+*Couple `title` & `media_type` needs to be unique across server's database*
 * `creator` - *string*
 * `release year` - *int32*
 
@@ -307,7 +308,7 @@
 
     - 400 Bad Request - One to many required fields are missing in request's body
     - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
-    - 409 Conflict - A medium with the exact same title already exists in database
+    - 409 Conflict - A medium with the exact same title/media_type already exists in database
 
 -> *OK Response status code expected* :
 
@@ -478,8 +479,8 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 > **REQUIRED**: 
 * `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#uuid))   
 > **OPTIONNAL**: 
-* `start_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#iso-8601-datetime))
-* `end_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#iso-8601-datetime))
+* `start_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#datetime))
+* `end_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#datetime))
 
 *Example*:
 ```json
