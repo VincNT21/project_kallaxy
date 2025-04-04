@@ -28,10 +28,11 @@ type UsersEndpoints struct {
 }
 
 type MediaEndpoints struct {
-	CreateMedia Endpoint
-	GetMedia    Endpoint
-	UpdateMedia Endpoint
-	DeleteMedia Endpoint
+	CreateMedia         Endpoint
+	GetMedia            Endpoint
+	GetMediaWithRecords Endpoint
+	UpdateMedia         Endpoint
+	DeleteMedia         Endpoint
 }
 
 type RecordsEndpoints struct {
@@ -117,6 +118,10 @@ func initApiConfig(baseURL string) *APIConfig {
 				GetMedia: Endpoint{
 					Method: "GET",
 					Path:   "/api/media",
+				},
+				GetMediaWithRecords: Endpoint{
+					Method: "GET",
+					Path:   "/api/records_media",
 				},
 				UpdateMedia: Endpoint{
 					Method: "PUT",

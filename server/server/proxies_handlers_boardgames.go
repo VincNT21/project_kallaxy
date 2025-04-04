@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -9,7 +8,7 @@ import (
 	"github.com/clbanning/mxj/v2"
 )
 
-// GET /external_api/boardgame/search
+// GET /external_api/boardgame/search <query parameter : ?query=xxx>
 func (cfg *apiConfig) handlerBoardgameSearch(w http.ResponseWriter, r *http.Request) {
 	const bggSearchApiUrl = "https://boardgamegeek.com/xmlapi2/search"
 
@@ -60,24 +59,15 @@ func (cfg *apiConfig) handlerBoardgameSearch(w http.ResponseWriter, r *http.Requ
 	w.Write(jsonData)
 }
 
-type parametersBoardgameDetails struct {
-	BoardgameID string `json:"boardgame_id"`
-}
-
-// GET /external_api/boardgame
+// GET /external_api/boardgame <query parameter : ?id=xxx>
 func (cfg *apiConfig) handlerBoardgameDetails(w http.ResponseWriter, r *http.Request) {
 	const bggDetailsApiUrl = "https://boardgamegeek.com/xmlapi2/things"
 
-	// Parse data from request body
-	var params parametersBoardgameDetails
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		respondWithError(w, 500, "couldn't decode body from request", err)
-		return
-	}
+	// Get query parameters
+	requestQuery := "?" + r.URL.RawQuery
 
 	// Create request
-	apiURL := bggDetailsApiUrl + "?id=" + params.BoardgameID
+	apiURL := bggDetailsApiUrl + requestQuery
 	log.Printf("--DEBUG-- Making external request to %s", apiURL)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {

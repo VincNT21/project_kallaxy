@@ -17,6 +17,26 @@ RETURNING *;
 SELECT * FROM users_media_records
 WHERE user_id = $1;
 
+-- name: GetRecordsAndMediaByUserID :many
+SELECT
+    records.id, 
+    records.user_id, 
+    records.media_id, 
+    records.is_finished, 
+    records.start_date, 
+    records.end_date, 
+    records.duration, 
+    media.media_type,
+    media.title,
+    media.creator,
+    media.release_year,
+    media.image_url,
+    media.metadata
+FROM users_media_records AS records
+INNER JOIN media
+ON records.media_id = media.id
+WHERE records.user_id = $1;
+
 -- name: GetRecordByID :one
 SELECT * FROM users_media_records
 WHERE id = $1;

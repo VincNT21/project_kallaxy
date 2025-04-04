@@ -10,3 +10,4 @@ sqlc.yaml
 start_client.sh
 client/config/appstate.json
 /client/gui/assets
+bundled.go

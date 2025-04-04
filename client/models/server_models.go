@@ -67,3 +67,23 @@ type ResponseVerifyResetToken struct {
 	Valid bool   `json:"valid"`
 	Email string `json:"email"`
 }
+
+type MediumWithRecord struct {
+	ID          string          `json:"record_id"`
+	UserID      string          `json:"user_id"`
+	MediaID     string          `json:"medium_id"`
+	IsFinished  bool            `json:"is_finished"`
+	StartDate   string          `json:"start_date"`
+	EndDate     string          `json:"end_date"`
+	Duration    int32           `json:"duration"`
+	MediaType   string          `json:"media_type"`
+	Title       string          `json:"title"`
+	Creator     string          `json:"creator"`
+	ReleaseYear int32           `json:"release_year"`
+	ImageUrl    string          `json:"image_url"`
+	Metadata    json.RawMessage `json:"metadata"`
+}
+
+type MediaWithRecords struct {
+	MediaRecords map[string][]MediumWithRecord `json:"records"`
+}

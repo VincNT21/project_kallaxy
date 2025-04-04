@@ -57,3 +57,25 @@ func (c *APIClient) makeHttpRequestWithResfreshToken(endpoint Endpoint) (*http.R
 	// Return response
 	return resp, nil
 }
+
+func (c *APIClient) makeHttpRequestWithQueryParameters(endpoint Endpoint, queryParameter string) (*http.Response, error) {
+	// Parse URL
+	url := fmt.Sprintf("%s%s?%s", c.Config.BaseURL, endpoint.Path, queryParameter)
+
+	// Create the request with correct headers
+	req, err := http.NewRequest(endpoint.Method, url, nil)
+	if err != nil {
+		return &http.Response{}, fmt.Errorf("couldn't create http.NewRequest: %v", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Config.AuthToken))
+
+	// Make request
+	log.Printf("--DEBUG-- Making request to %s\n", url)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return &http.Response{}, fmt.Errorf("couldn't Do Request: %v", err)
+	}
+
+	// Return response
+	return resp, nil
+}

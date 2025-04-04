@@ -1,9 +1,11 @@
 package kallaxyapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/VincNT21/kallaxy/client/models"
@@ -92,46 +94,129 @@ func (c *MediaClient) CreateMedium(title, mediaType, creator, releaseYear, image
 	return medium, nil
 }
 
+func (c *MediaClient) GetImageUrl(mediumType, mediumTitleOrId string) (string, error) {
+	switch mediumType {
+	case "book":
+		return fmt.Sprintf("https://covers.openlibrary.org/b/isbn/%s-M.jpg", mediumTitleOrId), nil
+	case "movie":
+		movie, err := c.apiClient.External.SearchForMovie(mediumTitleOrId)
+		if err != nil {
+			return "", err
+		}
+		if len(movie.Results) == 0 {
+			return "", err
+		}
+		return fmt.Sprintf("https://image.tmdb.org/t/p/w200%s", movie.Results[0].PosterPath), nil
+	case "series":
+		series, err := c.apiClient.External.SearchForSeries(mediumTitleOrId)
+		if err != nil {
+			return "", err
+		}
+		if len(series.Results) == 0 {
+			return "", err
+		}
+		return fmt.Sprintf("https://image.tmdb.org/t/p/w200%s", series.Results[0].PosterPath), nil
+	case "videogame":
+		videogame, err := c.apiClient.External.SearchForVideogameOnSteam(mediumTitleOrId)
+		if err != nil {
+			return "", err
+		}
+		if len(videogame.Results) == 0 {
+			return "", err
+		}
+		return videogame.Results[0].BackgroundImage, err
+	case "boardgame":
+		boardgame, err := c.apiClient.External.SearchForBoardgame(mediumTitleOrId)
+		if err != nil {
+			return "", err
+		}
+		return boardgame.Items.Item.Image, nil
+	default:
+		return "", nil
+	}
+}
 
-func (c *MediaClient) FetchImageUrl(mediumTitle string) (string, error) {
-	params := parameters{}
+func (c *MediaClient) FetchImage(imageUrl string) (*bytes.Buffer, error) {
 
 	// Make request
-	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.Media., params)
+	r, err := http.Get(imageUrl)
 	if err != nil {
-		log.Printf("--ERROR-- with FetchImageUrl(): %v\n", err)
-		return string, err
+		log.Printf("--ERROR-- with FetchImage(): %v\n", err)
+		return nil, err
 	}
 	defer r.Body.Close()
 
 	// Check response's status code
 	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with FetchImageUrl(). Response status code: %v\n", r.StatusCode)
+		log.Printf("--ERROR-- with FetchImage(). Response status code: %v\n", r.StatusCode)
+		return nil, fmt.Errorf("problem with FetchImage() request, status code: %v", r.StatusCode)
+	}
+
+	// Load the response body into a buffer
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(r.Body)
+	if err != nil {
+		log.Printf("--ERROR-- with FetchImage(): %v\n", err)
+		return nil, err
+	}
+
+	// Return data
+	log.Println("--DEBUG-- FetchImage() OK")
+	return &buf, nil
+}
+
+func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
+
+	// Make request
+	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.Media.GetMediaWithRecords, nil)
+	if err != nil {
+		log.Printf("--ERROR-- with GetMediaWithRecords(): %v\n", err)
+		return models.MediaWithRecords{}, err
+	}
+	defer r.Body.Close()
+
+	// Check response's status code
+	if r.StatusCode != 200 {
+		log.Printf("--ERROR-- with GetMediaWithRecords(). Response status code: %v\n", r.StatusCode)
 		switch r.StatusCode {
 		case 400:
-			return string, models.ErrBadRequest
+			return models.MediaWithRecords{}, models.ErrBadRequest
 		case 401:
-			return string, models.ErrUnauthorized
+			return models.MediaWithRecords{}, models.ErrUnauthorized
 		case 404:
-			return string, models.ErrNotFound
+			return models.MediaWithRecords{}, models.ErrNotFound
 		case 409:
-			return string, models.ErrConflict
+			return models.MediaWithRecords{}, models.ErrConflict
 		case 500:
-		return string, models.ErrServerIssue
+			return models.MediaWithRecords{}, models.ErrServerIssue
 		default:
-		return string, fmt.Errorf("unknown error status code: %v", r.StatusCode)
+			return models.MediaWithRecords{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
 		}
 	}
 
 	// Decode response
-	var name string
-	err = json.NewDecoder(r.Body).Decode(&name)
+	var mediaRecords models.MediaWithRecords
+	err = json.NewDecoder(r.Body).Decode(&mediaRecords)
 	if err != nil {
-		log.Printf("--ERROR-- with FetchImageUrl(): %v\n", err)
-		return string, err
+		log.Printf("--ERROR-- with GetMediaWithRecords(): %v\n", err)
+		return models.MediaWithRecords{}, err
 	}
 
 	// Return data
-	log.Println("--DEBUG-- FetchImageUrl() OK")
-	return name, nil
+	log.Println("--DEBUG-- GetMediaWithRecords() OK")
+	return mediaRecords, nil
+}
+
+func (c *MediaClient) GetMediaTypes(mediaRecords models.MediaWithRecords) map[string]bool {
+
+	mediaTypes := make(map[string]bool)
+
+	// Iterate over MediaRecords to check for different media types
+	for mediaType := range mediaRecords.MediaRecords {
+		mediaTypes[mediaType] = true
+	}
+
+	// Return data
+	log.Println("--DEBUG-- GetMediaTypes() OK")
+	return mediaTypes
 }

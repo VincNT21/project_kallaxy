@@ -116,6 +116,77 @@ func (q *Queries) GetRecordByID(ctx context.Context, id pgtype.UUID) (UsersMedia
 	return i, err
 }
 
+const getRecordsAndMediaByUserID = `-- name: GetRecordsAndMediaByUserID :many
+SELECT
+    records.id, 
+    records.user_id, 
+    records.media_id, 
+    records.is_finished, 
+    records.start_date, 
+    records.end_date, 
+    records.duration, 
+    media.media_type,
+    media.title,
+    media.creator,
+    media.release_year,
+    media.image_url,
+    media.metadata
+FROM users_media_records AS records
+INNER JOIN media
+ON records.media_id = media.id
+WHERE records.user_id = $1
+`
+
+type GetRecordsAndMediaByUserIDRow struct {
+	ID          pgtype.UUID
+	UserID      pgtype.UUID
+	MediaID     pgtype.UUID
+	IsFinished  pgtype.Bool
+	StartDate   pgtype.Timestamp
+	EndDate     pgtype.Timestamp
+	Duration    pgtype.Interval
+	MediaType   string
+	Title       string
+	Creator     string
+	ReleaseYear int32
+	ImageUrl    pgtype.Text
+	Metadata    []byte
+}
+
+func (q *Queries) GetRecordsAndMediaByUserID(ctx context.Context, userID pgtype.UUID) ([]GetRecordsAndMediaByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getRecordsAndMediaByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecordsAndMediaByUserIDRow
+	for rows.Next() {
+		var i GetRecordsAndMediaByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.MediaID,
+			&i.IsFinished,
+			&i.StartDate,
+			&i.EndDate,
+			&i.Duration,
+			&i.MediaType,
+			&i.Title,
+			&i.Creator,
+			&i.ReleaseYear,
+			&i.ImageUrl,
+			&i.Metadata,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecordsByUserID = `-- name: GetRecordsByUserID :many
 SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration FROM users_media_records
 WHERE user_id = $1

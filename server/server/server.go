@@ -87,6 +87,7 @@ func Start(envVars ...map[string]string) {
 	// Records endpoints
 	mux.Handle("POST /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateUserMediumRecord)))
 	mux.Handle("GET /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsByUserID)))
+	mux.Handle("GET /api/records_media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsAndMediaByUserID)))
 	mux.Handle("PUT /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateRecord)))
 	mux.Handle("DELETE /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteRecord)))
 

@@ -80,7 +80,9 @@ func (pm *GuiPageManager) GetHomeWindow() {
 		dialog.ShowCustomWithoutButtons("Kallaxy", container.NewBorder(mediaTypeQuestion, nil, nil, nil, globalContainer), w)
 
 	})
-	showShelfButton := widget.NewButton("Show My Shelf", func() {})
+	showShelfButton := widget.NewButton("Show My Shelf", func() {
+		pm.GetShelfWindow()
+	})
 	manageButton := widget.NewButtonWithIcon("Manage\nUser Parameters", theme.AccountIcon(), func() {
 		pm.GetUserParametersWindow()
 		w.Close()

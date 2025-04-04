@@ -46,7 +46,29 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	releaseYearForm := widget.NewFormItem("Release Year", releaseYearEntry)
 
 	imageUrlEntry := widget.NewEntry()
-	imageUrlForm := widget.NewFormItem("Image URL", imageUrlEntry)
+	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
+	buttonGetImageUrl := widget.NewButtonWithIcon("Get Image URL\nfrom title", theme.DownloadIcon(), func() {
+		if titleEntry.Text == "" {
+			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", w)
+		} else {
+			// Get the image url
+			url, err := pm.appCtxt.APIClient.Media.GetImageUrl(mediaTypeEntry.Text, titleEntry.Text)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			if url == "" {
+				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", pm.mediaType), w)
+				return
+			}
+			// Call a new confirmation window
+			pm.ShowImageWindow(w, url, func(confirmedUrl string) {
+				// This code runs when the "Confirm" button is clicked in the new window
+				imageUrlEntry.SetText(confirmedUrl)
+			})
+		}
+
+	})
 
 	startDateEntry := widget.NewEntry()
 	startDateEntry.SetPlaceHolder("2025/01/01")
@@ -176,9 +198,10 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	})
 
 	// Group objects
-	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, releaseYearForm, imageUrlForm)
+	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, releaseYearForm)
+	urlRow := container.NewBorder(nil, nil, nil, buttonGetImageUrl, imageUrlForm)
 	recordForm := widget.NewForm(startDateForm, endDateForm)
-	groupForms := container.NewVBox(mediaForm, widget.NewSeparator(), recordForm)
+	groupForms := container.NewVBox(mediaForm, urlRow, widget.NewSeparator(), recordForm)
 	submitRow := container.NewHBox(layout.NewSpacer(), submitButton, layout.NewSpacer())
 	statusRow := container.NewHBox(layout.NewSpacer(), statusLabel, layout.NewSpacer())
 	bottomRow := container.NewHBox(layout.NewSpacer(), exitButton)
@@ -186,6 +209,60 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 
 	// Create the global frame
 	globalContainer := container.NewBorder(pageTitleText, bottomRow, nil, nil, centralPart)
+
+	// Set container to window
+	w.SetContent(globalContainer)
+	w.Show()
+}
+
+func (pm *GuiPageManager) ShowImageWindow(parentWindow fyne.Window, url string, onConfirm func(string)) {
+	// Create the window
+	w := pm.appGui.NewWindow("Image Confirmation")
+	w.CenterOnScreen()
+	w.Resize(fyne.NewSize(640, 480))
+
+	// Fetch the image as an io.ReadCloser
+	bufImage, err := pm.appCtxt.APIClient.Media.FetchImage(url)
+	if err != nil {
+		dialog.ShowError(err, parentWindow)
+		w.Close()
+	}
+
+	// Create the image component
+	image := canvas.NewImageFromReader(bufImage, "image")
+	image.FillMode = canvas.ImageFillContain
+	image.Resize(fyne.NewSize(350, 250))
+
+	// Create UI components
+	pageTitleText := canvas.NewText("Is image ok ?", color.White)
+	pageTitleText.TextSize = 20
+	pageTitleText.Alignment = fyne.TextAlignCenter
+	pageTitleText.TextStyle.Bold = true
+	statusText := widget.NewLabelWithStyle(url, fyne.TextAlignCenter, fyne.TextStyle{})
+
+	confirmButton := widget.NewButtonWithIcon("Confirm", theme.ConfirmIcon(), func() {
+		onConfirm(url)
+		w.Close()
+	})
+	cancelButton := widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
+		w.Close()
+	})
+
+	// Layout the elements
+	globalContainer := container.NewBorder(
+		pageTitleText, // Top
+		container.NewVBox( // Bottom
+			statusText,
+			container.NewHBox(
+				cancelButton,
+				layout.NewSpacer(),
+				confirmButton,
+			),
+		),
+		nil,   // Left
+		nil,   // Right
+		image, // Center
+	)
 
 	// Set container to window
 	w.SetContent(globalContainer)

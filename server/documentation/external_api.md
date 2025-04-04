@@ -2,6 +2,8 @@
 
 ## Open Library API (books)
 
+https://covers.openlibrary.org/b/isbn/<*ISBN*>-M.jpg
+
 ## The Movie DB (movies and tv shows)
 
 ?language=en-US
@@ -13,7 +15,7 @@ https://api.themoviedb.org/3/search/movie
 Search for movies by their original, translated and alternative titles.
 
 query parameters : 
-* query ?q= (string) REQUIRED
+* query ?query= (string) REQUIRED
 * include_adult (bool)
 * language (string)
 * primary_release_year (string)
@@ -24,7 +26,7 @@ query parameters :
 https://api.themoviedb.org/3/search/tv  
 Search for TV shows by their original, translated and also known as names.
 query parameters :
-* query ?q=
+* query ?query=
 * first_air_date_year (int32)
 * include_adult
 * language
@@ -32,7 +34,7 @@ query parameters :
 
 https://api.themoviedb.org/3/search/multi  
 Use multi search when you want to search for movies, TV shows and people in a single request.  
-* query ?q=
+* query ?query=
 * include_adult
 * language
 
@@ -45,6 +47,9 @@ https://api.themoviedb.org/3/movie/{movie_id}
 Get the top level details of a movie by ID.
 query parameters:
 * language=fr-FR
+
+https://image.tmdb.org/t/p/w200/{poster_path}.jpg
+
 
 ## RAWG (video games)
 

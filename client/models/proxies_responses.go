@@ -1,4 +1,4 @@
-package server
+package models
 
 // Response from https://openlibrary.org/search.json
 type responseBooksSearch struct {
@@ -140,7 +140,7 @@ type responseBookAuthor struct {
 
 // From TheMovieDB.org
 
-type responseMovieSearch struct {
+type ResponseMovieSearch struct {
 	Page    int `json:"page"`
 	Results []struct {
 		Adult            bool    `json:"adult"`
@@ -211,7 +211,7 @@ type responseMovieDetails struct {
 	VoteCount   int     `json:"vote_count"`
 }
 
-type responseTvSearch struct {
+type ResponseTvSearch struct {
 	Page    int `json:"page"`
 	Results []struct {
 		Adult            bool     `json:"adult"`
@@ -347,7 +347,7 @@ type responseTvDetails struct {
 
 // api.rawg.io
 
-type responseVideogameSearch struct {
+type ResponseVideogameSearch struct {
 	Count    int `json:"count"`
 	Next     any `json:"next"`
 	Previous any `json:"previous"`
@@ -563,7 +563,7 @@ type responseVideogameDetails struct {
 
 // https://boardgamegeek.com/xmlapi2/
 
-type responseBoardgameSearch struct {
+type ResponseBoardgameSearch struct {
 	Items struct {
 		Item []struct {
 			ID   string `json:"id"`
@@ -581,18 +581,31 @@ type responseBoardgameSearch struct {
 	} `json:"items"`
 }
 
-type responseBoardgameDetails struct {
+type ResponseBoardgameSearchAlternative struct {
+	Items struct {
+		Item struct {
+			ID   string `json:"id"`
+			Name struct {
+				Type  string `json:"type"`
+				Value string `json:"value"`
+			} `json:"name"`
+			Type          string `json:"type"`
+			Yearpublished struct {
+				Value string `json:"value"`
+			} `json:"yearpublished"`
+		} `json:"item"`
+		Termsofuse string `json:"termsofuse"`
+		Total      string `json:"total"`
+	} `json:"items"`
+}
+
+type ResponseBoardgameDetails struct {
 	Items struct {
 		Item struct {
 			Description string `json:"description"`
 			ID          string `json:"id"`
 			Image       string `json:"image"`
-			Link        []struct {
-				ID    string `json:"id"`
-				Type  string `json:"type"`
-				Value string `json:"value"`
-			} `json:"link"`
-			Maxplayers struct {
+			Maxplayers  struct {
 				Value string `json:"value"`
 			} `json:"maxplayers"`
 			Maxplaytime struct {
@@ -607,34 +620,9 @@ type responseBoardgameDetails struct {
 			Minplaytime struct {
 				Value string `json:"value"`
 			} `json:"minplaytime"`
-			Name []struct {
-				Sortindex string `json:"sortindex"`
-				Type      string `json:"type"`
-				Value     string `json:"value"`
-			} `json:"name"`
 			Playingtime struct {
 				Value string `json:"value"`
 			} `json:"playingtime"`
-			Poll []struct {
-				Name    string `json:"name"`
-				Results []struct {
-					Numplayers string `json:"numplayers"`
-					Result     []struct {
-						Numvotes string `json:"numvotes"`
-						Value    string `json:"value"`
-					} `json:"result"`
-				} `json:"results"`
-				Title      string `json:"title"`
-				Totalvotes string `json:"totalvotes"`
-			} `json:"poll"`
-			PollSummary struct {
-				Name   string `json:"name"`
-				Result []struct {
-					Name  string `json:"name"`
-					Value string `json:"value"`
-				} `json:"result"`
-				Title string `json:"title"`
-			} `json:"poll-summary"`
 			Thumbnail     string `json:"thumbnail"`
 			Type          string `json:"type"`
 			Yearpublished struct {

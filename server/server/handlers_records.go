@@ -154,6 +154,61 @@ func (cfg *apiConfig) handlerGetRecordsByUserID(w http.ResponseWriter, r *http.R
 	respondWithJson(w, 200, response)
 }
 
+type responseGetRecordsAndMediaByUserID struct {
+	MediaRecords map[string][]MediumWithRecord `json:"records"`
+}
+
+// GET /api/records_media
+func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r *http.Request) {
+
+	// Get userID from access token
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Call query function
+	recordsAndMedia, err := cfg.db.GetRecordsAndMediaByUserID(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, 500, "couldn't get records and media by user ID in database", err)
+		return
+	}
+	if len(recordsAndMedia) == 0 {
+		respondWithError(w, 404, "no record found for given user id", errors.New("recordsMedia list returning from query was empty"))
+		return
+	}
+
+	response := responseGetRecordsAndMediaByUserID{
+		MediaRecords: make(map[string][]MediumWithRecord),
+	}
+
+	for _, medium := range recordsAndMedia {
+		// Create the MediumWithRecord object
+		mediumRecord := MediumWithRecord{
+			ID:          medium.ID,
+			UserID:      medium.UserID,
+			MediaID:     medium.MediaID,
+			IsFinished:  medium.IsFinished,
+			StartDate:   medium.StartDate,
+			EndDate:     medium.EndDate,
+			Duration:    medium.Duration.Days,
+			MediaType:   medium.MediaType,
+			Title:       medium.Title,
+			Creator:     medium.Creator,
+			ReleaseYear: medium.ReleaseYear,
+			ImageUrl:    medium.ImageUrl,
+			Metadata:    medium.Metadata,
+		}
+
+		// Get the appropriate media type key
+		mediaType := medium.MediaType
+
+		// Append to the correct slice in the map
+		response.MediaRecords[mediaType] = append(response.MediaRecords[mediaType], mediumRecord)
+	}
+
+	// Respond
+	respondWithJson(w, 200, response)
+
+}
+
 type parametersUpdateRecord struct {
 	RecordID  string `json:"record_id"`
 	StartDate string `json:"start_date"`
