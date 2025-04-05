@@ -26,16 +26,14 @@ func (pm *GuiPageManager) GetShelfWindow() {
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(1024, 768))
 
-	// Create texts
+	// Create UI Objects
+	// Texts
 	pageTitleText := canvas.NewText(fmt.Sprintf("%s's Kallaxy Shelf", pm.appCtxt.APIClient.CurrentUser.Username), color.White)
 	pageTitleText.TextSize = 20
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextStyle.Bold = true
-	// statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 
-	// Create objects
-
-	// Create UI components
+	// Buttons
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		pm.GetHomeWindow()
 		w.Close()
@@ -63,10 +61,11 @@ func (pm *GuiPageManager) GetShelfWindow() {
 }
 
 func (pm *GuiPageManager) BuildMediaContainers(mediaRecords models.MediaWithRecords) (*container.Scroll, error) {
+	// This function create a scrollable shelf container where each media type has a compartment
 	shelf := container.NewVBox()
 
 	// Get media types map
-	typesMap := pm.appCtxt.APIClient.Media.GetMediaTypes(mediaRecords)
+	typesMap := pm.appCtxt.APIClient.Helpers.GetMediaTypes(mediaRecords)
 
 	// Iterate over each media type
 	for mediaType := range typesMap {
@@ -87,7 +86,7 @@ func (pm *GuiPageManager) BuildMediaContainers(mediaRecords models.MediaWithReco
 		mediaDisplay := container.NewGridWrap(fyne.NewSize(200, 500))
 		for _, medium := range mediaRecords.MediaRecords[mediaType] {
 			// Get image buffer
-			buffer, err := pm.appCtxt.APIClient.Media.FetchImage(medium.ImageUrl)
+			buffer, err := pm.appCtxt.APIClient.Helpers.GetImage(medium.ImageUrl)
 			if err != nil {
 				return container.NewVScroll(shelf), err
 			}
@@ -114,5 +113,7 @@ func (pm *GuiPageManager) BuildMediaContainers(mediaRecords models.MediaWithReco
 	// Make the shelf scrollable
 	scrollableShelf := container.NewVScroll(shelf)
 	scrollableShelf.SetMinSize(fyne.NewSize(800, 600))
+
+	// Return the completed shelf
 	return scrollableShelf, nil
 }

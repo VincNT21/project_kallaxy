@@ -35,4 +35,5 @@ func StartGui(appCtxt *context.AppContext) {
 func exitGui(appCtxt *context.AppContext) {
 	log.Print("--INFO-- Client GUI exited")
 	appCtxt.DumpAppstate()
+	appCtxt.APIClient.Cache.DumpCacheFile()
 }

@@ -21,17 +21,20 @@ func (pm *GuiPageManager) GetHomeWindow() {
 	w.Resize(fyne.NewSize(800, 600))
 
 	// Create objects
+	// Texts
 	titleText := canvas.NewText("Welcome to your Kallaxy", color.White)
 	titleText.TextSize = 18
 	titleText.Alignment = fyne.TextAlignCenter
 	titleText.TextStyle.Bold = true
+
 	usernameText := canvas.NewText(pm.appCtxt.APIClient.CurrentUser.Username, color.White)
 	usernameText.TextSize = 20
 	usernameText.Alignment = fyne.TextAlignCenter
 	usernameText.TextStyle.Bold = true
 
+	// Buttons
 	addMediaButton := widget.NewButton("Add New Media", func() {
-		// Create the custom dialog box to choose media_type
+		// Create a custom dialog box to choose media_type
 		mediaTypeQuestion := canvas.NewText("Which type of media ?", color.White)
 
 		// Create a button for each media Type + an "other" button
@@ -80,9 +83,12 @@ func (pm *GuiPageManager) GetHomeWindow() {
 		dialog.ShowCustomWithoutButtons("Kallaxy", container.NewBorder(mediaTypeQuestion, nil, nil, nil, globalContainer), w)
 
 	})
+
 	showShelfButton := widget.NewButton("Show My Shelf", func() {
 		pm.GetShelfWindow()
+		w.Close()
 	})
+
 	manageButton := widget.NewButtonWithIcon("Manage\nUser Parameters", theme.AccountIcon(), func() {
 		pm.GetUserParametersWindow()
 		w.Close()
@@ -128,6 +134,8 @@ func (pm *GuiPageManager) GetHomeWindow() {
 	centralRow := container.NewHBox(layout.NewSpacer(), centralbuttonsRow, layout.NewSpacer())
 	exitButtons := container.NewVBox(logoutButton, exitButton)
 	bottomRow := container.NewHBox(manageButton, layout.NewSpacer(), exitButtons)
+
+	// Set the global frame container
 	globalContainer := container.NewVBox(layout.NewSpacer(), titleText, usernameText, layout.NewSpacer(), centralRow, layout.NewSpacer(), bottomRow)
 
 	// Set container to window

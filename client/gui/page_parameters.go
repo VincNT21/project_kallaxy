@@ -20,28 +20,33 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(400, 300))
 
-	// Create title text
+	// Create UI objects
+	// Texts
 	statusLabel := widget.NewLabelWithStyle("You'll be automatically logged out if you update your personal info", fyne.TextAlignCenter, fyne.TextStyle{})
 	titleText := canvas.NewText("Personal Informations", color.White)
 	titleText.TextSize = 20
 	titleText.Alignment = fyne.TextAlignCenter
 	titleText.TextStyle.Bold = true
 
-	// Create objects
 	usernameLabel := widget.NewLabel(fmt.Sprintf("Username: %s", pm.appCtxt.APIClient.CurrentUser.Username))
 	emailLabel := widget.NewLabel(fmt.Sprintf("Email: %s", pm.appCtxt.APIClient.CurrentUser.Email))
 
+	// Entries
 	passswordEntry := widget.NewPasswordEntry()
 	usernameEntry := widget.NewEntry()
 	usernameEntry.SetText(pm.appCtxt.APIClient.CurrentUser.Username)
 	emailEntry := widget.NewEntry()
 	emailEntry.SetText(pm.appCtxt.APIClient.CurrentUser.Email)
+	// Group entries in a form
 	passwordForm := widget.NewFormItem("Password", passswordEntry)
 	usernameForm := widget.NewFormItem("Username", usernameEntry)
 	emailForm := widget.NewFormItem("Email", emailEntry)
 	contentForm := []*widget.FormItem{usernameForm, emailForm, passwordForm}
+
+	// Special form for the dialog password confirmation window
 	confirmPasswordform := []*widget.FormItem{passwordForm}
 
+	// Buttons
 	updateButton := widget.NewButtonWithIcon("Update info", theme.DocumentCreateIcon(), func() {
 		dialog.ShowForm("Confirm your password", "Confirm", "Cancel", confirmPasswordform, func(b bool) {
 			if err := pm.appCtxt.APIClient.Auth.ConfirmPassword(passswordEntry.Text); err != nil {
@@ -50,6 +55,7 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 				passswordEntry.SetText("")
 				dialog.ShowForm("ALL info required, including not updated fields", "Confirm", "Cancel", contentForm, func(b bool) {
 					if b {
+						// Call the Update User client API function
 						_, err := pm.appCtxt.APIClient.Users.UpdateUser(usernameEntry.Text, passswordEntry.Text, emailEntry.Text)
 						if err != nil {
 							switch err {
@@ -88,6 +94,7 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 			}
 		}, w)
 	})
+
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\nAll unsubmitted changes will be lost!", func(b bool) {
 			if b {

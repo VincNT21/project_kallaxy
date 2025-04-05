@@ -1,11 +1,9 @@
 package kallaxyapi
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"strconv"
 
 	"github.com/VincNT21/kallaxy/client/models"
@@ -136,35 +134,6 @@ func (c *MediaClient) GetImageUrl(mediumType, mediumTitleOrId string) (string, e
 	}
 }
 
-func (c *MediaClient) FetchImage(imageUrl string) (*bytes.Buffer, error) {
-
-	// Make request
-	r, err := http.Get(imageUrl)
-	if err != nil {
-		log.Printf("--ERROR-- with FetchImage(): %v\n", err)
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with FetchImage(). Response status code: %v\n", r.StatusCode)
-		return nil, fmt.Errorf("problem with FetchImage() request, status code: %v", r.StatusCode)
-	}
-
-	// Load the response body into a buffer
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(r.Body)
-	if err != nil {
-		log.Printf("--ERROR-- with FetchImage(): %v\n", err)
-		return nil, err
-	}
-
-	// Return data
-	log.Println("--DEBUG-- FetchImage() OK")
-	return &buf, nil
-}
-
 func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
 
 	// Make request
@@ -205,18 +174,4 @@ func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
 	// Return data
 	log.Println("--DEBUG-- GetMediaWithRecords() OK")
 	return mediaRecords, nil
-}
-
-func (c *MediaClient) GetMediaTypes(mediaRecords models.MediaWithRecords) map[string]bool {
-
-	mediaTypes := make(map[string]bool)
-
-	// Iterate over MediaRecords to check for different media types
-	for mediaType := range mediaRecords.MediaRecords {
-		mediaTypes[mediaType] = true
-	}
-
-	// Return data
-	log.Println("--DEBUG-- GetMediaTypes() OK")
-	return mediaTypes
 }

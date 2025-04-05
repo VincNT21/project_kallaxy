@@ -12,26 +12,30 @@ import (
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (pm *GuiPageManager) GetCreateUserWindow() {
+func (pm *GuiPageManager) GetCreateUserWindow(onConfirm func()) {
 	// Create the window
 	w := pm.appGui.NewWindow("Kallaxy New User")
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(500, 200))
 
 	// Create objects
+	// Texts
 	titleLabel := widget.NewLabelWithStyle("Please provide information for user creation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
+
+	// Entries
 	usernameEntry := widget.NewEntry()
 	passwordEntry := widget.NewPasswordEntry()
 	emailEntry := widget.NewEntry()
 
-	// Group objects in a Form
+	// Group entries in a Form
 	userForm := &widget.Form{
 		Items: []*widget.FormItem{
 			{Text: "Username", Widget: usernameEntry},
 			{Text: "Password", Widget: passwordEntry},
 			{Text: "Email", Widget: emailEntry},
 		},
+		// Forms buttons
 		OnSubmit: func() {
 			log.Printf("--GUI-- CreateUser Form submitted - Username: %s, Email: %s\n", usernameEntry.Text, emailEntry.Text)
 			dialog.ShowConfirm(
@@ -39,6 +43,7 @@ func (pm *GuiPageManager) GetCreateUserWindow() {
 				fmt.Sprintf("Are you sure to create this user ?\nUsername: %s\nPassword: %s\nEmail: %s", usernameEntry.Text, passwordEntry.Text, emailEntry.Text),
 				func(b bool) {
 					if b {
+						// If user confims, call CreateUser API function
 						_, err := pm.appCtxt.APIClient.Users.CreateUser(usernameEntry.Text, passwordEntry.Text, emailEntry.Text)
 						if err != nil {
 							switch err {
@@ -52,6 +57,8 @@ func (pm *GuiPageManager) GetCreateUserWindow() {
 								statusLabel.SetText("User creation failed: unknown error")
 							}
 						} else {
+							// Activate the callback onConfirm function
+							onConfirm()
 							w.Close()
 						}
 					}
@@ -65,8 +72,10 @@ func (pm *GuiPageManager) GetCreateUserWindow() {
 		},
 	}
 
+	// Set the global frame
 	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), userForm, layout.NewSpacer(), statusLabel, layout.NewSpacer())
 
+	// Set container to window
 	w.SetContent(globalContainer)
 	w.Show()
 }

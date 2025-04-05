@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	fyne.io/fyne/v2 v2.5.5
 	github.com/clbanning/mxj/v2 v2.7.0
+	github.com/disintegration/imaging v1.6.2
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1

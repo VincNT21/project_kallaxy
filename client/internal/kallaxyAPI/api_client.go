@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/VincNT21/kallaxy/client/internal/cache"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
@@ -11,6 +12,7 @@ type APIClient struct {
 	HttpClient  *http.Client
 	Config      *APIConfig
 	CurrentUser models.ClientUser
+	Cache       *cache.Cache
 
 	Users    *UsersClient
 	Media    *MediaClient
@@ -18,6 +20,7 @@ type APIClient struct {
 	Auth     *AuthClient
 	External *ExternalAPIClient
 	Admin    *AdminClient
+	Helpers  *HelpersClient
 }
 
 type UsersClient struct {
@@ -44,19 +47,28 @@ type AdminClient struct {
 	apiClient *APIClient // Reference back to the parent
 }
 
+type HelpersClient struct {
+	apiClient *APIClient // Reference back to the parent
+}
+
 // Constructs the APIClient using api_config
 func NewApiClient(baseURL string) *APIClient {
 	// Create a http.Client
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
+
 	// Get proper initialized api Config
 	apiCfg := initApiConfig(baseURL)
+
+	// Init cache
+	cache := cache.NewCacheFromFile()
 
 	// Initialize the APIClient itself
 	apiClient := &APIClient{
 		HttpClient: httpClient,
 		Config:     apiCfg,
+		Cache:      cache,
 	}
 
 	// Initialize the subclients and give them access to the parent
@@ -66,6 +78,7 @@ func NewApiClient(baseURL string) *APIClient {
 	apiClient.Auth = &AuthClient{apiClient: apiClient}
 	apiClient.External = &ExternalAPIClient{apiClient: apiClient}
 	apiClient.Admin = &AdminClient{apiClient: apiClient}
+	apiClient.Helpers = &HelpersClient{apiClient: apiClient}
 
 	return apiClient
 }

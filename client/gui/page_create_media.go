@@ -23,14 +23,15 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(800, 600))
 
-	// Create texts
+	// Create UI objects
+	// Texts
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 	pageTitleText := canvas.NewText(fmt.Sprintf("Create a new %s", pm.mediaType), color.White)
 	pageTitleText.TextSize = 20
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextStyle.Bold = true
 
-	// Create objects
+	// Entries and forms
 	titleEntry := widget.NewEntry()
 	titleForm := widget.NewFormItem("Title", titleEntry)
 
@@ -47,29 +48,8 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 
 	imageUrlEntry := widget.NewEntry()
 	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
-	buttonGetImageUrl := widget.NewButtonWithIcon("Get Image URL\nfrom title", theme.DownloadIcon(), func() {
-		if titleEntry.Text == "" {
-			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", w)
-		} else {
-			// Get the image url
-			url, err := pm.appCtxt.APIClient.Media.GetImageUrl(mediaTypeEntry.Text, titleEntry.Text)
-			if err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-			if url == "" {
-				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", pm.mediaType), w)
-				return
-			}
-			// Call a new confirmation window
-			pm.ShowImageWindow(w, url, func(confirmedUrl string) {
-				// This code runs when the "Confirm" button is clicked in the new window
-				imageUrlEntry.SetText(confirmedUrl)
-			})
-		}
 
-	})
-
+	// Date entries have a Action Button that calls a Date Picker dialog
 	startDateEntry := widget.NewEntry()
 	startDateEntry.SetPlaceHolder("2025/01/01")
 	startDateEntry.ActionItem = widget.NewButtonWithIcon("", theme.MoreHorizontalIcon(), func() {
@@ -128,6 +108,30 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	})
 	endDateForm := widget.NewFormItem("Completed on", endDateEntry)
 
+	// Buttons
+	buttonGetImageUrl := widget.NewButtonWithIcon("Get Image URL\nfrom title", theme.DownloadIcon(), func() {
+		if titleEntry.Text == "" {
+			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", w)
+		} else {
+			// Get the image url
+			url, err := pm.appCtxt.APIClient.Media.GetImageUrl(mediaTypeEntry.Text, titleEntry.Text)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			if url == "" {
+				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", pm.mediaType), w)
+				return
+			}
+			// Call a new confirmation window
+			pm.ShowImageWindow(w, url, func(confirmedUrl string) {
+				// This code runs when the "Confirm" button is clicked in the new window
+				imageUrlEntry.SetText(confirmedUrl)
+			})
+		}
+
+	})
+
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\n\nAll unsubmitted changes will be lost!", func(b bool) {
 			if b {
@@ -145,16 +149,16 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 			"Cancel",
 			container.NewVBox(
 				widget.NewLabelWithStyle("Do you confirm the info entered ?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Media Type: %s", mediaTypeEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Title: %s", titleEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Creator: %s", creatorEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Release Year: %s", releaseYearEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Image URL: %s", imageUrlEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Start Date: %s", startDateEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("End Date: %s", endDateEntry.Text), fyne.TextAlignCenter, fyne.TextStyle{}),
+				widget.NewLabel(fmt.Sprintf("Media Type: %s", mediaTypeEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("Title: %s", titleEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("Creator: %s", creatorEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("Release Year: %s", releaseYearEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("Image URL: %s", imageUrlEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("Start Date: %s", startDateEntry.Text)),
+				widget.NewLabel(fmt.Sprintf("End Date: %s", endDateEntry.Text)),
 			),
 			func(b bool) {
-				// If Confirmed
+				// If Confirmed. call the CreateMediumAndRecord client API function
 				if b {
 					_, _, err := pm.appCtxt.APIClient.Media.CreateMediumAndRecord(
 						titleEntry.Text,
@@ -221,8 +225,8 @@ func (pm *GuiPageManager) ShowImageWindow(parentWindow fyne.Window, url string, 
 	w.CenterOnScreen()
 	w.Resize(fyne.NewSize(640, 480))
 
-	// Fetch the image as an io.ReadCloser
-	bufImage, err := pm.appCtxt.APIClient.Media.FetchImage(url)
+	// Fetch the image as a buffer
+	bufImage, err := pm.appCtxt.APIClient.Helpers.GetImage(url)
 	if err != nil {
 		dialog.ShowError(err, parentWindow)
 		w.Close()
@@ -234,12 +238,14 @@ func (pm *GuiPageManager) ShowImageWindow(parentWindow fyne.Window, url string, 
 	image.Resize(fyne.NewSize(350, 250))
 
 	// Create UI components
+	// Texts
 	pageTitleText := canvas.NewText("Is image ok ?", color.White)
 	pageTitleText.TextSize = 20
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextStyle.Bold = true
 	statusText := widget.NewLabelWithStyle(url, fyne.TextAlignCenter, fyne.TextStyle{})
 
+	// Buttons
 	confirmButton := widget.NewButtonWithIcon("Confirm", theme.ConfirmIcon(), func() {
 		onConfirm(url)
 		w.Close()
