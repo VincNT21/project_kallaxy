@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -49,14 +50,61 @@ func (cfg *apiConfig) handlerBoardgameSearch(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Problem to handle : if the search returns only one item,
+	// `item` field will be a struct of one item and not a list
+
+	// First try to unmarshal as if it has multiple items
+	var multiResponse responseBoardgameSearch
+
 	jsonData, err := mv.Json()
 	if err != nil {
 		respondWithError(w, 500, "couldn't convert XML response to JSON", err)
+		return
+	}
+
+	err = json.Unmarshal(jsonData, &multiResponse)
+
+	// Check if Items.Item is empty (which means it might be a single item response)
+	if err != nil || len(multiResponse.Items.Item) == 0 {
+		// Try the alternative structure with a single item
+		var singleResponse responseBoardgameSearchAlternative
+		err = json.Unmarshal(jsonData, &singleResponse)
+		if err != nil {
+			respondWithError(w, 500, "failed to parse response", err)
+			return
+		}
+
+		// Convert single item to multi-item format
+		multiResponse.Items.Total = singleResponse.Items.Total
+		multiResponse.Items.Item = []struct {
+			ID   string `json:"id"`
+			Name struct {
+				Value string `json:"value"`
+			} `json:"name"`
+			Type          string `json:"type"`
+			Yearpublished struct {
+				Value string `json:"value"`
+			} `json:"yearpublished"`
+		}{
+			{
+				ID:            singleResponse.Items.Item.ID,
+				Name:          singleResponse.Items.Item.Name,
+				Type:          singleResponse.Items.Item.Type,
+				Yearpublished: singleResponse.Items.Item.Yearpublished,
+			},
+		}
+	}
+
+	// Now multiResponse always has the array format, regardless of original XML
+	responseJSON, err := json.Marshal(multiResponse)
+	if err != nil {
+		respondWithError(w, 500, "failed to serialize response", err)
+		return
 	}
 
 	// Send the response
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.Write(responseJSON)
 }
 
 // GET /external_api/boardgame <query parameter : ?id=xxx>

@@ -17,26 +17,27 @@ import (
 	datepicker "github.com/sdassow/fyne-datepicker"
 )
 
-func (pm *GuiPageManager) GetCreateMediaWindow() {
+func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 	// Create the window
 	w := pm.appGui.NewWindow("Kallaxy")
 	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(800, 600))
+	w.Resize(fyne.NewSize(1024, 768))
 
 	// Create UI objects
 	// Texts
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
-	pageTitleText := canvas.NewText(fmt.Sprintf("Create a new %s", pm.mediaType), color.White)
+	pageTitleText := canvas.NewText(fmt.Sprintf("Create a new %s", mediaType), color.White)
 	pageTitleText.TextSize = 20
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextStyle.Bold = true
 
 	// Entries and forms
+	// Global Media forms
 	titleEntry := widget.NewEntry()
 	titleForm := widget.NewFormItem("Title", titleEntry)
 
 	mediaTypeEntry := widget.NewEntry()
-	mediaTypeEntry.SetText(pm.mediaType)
+	mediaTypeEntry.SetText(mediaType)
 	mediaTypeEntry.Disable()
 	mediaTypeForm := widget.NewFormItem("Media Type", mediaTypeEntry)
 
@@ -49,6 +50,7 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	imageUrlEntry := widget.NewEntry()
 	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
 
+	// User's Record forms
 	// Date entries have a Action Button that calls a Date Picker dialog
 	startDateEntry := widget.NewEntry()
 	startDateEntry.SetPlaceHolder("2025/01/01")
@@ -108,8 +110,10 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	})
 	endDateForm := widget.NewFormItem("Completed on", endDateEntry)
 
+	// Metadata formItems will depend on the media_type
+
 	// Buttons
-	buttonGetImageUrl := widget.NewButtonWithIcon("Get Image URL\nfrom title", theme.DownloadIcon(), func() {
+	buttonGetImageUrl := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
 		if titleEntry.Text == "" {
 			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", w)
 		} else {
@@ -120,7 +124,7 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 				return
 			}
 			if url == "" {
-				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", pm.mediaType), w)
+				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", mediaType), w)
 				return
 			}
 			// Call a new confirmation window
@@ -149,13 +153,13 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 			"Cancel",
 			container.NewVBox(
 				widget.NewLabelWithStyle("Do you confirm the info entered ?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-				widget.NewLabel(fmt.Sprintf("Media Type: %s", mediaTypeEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("Title: %s", titleEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("Creator: %s", creatorEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("Release Year: %s", releaseYearEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("Image URL: %s", imageUrlEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("Start Date: %s", startDateEntry.Text)),
-				widget.NewLabel(fmt.Sprintf("End Date: %s", endDateEntry.Text)),
+				widget.NewLabelWithStyle(fmt.Sprintf("Media Type: %s", mediaTypeEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Title: %s", titleEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Creator: %s", creatorEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Release Year: %s", releaseYearEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Image URL: %s", imageUrlEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Start Date: %s", startDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("End Date: %s", endDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 			),
 			func(b bool) {
 				// If Confirmed. call the CreateMediumAndRecord client API function
@@ -205,14 +209,14 @@ func (pm *GuiPageManager) GetCreateMediaWindow() {
 	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, releaseYearForm)
 	urlRow := container.NewBorder(nil, nil, nil, buttonGetImageUrl, imageUrlForm)
 	recordForm := widget.NewForm(startDateForm, endDateForm)
+	// metadataForm := widget.NewForm()
 	groupForms := container.NewVBox(mediaForm, urlRow, widget.NewSeparator(), recordForm)
-	submitRow := container.NewHBox(layout.NewSpacer(), submitButton, layout.NewSpacer())
+	submitRow := container.NewHBox(customSpacerHorizontal(100), submitButton, customSpacerHorizontal(100))
 	statusRow := container.NewHBox(layout.NewSpacer(), statusLabel, layout.NewSpacer())
-	bottomRow := container.NewHBox(layout.NewSpacer(), exitButton)
 	centralPart := container.NewVBox(groupForms, statusRow, submitRow)
 
 	// Create the global frame
-	globalContainer := container.NewBorder(pageTitleText, bottomRow, nil, nil, centralPart)
+	globalContainer := container.NewBorder(pageTitleText, exitButton, nil, nil, centralPart)
 
 	// Set container to window
 	w.SetContent(globalContainer)

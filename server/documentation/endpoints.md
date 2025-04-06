@@ -13,8 +13,8 @@
   - [GET /auth/login -- Confirm user password](#get-authlogin----confirm-user-password)
 - [3. Media endpoints](#3-media-endpoints)
   - [3.1. POST /api/media -- Create a new medium](#31-post-apimedia----create-a-new-medium)
-  - [3.2. GET /api/media?title=*xxx* -- Get a medium's info by its title](#32-get-apimediatitlexxx----get-a-mediums-info-by-its-title)
-  - [3.3. GET /api/media?type=*xxx* -- Get all media based on given type](#33-get-apimediatypexxx----get-all-media-based-on-given-type)
+  - [3.2. GET /api/media -- Get a medium's info by its title](#32-get-apimedia----get-a-mediums-info-by-its-title)
+  - [3.3. GET /api/media/type -- Get all media based on given type](#33-get-apimediatype----get-all-media-based-on-given-type)
   - [3.4. PUT /api/media -- Update a medium's info](#34-put-apimedia----update-a-mediums-info)
   - [3.5. DELETE /api/media -- Delete a medium](#35-delete-apimedia----delete-a-medium)
 - [4. Records endpoints](#4-records-endpoints)
@@ -26,6 +26,23 @@
   - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
   - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
   - [5.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#53-put-authpassword_reset----step-3--set-a-new-password)
+- [External API endpoints (Server acts as a proxy)](#external-api-endpoints-server-acts-as-a-proxy)
+  - [Books (on openLibrary.org)](#books-on-openlibraryorg)
+    - [GET /external\_api/book/search -- Search for a book by title or by author](#get-external_apibooksearch----search-for-a-book-by-title-or-by-author)
+    - [GET /external\_api/book/isbn](#get-external_apibookisbn)
+    - [GET /external\_api/book/author](#get-external_apibookauthor)
+    - [GET /external\_api/book/search\_isbn](#get-external_apibooksearch_isbn)
+  - [Movies/Series](#moviesseries)
+    - [GET /external\_api/movie\_tv/search\_movie](#get-external_apimovie_tvsearch_movie)
+    - [GET /external\_api/movie\_tv/search\_tv](#get-external_apimovie_tvsearch_tv)
+    - [GET /external\_api/movie\_tv/search](#get-external_apimovie_tvsearch)
+    - [GET /external\_api/movie\_tv](#get-external_apimovie_tv)
+  - [Videogames](#videogames)
+    - [GET /external\_api/videogame/search](#get-external_apivideogamesearch)
+    - [GET /external\_api/videogame](#get-external_apivideogame)
+  - [Boardgames](#boardgames)
+    - [GET /external\_api/boardgame/search](#get-external_apiboardgamesearch)
+    - [GET /external\_api/boardgame](#get-external_apiboardgame)
 
 
 ## 1. Users endpoints
@@ -289,7 +306,7 @@
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - json struct (according to media type see resources [metadata](resources.md#metadata-for-media))
+* `metadata` - map[string]string (according to media type see resources [metadata](resources.md#metadata-for-media))
 
 
 *Example*:
@@ -317,23 +334,28 @@
 -> *Response body* :
 > See resource [Medium](resources.md#media-resource)
 
-### 3.2. GET /api/media?title=*xxx* -- Get a medium's info by its title
+### 3.2. GET /api/media -- Get a medium's info by its title
 -> *Description* :
->Get info for a medium whose title is given in request query parameters
+>Get info for a medium whose title and media_type is given in request body
 >Respond with the found medium
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header  
 >See resource [Authorization header](resources.md#authorization-header)
 
--> *Request query parameters* :
->"?title=<medium_title>"  
-Note that medium title is case insensitive (lowered before database query) BUT spaces (encoded with + or %20) and special characters matters for server search
+-> *Request body* :
+>**REQUIRED**:
+* `title` - *string*
+* `media_type` - *string*  
 
 *Example*:
+```json
+{
+    "title": "The Fellowship of the Ring",
+    "media_type": "book"
+}
 ```
-/api/media?title=The+Fellowship+Of+The+Ring
-```
+
 -> *Error Response status code to handle* : 
 
     - 400 Bad Request - Client didn't provide a correct query parameter.
@@ -347,23 +369,26 @@ Note that medium title is case insensitive (lowered before database query) BUT s
 -> *OK Response body example* :
 > See resource [Medium](resources.md#media-resource)
 
-### 3.3. GET /api/media?type=*xxx* -- Get all media based on given type
+### 3.3. GET /api/media/type -- Get all media based on given type
 -> *Description* :
->Get info for all media whose type is given in request query parameters
+>Get info for all media whose type is given in request body
 >Respond with a list of media
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header  
 >See resource [Authorization header](resources.md#authorization-header)
 
--> *Request query parameters* :
->"?type=<media_type>"  
-Note that media type is case insensitive (lowered before database query) BUT spaces (encoded with + or %20) and special characters matters for server search
+-> *Request body* :
+>**REQUIRED**:
+* `media_type` - *string* 
 
 *Example*:
+```json
+{
+    "media_type": "book"
+}
 ```
-/api/media?type=book
-```
+
 -> *Error Response status code to handle* : 
 
     - 400 Bad Request - Client didn't provide a correct query parameter.
@@ -377,7 +402,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 -> *OK Response body example* :
 ```json
 {
-    "media": []medium
+    "media": []Medium
 }
 ```
 > See resource [Medium](resources.md#media-resource)
@@ -400,7 +425,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - json struct (according to media type see resources [metadata](resources.md#metadata-for-media))
+* `metadata` - map[string]string (according to media type see resources [metadata](resources.md#metadata-for-media))
 
 >**`media_type` cannot be updated**  
 >Even if a field is not updated, client still need to send old info (no comparison is done in server, all are replaced).
@@ -645,7 +670,7 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 > Respond with `valid` (*bool*) and `email` (*string*)
 
 -> *Request headers* :
->None
+>REFRESH TOKEN
 
 -> *Request body* :
 >**REQUIRED**:
@@ -704,3 +729,56 @@ Note that media type is case insensitive (lowered before database query) BUT spa
 
 -> *OK Response body example* :
 >See resource [User](resources.md#user-resource)
+
+
+## External API endpoints (Server acts as a proxy)
+### Books (on openLibrary.org)
+#### GET /external_api/book/search -- Search for a book by title or by author
+-> *Request query parameters:*  
+> ?title=xxxx
+> ?author=xxxxx
+
+#### GET /external_api/book/isbn
+-> *Request query parameters:*  
+> ?isbn=xxxxx
+
+#### GET /external_api/book/author
+-> *Request query parameters:*  
+> ?author=xxxxx
+
+#### GET /external_api/book/search_isbn
+-> *Request query parameters:*  
+> ?key=xxxxx
+
+### Movies/Series
+#### GET /external_api/movie_tv/search_movie
+-> *Request query parameters:*  
+> ?query=xxxx
+
+#### GET /external_api/movie_tv/search_tv
+-> *Request query parameters:*  
+> ?query=xxxx
+
+#### GET /external_api/movie_tv/search
+-> *Request query parameters:*  
+> ?query=xxxx
+
+#### GET /external_api/movie_tv
+-> Request body:
+movie_id string
+tv_id string
+language string
+
+### Videogames
+#### GET /external_api/videogame/search
+> ?search=<title>&platforms=<platformsID>
+
+#### GET /external_api/videogame
+> ?id=xxxx
+
+### Boardgames
+#### GET /external_api/boardgame/search
+> ?query=xxxx
+
+#### GET /external_api/boardgame
+> ?id=xxxx

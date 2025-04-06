@@ -13,12 +13,12 @@ import (
 )
 
 type parametersCreateMedium struct {
-	Title       string          `json:"title"`
-	MediaType   string          `json:"media_type"`
-	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
-	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	Title       string            `json:"title"`
+	MediaType   string            `json:"media_type"`
+	Creator     string            `json:"creator"`
+	ReleaseYear int32             `json:"release_year"`
+	ImageUrl    string            `json:"image_url"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 // POST /api/media
@@ -49,6 +49,13 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Convert metadata map to []byte
+	metadataBytes, err := mapToBytes(params.Metadata)
+	if err != nil {
+		respondWithError(w, 500, "couldn't convert metadata map for database", err)
+		return
+	}
+
 	// Call query function
 	medium, err := cfg.db.CreateMedium(r.Context(), database.CreateMediumParams{
 		MediaType:   params.MediaType,
@@ -56,7 +63,7 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 		Creator:     params.Creator,
 		ReleaseYear: params.ReleaseYear,
 		ImageUrl:    imageUrl,
-		Metadata:    params.Metadata,
+		Metadata:    metadataBytes,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -66,6 +73,13 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 			return
 		}
 		respondWithError(w, 500, "couldn't create new medium in database", err)
+		return
+	}
+
+	// Convert metadata back to map
+	metadataMap, err := bytesToMap(medium.Metadata)
+	if err != nil {
+		respondWithError(w, 500, "couldn't convert metadata map from database", err)
 		return
 	}
 
@@ -80,50 +94,48 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 			Creator:     medium.Creator,
 			ReleaseYear: medium.ReleaseYear,
 			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
+			Metadata:    metadataMap,
 		},
 	})
 }
 
-// GET /api/media (query parameters: "?title=xxx" / "?type=xxx"
-func (cfg *apiConfig) handlerGetMedia(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Title     string
-		MediaType string
-	}
-	// Get parameters from request query parameters
-	p := parameters{}
-	p.Title = r.URL.Query().Get("title")
-	p.MediaType = r.URL.Query().Get("type")
-
-	// Handle different cases
-	if p.Title != "" {
-		cfg.getMediumByTitle(w, r, p.Title)
-		return
-	} else if p.MediaType != "" {
-		cfg.getMediaByType(w, r, p.MediaType)
-		return
-	} else {
-		// We could get all media here, but for now, it respond with error
-		respondWithError(w, 400, "must provide either 'title' or 'type' query parameter", nil)
-		return
-	}
-
+type parametersGetMediumByTitleAndType struct {
+	Title     string `json:"title"`
+	MediaType string `json:"media_type"`
 }
 
-// Sub-function for handlerGetMedia
-func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, title string) {
+// GET /api/media
+func (cfg *apiConfig) handlerGetMediumByTitleAndType(w http.ResponseWriter, r *http.Request) {
 	type response struct {
 		Medium
 	}
+
+	// Parse data from request body
+	var params parametersGetMediumByTitleAndType
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "couldn't decode body from request", err)
+		return
+	}
+
 	// Call query function
-	medium, err := cfg.db.GetMediumByTitle(r.Context(), title)
+	medium, err := cfg.db.GetMediumByTitleAndType(r.Context(), database.GetMediumByTitleAndTypeParams{
+		Lower:   params.Title,
+		Lower_2: params.MediaType,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			respondWithError(w, 404, fmt.Sprintf("No medium with title %s in database", title), err)
+			respondWithError(w, 404, fmt.Sprintf("No %s medium with title %s in database", params.MediaType, params.Title), err)
 			return
 		}
 		respondWithError(w, 500, "couldn't get medium by title", err)
+		return
+	}
+
+	// Convert metadata back to map
+	metadataMap, err := bytesToMap(medium.Metadata)
+	if err != nil {
+		respondWithError(w, 500, "couldn't convert metadata map from database", err)
 		return
 	}
 
@@ -138,21 +150,33 @@ func (cfg *apiConfig) getMediumByTitle(w http.ResponseWriter, r *http.Request, t
 			Creator:     medium.Creator,
 			ReleaseYear: medium.ReleaseYear,
 			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
+			Metadata:    metadataMap,
 		},
 	})
 
+}
+
+type parametersGetMediaByType struct {
+	MediaType string `json:"media_type"`
 }
 
 type responseGetMediaByType struct {
 	Media []Medium `json:"media"`
 }
 
-// Sub-function for handlerGetMedia
-func (cfg *apiConfig) getMediaByType(w http.ResponseWriter, r *http.Request, mediaType string) {
+// GET /api/media/type
+func (cfg *apiConfig) handlerGetMediaByType(w http.ResponseWriter, r *http.Request) {
+
+	// Parse data from request body
+	var params parametersGetMediaByType
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "couldn't decode body from request", err)
+		return
+	}
 
 	// Call query function
-	media, err := cfg.db.GetMediaByType(r.Context(), mediaType)
+	media, err := cfg.db.GetMediaByType(r.Context(), params.MediaType)
 	if err != nil {
 		respondWithError(w, 500, "couldn't get media by given type", err)
 		return
@@ -164,6 +188,13 @@ func (cfg *apiConfig) getMediaByType(w http.ResponseWriter, r *http.Request, med
 
 	response := responseGetMediaByType{}
 	for _, medium := range media {
+		// Convert metadata back to map
+		metadataMap, err := bytesToMap(medium.Metadata)
+		if err != nil {
+			respondWithError(w, 500, "couldn't convert metadata map from database", err)
+			return
+		}
+
 		response.Media = append(response.Media, Medium{
 			ID:          medium.ID,
 			MediaType:   medium.MediaType,
@@ -173,7 +204,7 @@ func (cfg *apiConfig) getMediaByType(w http.ResponseWriter, r *http.Request, med
 			Creator:     medium.Creator,
 			ReleaseYear: medium.ReleaseYear,
 			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
+			Metadata:    metadataMap,
 		})
 	}
 
@@ -241,6 +272,13 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Convert metadata back to map
+	metadataMap, err := bytesToMap(medium.Metadata)
+	if err != nil {
+		respondWithError(w, 500, "couldn't convert metadata map from database", err)
+		return
+	}
+
 	// Respond
 	respondWithJson(w, 200, Medium{
 		ID:          medium.ID,
@@ -251,7 +289,7 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		Creator:     medium.Creator,
 		ReleaseYear: medium.ReleaseYear,
 		ImageUrl:    medium.ImageUrl,
-		Metadata:    medium.Metadata,
+		Metadata:    metadataMap,
 	})
 }
 

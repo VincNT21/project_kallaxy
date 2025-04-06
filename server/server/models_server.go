@@ -1,8 +1,6 @@
 package server
 
 import (
-	"encoding/json"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -20,15 +18,15 @@ type Tokens struct {
 }
 
 type Medium struct {
-	ID          pgtype.UUID      `json:"id"`
-	MediaType   string           `json:"media_type"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	Title       string           `json:"title"`
-	Creator     string           `json:"creator"`
-	ReleaseYear int32            `json:"release_year"`
-	ImageUrl    pgtype.Text      `json:"image_url"`
-	Metadata    json.RawMessage  `json:"metadata"`
+	ID          pgtype.UUID       `json:"id"`
+	MediaType   string            `json:"media_type"`
+	CreatedAt   pgtype.Timestamp  `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp  `json:"updated_at"`
+	Title       string            `json:"title"`
+	Creator     string            `json:"creator"`
+	ReleaseYear int32             `json:"release_year"`
+	ImageUrl    pgtype.Text       `json:"image_url"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 type Record struct {
@@ -44,17 +42,17 @@ type Record struct {
 }
 
 type MediumWithRecord struct {
-	ID          pgtype.UUID      `json:"record_id"`
-	UserID      pgtype.UUID      `json:"user_id"`
-	MediaID     pgtype.UUID      `json:"medium_id"`
-	IsFinished  pgtype.Bool      `json:"is_finished"`
-	StartDate   pgtype.Timestamp `json:"start_date"`
-	EndDate     pgtype.Timestamp `json:"end_date"`
-	Duration    int32            `json:"duration"`
-	MediaType   string           `json:"media_type"`
-	Title       string           `json:"title"`
-	Creator     string           `json:"creator"`
-	ReleaseYear int32            `json:"release_year"`
-	ImageUrl    pgtype.Text      `json:"image_url"`
-	Metadata    []byte           `json:"metadata"`
+	ID          pgtype.UUID       `json:"record_id"`
+	UserID      pgtype.UUID       `json:"user_id"`
+	MediaID     pgtype.UUID       `json:"medium_id"`
+	IsFinished  pgtype.Bool       `json:"is_finished"`
+	StartDate   pgtype.Timestamp  `json:"start_date"`
+	EndDate     pgtype.Timestamp  `json:"end_date"`
+	Duration    int32             `json:"duration"`
+	MediaType   string            `json:"media_type"`
+	Title       string            `json:"title"`
+	Creator     string            `json:"creator"`
+	ReleaseYear int32             `json:"release_year"`
+	ImageUrl    pgtype.Text       `json:"image_url"`
+	Metadata    map[string]string `json:"metadata"`
 }

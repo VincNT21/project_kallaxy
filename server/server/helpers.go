@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -59,4 +60,16 @@ func convertDateToPgtype(stringdate string) (pgtype.Timestamp, error) {
 		return date, errors.New("invalid string date format")
 	}
 	return date, nil
+}
+
+func mapToBytes(metadata map[string]string) ([]byte, error) {
+	return json.Marshal(metadata)
+}
+
+func bytesToMap(data []byte) (map[string]string, error) {
+	var metadata map[string]string
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		return nil, err
+	}
+	return metadata, nil
 }

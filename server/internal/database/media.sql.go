@@ -133,13 +133,19 @@ func (q *Queries) GetMediumByID(ctx context.Context, id pgtype.UUID) (Medium, er
 	return i, err
 }
 
-const getMediumByTitle = `-- name: GetMediumByTitle :one
+const getMediumByTitleAndType = `-- name: GetMediumByTitleAndType :one
 SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
 WHERE LOWER(title) = LOWER($1)
+AND LOWER(media_type) = LOWER($2)
 `
 
-func (q *Queries) GetMediumByTitle(ctx context.Context, lower string) (Medium, error) {
-	row := q.db.QueryRow(ctx, getMediumByTitle, lower)
+type GetMediumByTitleAndTypeParams struct {
+	Lower   string
+	Lower_2 string
+}
+
+func (q *Queries) GetMediumByTitleAndType(ctx context.Context, arg GetMediumByTitleAndTypeParams) (Medium, error) {
+	row := q.db.QueryRow(ctx, getMediumByTitleAndType, arg.Lower, arg.Lower_2)
 	var i Medium
 	err := row.Scan(
 		&i.ID,

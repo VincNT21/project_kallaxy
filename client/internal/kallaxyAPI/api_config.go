@@ -28,11 +28,12 @@ type UsersEndpoints struct {
 }
 
 type MediaEndpoints struct {
-	CreateMedia         Endpoint
-	GetMedia            Endpoint
-	GetMediaWithRecords Endpoint
-	UpdateMedia         Endpoint
-	DeleteMedia         Endpoint
+	CreateMedia             Endpoint
+	GetMediumByTitleAndType Endpoint
+	GetMediaByType          Endpoint
+	GetMediaWithRecords     Endpoint
+	UpdateMedia             Endpoint
+	DeleteMedia             Endpoint
 }
 
 type RecordsEndpoints struct {
@@ -64,16 +65,18 @@ type ExternalApiEndpoints struct {
 }
 
 type BooksProxy struct {
-	Search Endpoint
-	ISBN   Endpoint
-	Author Endpoint
+	Search  Endpoint
+	ByISBN  Endpoint
+	Author  Endpoint
+	GetISBN Endpoint
 }
 
 type MoviesTvProxy struct {
-	SearchMovie Endpoint
-	SearchTV    Endpoint
-	Search      Endpoint
-	GetDetails  Endpoint
+	SearchMovie     Endpoint
+	SearchTV        Endpoint
+	Search          Endpoint
+	GetDetails      Endpoint
+	GetMovieCredits Endpoint
 }
 
 type VideogamesProxy struct {
@@ -115,13 +118,17 @@ func initApiConfig(baseURL string) *APIConfig {
 					Method: "POST",
 					Path:   "/api/media",
 				},
-				GetMedia: Endpoint{
+				GetMediumByTitleAndType: Endpoint{
 					Method: "GET",
 					Path:   "/api/media",
 				},
+				GetMediaByType: Endpoint{
+					Method: "GET",
+					Path:   "/api/media/type",
+				},
 				GetMediaWithRecords: Endpoint{
 					Method: "GET",
-					Path:   "/api/records_media",
+					Path:   "/api/media_records",
 				},
 				UpdateMedia: Endpoint{
 					Method: "PUT",
@@ -192,13 +199,17 @@ func initApiConfig(baseURL string) *APIConfig {
 						Method: "GET",
 						Path:   "/external_api/book/search",
 					},
-					ISBN: Endpoint{
+					ByISBN: Endpoint{
 						Method: "GET",
 						Path:   "/external_api/book/isbn",
 					},
 					Author: Endpoint{
 						Method: "GET",
 						Path:   "/external_api/book/author",
+					},
+					GetISBN: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/book/search_isbn",
 					},
 				},
 				MoviesTV: MoviesTvProxy{
@@ -217,6 +228,10 @@ func initApiConfig(baseURL string) *APIConfig {
 					GetDetails: Endpoint{
 						Method: "GET",
 						Path:   "/external_api/movie_tv/",
+					},
+					GetMovieCredits: Endpoint{
+						Method: "GET",
+						Path:   "/external_api/movie_tv/movie_credits",
 					},
 				},
 				Videogames: VideogamesProxy{

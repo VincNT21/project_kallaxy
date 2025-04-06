@@ -19,9 +19,10 @@ SET title = $2, creator = $3, release_year = $4, image_url = $5, metadata = $6, 
 WHERE id = $1
 RETURNING *;
 
--- name: GetMediumByTitle :one
+-- name: GetMediumByTitleAndType :one
 SELECT * FROM media
-WHERE LOWER(title) = LOWER($1);
+WHERE LOWER(title) = LOWER($1)
+AND LOWER(media_type) = LOWER($2);
 
 -- name: GetMediaByType :many
 SELECT * FROM media

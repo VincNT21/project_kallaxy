@@ -180,6 +180,12 @@ func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r
 	}
 
 	for _, medium := range recordsAndMedia {
+		// Convert metadata back to map
+		metadataMap, err := bytesToMap(medium.Metadata)
+		if err != nil {
+			respondWithError(w, 500, "couldn't convert metadata map from database", err)
+			return
+		}
 		// Create the MediumWithRecord object
 		mediumRecord := MediumWithRecord{
 			ID:          medium.ID,
@@ -194,7 +200,7 @@ func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r
 			Creator:     medium.Creator,
 			ReleaseYear: medium.ReleaseYear,
 			ImageUrl:    medium.ImageUrl,
-			Metadata:    medium.Metadata,
+			Metadata:    metadataMap,
 		}
 
 		// Get the appropriate media type key

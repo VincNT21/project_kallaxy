@@ -19,3 +19,9 @@ func customSpacerHorizontal(width float32) fyne.CanvasObject {
 	spacer.SetMinSize(fyne.NewSize(width, 1))
 	return spacer
 }
+
+func customSpacerVertical(height float32) fyne.CanvasObject {
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(1, height))
+	return spacer
+}

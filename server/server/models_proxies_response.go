@@ -345,6 +345,33 @@ type responseTvDetails struct {
 	VoteCount   int     `json:"vote_count"`
 }
 
+type responseMovieCredits struct {
+	ID   int `json:"id"`
+	Cast []struct {
+		Gender             int    `json:"gender"`
+		ID                 int    `json:"id"`
+		KnownForDepartment string `json:"known_for_department"`
+		Name               string `json:"name"`
+		OriginalName       string `json:"original_name"`
+		ProfilePath        string `json:"profile_path"`
+		Character          string `json:"character"`
+		Order              int    `json:"order"`
+	} `json:"cast"`
+	Crew []struct {
+		Adult              bool    `json:"adult"`
+		Gender             int     `json:"gender"`
+		ID                 int     `json:"id"`
+		KnownForDepartment string  `json:"known_for_department"`
+		Name               string  `json:"name"`
+		OriginalName       string  `json:"original_name"`
+		Popularity         float64 `json:"popularity"`
+		ProfilePath        any     `json:"profile_path"`
+		CreditID           string  `json:"credit_id"`
+		Department         string  `json:"department"`
+		Job                string  `json:"job"`
+	} `json:"crew"`
+}
+
 // api.rawg.io
 
 type responseVideogameSearch struct {
@@ -568,16 +595,30 @@ type responseBoardgameSearch struct {
 		Item []struct {
 			ID   string `json:"id"`
 			Name struct {
-				Type  string `json:"type"`
 				Value string `json:"value"`
 			} `json:"name"`
 			Type          string `json:"type"`
 			Yearpublished struct {
 				Value string `json:"value"`
-			} `json:"yearpublished,omitempty"`
+			} `json:"yearpublished"`
 		} `json:"item"`
-		Termsofuse string `json:"termsofuse"`
-		Total      string `json:"total"`
+		Total string `json:"total"`
+	} `json:"items"`
+}
+
+type responseBoardgameSearchAlternative struct {
+	Items struct {
+		Item struct {
+			ID   string `json:"id"`
+			Name struct {
+				Value string `json:"value"`
+			} `json:"name"`
+			Type          string `json:"type"`
+			Yearpublished struct {
+				Value string `json:"value"`
+			} `json:"yearpublished"`
+		} `json:"item"`
+		Total string `json:"total"`
 	} `json:"items"`
 }
 

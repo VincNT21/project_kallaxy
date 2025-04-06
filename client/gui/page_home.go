@@ -23,12 +23,12 @@ func (pm *GuiPageManager) GetHomeWindow() {
 	// Create objects
 	// Texts
 	titleText := canvas.NewText("Welcome to your Kallaxy", color.White)
-	titleText.TextSize = 18
+	titleText.TextSize = 40
 	titleText.Alignment = fyne.TextAlignCenter
 	titleText.TextStyle.Bold = true
 
 	usernameText := canvas.NewText(pm.appCtxt.APIClient.CurrentUser.Username, color.White)
-	usernameText.TextSize = 20
+	usernameText.TextSize = 40
 	usernameText.Alignment = fyne.TextAlignCenter
 	usernameText.TextStyle.Bold = true
 
@@ -36,31 +36,28 @@ func (pm *GuiPageManager) GetHomeWindow() {
 	addMediaButton := widget.NewButton("Add New Media", func() {
 		// Create a custom dialog box to choose media_type
 		mediaTypeQuestion := canvas.NewText("Which type of media ?", color.White)
+		mediaTypeQuestion.Alignment = fyne.TextAlignCenter
+		mediaTypeQuestion.TextSize = 20
 
 		// Create a button for each media Type + an "other" button
 		buttonBook := widget.NewButtonWithIcon("Book", theme.DocumentIcon(), func() {
-			pm.mediaType = "book"
-			pm.GetCreateMediaWindow()
+			pm.GetCreateMediaWindow("book")
 			w.Close()
 		})
 		buttonMovie := widget.NewButtonWithIcon("Movie", theme.MediaVideoIcon(), func() {
-			pm.mediaType = "movie"
-			pm.GetCreateMediaWindow()
+			pm.GetCreateMediaWindow("movie")
 			w.Close()
 		})
 		buttonSeries := widget.NewButtonWithIcon("Series", theme.MediaPlayIcon(), func() {
-			pm.mediaType = "series"
-			pm.GetCreateMediaWindow()
+			pm.GetCreateMediaWindow("series")
 			w.Close()
 		})
 		buttonVideogame := widget.NewButtonWithIcon("Videogame", theme.ComputerIcon(), func() {
-			pm.mediaType = "videogame"
-			pm.GetCreateMediaWindow()
+			pm.GetCreateMediaWindow("videogame")
 			w.Close()
 		})
 		buttonBoardgame := widget.NewButtonWithIcon("Boardgame", theme.SettingsIcon(), func() {
-			pm.mediaType = "boardgame"
-			pm.GetCreateMediaWindow()
+			pm.GetCreateMediaWindow("boardgame")
 			w.Close()
 		})
 		buttonOther := widget.NewButtonWithIcon("Other", theme.MoreHorizontalIcon(), func() {
@@ -68,8 +65,7 @@ func (pm *GuiPageManager) GetHomeWindow() {
 			otherForm := widget.NewFormItem("Media Type", otherInput)
 			dialog.ShowForm("Other media type", "Confirm", "Dismiss", []*widget.FormItem{otherForm}, func(b bool) {
 				if b {
-					pm.mediaType = otherInput.Text
-					pm.GetCreateMediaWindow()
+					pm.GetCreateMediaWindow(otherInput.Text)
 					w.Close()
 				}
 			}, w)
@@ -77,10 +73,22 @@ func (pm *GuiPageManager) GetHomeWindow() {
 
 		// Groups buttons
 		groupButtons := container.NewVBox(buttonBook, buttonMovie, buttonSeries, buttonVideogame, buttonBoardgame, buttonOther)
-		globalContainer := container.NewHBox(layout.NewSpacer(), groupButtons, layout.NewSpacer())
+		globalContainer := container.NewBorder(
+			nil,
+			nil,
+			customSpacerHorizontal(50),
+			customSpacerHorizontal(50),
+			groupButtons,
+		)
 
 		// Display custom dialog
-		dialog.ShowCustomWithoutButtons("Kallaxy", container.NewBorder(mediaTypeQuestion, nil, nil, nil, globalContainer), w)
+		dialog.ShowCustomWithoutButtons("", container.NewBorder(
+			container.NewVBox(mediaTypeQuestion),
+			nil,
+			nil,
+			nil,
+			globalContainer,
+		), w)
 
 	})
 
@@ -131,7 +139,13 @@ func (pm *GuiPageManager) GetHomeWindow() {
 
 	// Create rows
 	centralbuttonsRow := container.NewVBox(addMediaButton, &layout.Spacer{FixVertical: true}, showShelfButton)
-	centralRow := container.NewHBox(layout.NewSpacer(), centralbuttonsRow, layout.NewSpacer())
+	centralRow := container.NewBorder(
+		nil,
+		nil,
+		customSpacerHorizontal(100),
+		customSpacerHorizontal(100),
+		centralbuttonsRow,
+	)
 	exitButtons := container.NewVBox(logoutButton, exitButton)
 	bottomRow := container.NewHBox(manageButton, layout.NewSpacer(), exitButtons)
 

@@ -1,13 +1,12 @@
 package server
 
 import (
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 )
 
-// GET /external_api/videogame/search
+// GET /external_api/videogame/search (query parameter: ?search=<title>&platforms=<platformsID>)
 func (cfg *apiConfig) handlerVideoGameSearch(w http.ResponseWriter, r *http.Request) {
 	const RAWGSearchUrl = "https://api.rawg.io/api/games"
 
@@ -37,23 +36,15 @@ func (cfg *apiConfig) handlerVideoGameSearch(w http.ResponseWriter, r *http.Requ
 	io.Copy(w, resp.Body)
 }
 
-type parametersVideogameDetails struct {
-	GameID string `json:"game_id"`
-}
-
-// GET /external_api/videogame
+// GET /external_api/videogame (query parameter: ?id=<gameID>)
 func (cfg *apiConfig) handlerVideoGameDetails(w http.ResponseWriter, r *http.Request) {
 	const RAWGUrl = "https://api.rawg.io/api/games"
-	// Parse data from request body
-	var params parametersVideogameDetails
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		respondWithError(w, 500, "couldn't decode body from request", err)
-		return
-	}
+
+	// Get game ID from request query parameter
+	gameID := r.URL.Query().Get("id")
 
 	// Create request
-	apiURL := RAWGUrl + "/" + params.GameID + "?key=" + cfg.rawgKey
+	apiURL := RAWGUrl + "/" + gameID + "?key=" + cfg.rawgKey
 	log.Printf("--DEBUG-- Making external request to %s", apiURL)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {

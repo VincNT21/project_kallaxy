@@ -19,14 +19,14 @@ func (pm *GuiPageManager) GetLoginWindow() {
 	// Create the window
 	w := pm.appGui.NewWindow("Kallaxy Login")
 	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(400, 300))
+	w.Resize(fyne.NewSize(800, 600))
 
 	// Create UI objects
 	// Texts
-	titleText := canvas.NewText("Please login", color.White)
-	titleText.Alignment = fyne.TextAlignCenter
-	titleText.TextSize = 20
-	titleText.TextStyle.Bold = true
+	pageTitleText := canvas.NewText("Please login", color.White)
+	pageTitleText.Alignment = fyne.TextAlignCenter
+	pageTitleText.TextSize = 40
+	pageTitleText.TextStyle.Bold = true
 
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 
@@ -83,10 +83,15 @@ func (pm *GuiPageManager) GetLoginWindow() {
 
 	// Group objects in VBox container
 	objectsContainer := container.NewVBox(usernameEntry, passwordEntry, loginButton, passwordLostButton, createNewUserButton)
-	centerRow := container.NewHBox(layout.NewSpacer(), objectsContainer, layout.NewSpacer())
 
 	// Create the global frame
-	globalContainer := container.NewVBox(layout.NewSpacer(), titleText, layout.NewSpacer(), centerRow, layout.NewSpacer(), statusLabel, layout.NewSpacer(), exitButton)
+	globalContainer := container.NewBorder(
+		pageTitleText,
+		exitButton,
+		customSpacerHorizontal(100),
+		customSpacerHorizontal(100),
+		container.NewVBox(layout.NewSpacer(), objectsContainer, layout.NewSpacer()),
+	)
 
 	// Set container to window and show it
 	w.SetContent(globalContainer)
@@ -97,11 +102,14 @@ func (pm *GuiPageManager) GetBackWindow() {
 	// Create the window
 	w := pm.appGui.NewWindow("Kallaxy back")
 	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(400, 300))
+	w.Resize(fyne.NewSize(800, 600))
 
 	// Create objects
 	// Text
-	titleLabel := widget.NewLabelWithStyle(fmt.Sprintf("Welcome back %s !", pm.appCtxt.APIClient.CurrentUser.Username), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	pageTitleText := canvas.NewText(fmt.Sprintf("Welcome back %s !", pm.appCtxt.APIClient.CurrentUser.Username), color.White)
+	pageTitleText.Alignment = fyne.TextAlignCenter
+	pageTitleText.TextSize = 40
+	pageTitleText.TextStyle.Bold = true
 
 	// Buttons
 	enterButton := widget.NewButtonWithIcon("Enter app", theme.LoginIcon(), func() {
@@ -135,10 +143,16 @@ func (pm *GuiPageManager) GetBackWindow() {
 	})
 
 	// Group Buttons
-	buttonRow := container.NewHBox(layout.NewSpacer(), notMeButton, enterButton, layout.NewSpacer())
+	buttonContainer := container.NewVBox(enterButton, notMeButton)
 
 	// Create the global frame
-	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), buttonRow, layout.NewSpacer(), exitButton)
+	globalContainer := container.NewBorder(
+		pageTitleText,
+		exitButton,
+		customSpacerHorizontal(100),
+		customSpacerHorizontal(100),
+		container.NewVBox(layout.NewSpacer(), buttonContainer, layout.NewSpacer()),
+	)
 
 	// Set container to window and show it
 	w.SetContent(globalContainer)

@@ -18,7 +18,7 @@ type PageManager interface {
 	GetCreateUserWindow(func())
 	GetHomeWindow()
 	GetUserParametersWindow()
-	GetCreateMediaWindow()
+	GetCreateMediaWindow(mediaType string)
 	ShowImageWindow(fyne.Window, string, func(string))
 	GetShelfWindow()
 	BuildMediaContainers(models.MediaWithRecords) (*container.Scroll, error)

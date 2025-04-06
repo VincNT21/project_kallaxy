@@ -80,14 +80,15 @@ func Start(envVars ...map[string]string) {
 
 	// Media endpoints
 	mux.Handle("POST /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateMedium)))
-	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMedia)))
+	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMediumByTitleAndType)))
+	mux.Handle("GET /api/media/type", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMediaByType)))
+	mux.Handle("GET /api/media_records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsAndMediaByUserID)))
 	mux.Handle("PUT /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateMedium)))
 	mux.Handle("DELETE /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteMedium)))
 
 	// Records endpoints
 	mux.Handle("POST /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateUserMediumRecord)))
 	mux.Handle("GET /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsByUserID)))
-	mux.Handle("GET /api/records_media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsAndMediaByUserID)))
 	mux.Handle("PUT /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateRecord)))
 	mux.Handle("DELETE /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteRecord)))
 
@@ -114,11 +115,15 @@ func Start(envVars ...map[string]string) {
 	mux.Handle("GET /external_api/book/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookSearch)))
 	mux.Handle("GET /external_api/book/isbn", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookByISBN)))
 	mux.Handle("GET /external_api/book/author", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookAuthor)))
+	mux.Handle("GET /external_api/book/search_isbn", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetBookISBN)))
+
 	// Movies and TV shows
 	mux.Handle("GET /external_api/movie_tv/search_movie", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieSearch)))
 	mux.Handle("GET /external_api/movie_tv/search_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerTVSearch)))
 	mux.Handle("GET /external_api/movie_tv/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMultiSearch)))
 	mux.Handle("GET /external_api/movie_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieTvDetails)))
+	mux.Handle("GET /external_api/movie_tv/movie_credits", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieCreditsDetails)))
+
 	// Videogames
 	mux.Handle("GET /external_api/videogame/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameSearch)))
 	mux.Handle("GET /external_api/videogame", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameDetails)))

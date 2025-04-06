@@ -1,9 +1,5 @@
 package server
 
-import (
-	"encoding/json"
-)
-
 type ClientUser struct {
 	ID        string `json:"id"`
 	CreatedAt string `json:"created_at"`
@@ -28,15 +24,15 @@ type ClientTokensAndUser struct {
 }
 
 type ClientMedium struct {
-	ID          string          `json:"id"`
-	MediaType   string          `json:"media_type"`
-	CreatedAt   string          `json:"created_at"`
-	UpdatedAt   string          `json:"updated_at"`
-	Title       string          `json:"title"`
-	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
-	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	ID          string            `json:"id"`
+	MediaType   string            `json:"media_type"`
+	CreatedAt   string            `json:"created_at"`
+	UpdatedAt   string            `json:"updated_at"`
+	Title       string            `json:"title"`
+	Creator     string            `json:"creator"`
+	ReleaseYear int32             `json:"release_year"`
+	ImageUrl    string            `json:"image_url"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 type ClientListMedia struct {

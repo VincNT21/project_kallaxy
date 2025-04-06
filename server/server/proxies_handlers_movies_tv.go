@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 // GET /external_api/movie_tv/search_movie
@@ -148,7 +149,40 @@ func (cfg *apiConfig) handlerMovieTvDetails(w http.ResponseWriter, r *http.Reque
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
+}
+
+// GET /external_api/movie_tv/movie_credits (query parameters: "?movie_id=xxxx")
+func (cfg *apiConfig) handlerMovieCreditsDetails(w http.ResponseWriter, r *http.Request) {
+	const movieDbMovieDetailsUrl = "https://api.themoviedb.org/3/movie"
+	// const movieDbTvCreditsDetailsUrl = " https://api.themoviedb.org/3/tv/{series_id}/season/{season_number}/credits"
+
+	// Get movie ID from request query parameters
+	movieID := r.URL.Query().Get("movie_id")
+
+	// Create request
+	creditsUrl := movieDbMovieDetailsUrl + fmt.Sprintf("/%v/credits", url.QueryEscape(movieID))
+	req, err := http.NewRequest("GET", creditsUrl, nil)
+	if err != nil {
+		respondWithError(w, 500, "couldn't create Get request for The Movie DB API", err)
+		return
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.moviedbKey))
+
+	// Make request to external API
+	log.Printf("--DEBUG-- Making external request to %s", creditsUrl)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		respondWithError(w, 500, "failed to fetch data", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Pass through the response
+	w.Header().Set("Content-Type", "application/json")
+	io.Copy(w, resp.Body)
+
 }
