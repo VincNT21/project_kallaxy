@@ -758,7 +758,7 @@ func TestCreateMedium(t *testing.T) {
 		Title:       "The Fellowship of the Ring",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 	}
 
@@ -826,7 +826,7 @@ func TestCreateMedium(t *testing.T) {
 			requestBody: parametersCreateMedium{
 				Title:       "The Fellowship of the Ring2",
 				MediaType:   "book",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 400,
@@ -840,7 +840,7 @@ func TestCreateMedium(t *testing.T) {
 				Title:       "The Fellowship of the Ring3",
 				MediaType:   "book",
 				Creator:     "J.R.R Tolkien",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 			},
 			expectedStatus: 201,
 		},
@@ -890,7 +890,7 @@ func TestGetMediaByTitle(t *testing.T) {
 		Title:       "The Fellowship of the Ring",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 	}
 
@@ -914,7 +914,7 @@ func TestGetMediaByTitle(t *testing.T) {
 			requestHeaders: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
-			queryParameter: "?title=The+Fellowship+Of+The+Ring",
+			requestBody:    nil,
 			expectedStatus: 200,
 			expectResponse: true,
 			checkResponse: func(t *testing.T, m ClientMedium) {
@@ -1013,14 +1013,14 @@ func TestGetMediaByType(t *testing.T) {
 		Title:       "The Fellowship of the Ring",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/8/8e/The_Fellowship_of_the_Ring_cover.gif",
 	}
 	testBook2 := parametersCreateMedium{
 		Title:       "The Two Towers",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/a/a1/The_Two_Towers_cover.gif",
 	}
 
@@ -1147,14 +1147,14 @@ func TestUpdateMedium(t *testing.T) {
 		Title:       "The Fellowship of the Ring",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 	}
 	testBook2 := parametersCreateMedium{
 		Title:       "The Two Towers",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/a/a1/The_Two_Towers_cover.gif",
 	}
 
@@ -1182,7 +1182,7 @@ func TestUpdateMedium(t *testing.T) {
 				MediumID:    mediumId,
 				Title:       "The Fellowship of the Ring",
 				Creator:     "John Ronald Reuel Tolkien",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 200,
@@ -1212,7 +1212,7 @@ func TestUpdateMedium(t *testing.T) {
 				MediumID:    mediumId,
 				Title:       "The Two Towers",
 				Creator:     "John Ronald Reuel Tolkien",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 409,
@@ -1226,7 +1226,7 @@ func TestUpdateMedium(t *testing.T) {
 				MediumID:    "ba983bd8-36ce-4d1b-ad24-2b65269f9921",
 				Title:       "The Fellowship of the Ring",
 				Creator:     "John Ronald Reuel Tolkien",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 404,
@@ -1240,7 +1240,7 @@ func TestUpdateMedium(t *testing.T) {
 				MediumID:    "ba983bd8-2b65269f9921",
 				Title:       "The Fellowship of the Ring",
 				Creator:     "John Ronald Reuel Tolkien",
-				ReleaseYear: 1954,
+				ReleaseYear: "1954",
 				ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
 			},
 			expectedStatus: 400,
@@ -1294,7 +1294,7 @@ func TestDeleteMedium(t *testing.T) {
 		Title:       "The Fellowship of the Ring",
 		MediaType:   "book",
 		Creator:     "J.R.R Tolkien",
-		ReleaseYear: 1954,
+		ReleaseYear: "1954",
 		ImageUrl:    "https://upload.wikimedia.org/wikipedia/en/8/8e/The_Fellowship_of_the_Ring_cover.gif",
 	}
 	mediumID := ctx.CreateTestMediumCustom(t, testBook)

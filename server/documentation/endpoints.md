@@ -20,6 +20,7 @@
 - [4. Records endpoints](#4-records-endpoints)
   - [4.1. POST /api/records -- Create a new User-Medium Record](#41-post-apirecords----create-a-new-user-medium-record)
   - [4.2. GET /api/records -- Get all records by user's ID](#42-get-apirecords----get-all-records-by-users-id)
+  - [GET /api/media\_records -- Get all user's record and related media](#get-apimedia_records----get-all-users-record-and-related-media)
   - [4.3. PUT /api/records -- Update a record's start and/ord end date](#43-put-apirecords----update-a-records-start-andord-end-date)
   - [4.4. DELETE /api/records -- Delete a record](#44-delete-apirecords----delete-a-record)
 - [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
@@ -407,6 +408,9 @@
 ```
 > See resource [Medium](resources.md#media-resource)
 
+
+
+
 ### 3.4. PUT /api/media -- Update a medium's info
 -> *Description* :
 > Change some info about a specified medium (by medium's id)  
@@ -558,6 +562,35 @@
 }
 ```
 > See resource [Record](resources.md#record-resource)
+
+### GET /api/media_records -- Get all user's record and related media
+-> *Description* :
+> Find all records matching logged user (by user's id from access token) and all media related to those records
+> Respond with a map[string][]MediumWithRecord
+
+-> *Request headers* :
+>A valid Bearer access token in "Authorization" header 
+>See resource [Authorization header](resources.md#authorization-header)
+
+-> *Request body* :
+> None
+
+-> *Error Response status code to handle* : 
+
+    - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 404 Not Found - No record found for logged user
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* :
+```json
+{
+    "records": map[string][]MediumWithRecord
+}
+```
+> See resource [MediumWithRecord](resources.md#media-with-record-resource)
 
 ### 4.3. PUT /api/records -- Update a record's start and/ord end date 
 -> *Description* :

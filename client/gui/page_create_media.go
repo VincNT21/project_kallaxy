@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"errors"
 	"fmt"
 	"image/color"
 	"log"
@@ -13,16 +14,12 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/VincNT21/kallaxy/client/context"
 	"github.com/VincNT21/kallaxy/client/models"
 	datepicker "github.com/sdassow/fyne-datepicker"
 )
 
-func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
-	// Create the window
-	w := pm.appGui.NewWindow("Kallaxy")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(1024, 768))
-
+func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *fyne.Container {
 	// Create UI objects
 	// Texts
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
@@ -44,11 +41,27 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 	creatorEntry := widget.NewEntry()
 	creatorForm := widget.NewFormItem("Creator", creatorEntry)
 
-	releaseYearEntry := widget.NewEntry()
-	releaseYearForm := widget.NewFormItem("Release Year", releaseYearEntry)
+	pubDateEntry := widget.NewEntry()
+	pubDateForm := widget.NewFormItem("Publication date", pubDateEntry)
 
+	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, pubDateForm)
+
+	// ImageUrl row (with "get info online" button)
 	imageUrlEntry := widget.NewEntry()
 	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
+
+	// Get info online button
+	buttonGetInfoOnline := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
+		if titleEntry.Text == "" {
+			// If title not provided
+			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", appCtxt.MainWindow)
+		} else {
+			// If title provided
+			initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", func(s string) {})
+		}
+
+	})
+	urlRow := container.NewBorder(nil, nil, nil, buttonGetInfoOnline, imageUrlForm)
 
 	// User's Record forms
 	// Date entries have a Action Button that calls a Date Picker dialog
@@ -76,7 +89,7 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 			"Cancel",
 			datepicker,
 			datepicker.OnActioned,
-			w,
+			appCtxt.MainWindow,
 		)
 	})
 	startDateForm := widget.NewFormItem("Started on", startDateEntry)
@@ -105,44 +118,27 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 			"Cancel",
 			datepicker,
 			datepicker.OnActioned,
-			w,
+			appCtxt.MainWindow,
 		)
 	})
 	endDateForm := widget.NewFormItem("Completed on", endDateEntry)
 
+	commentsEntry := widget.NewMultiLineEntry()
+	commentsForm := widget.NewFormItem("Personal comments", commentsEntry)
+
+	recordForm := widget.NewForm(startDateForm, endDateForm, commentsForm)
+
 	// Metadata formItems will depend on the media_type
 
-	// Buttons
-	buttonGetImageUrl := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
-		if titleEntry.Text == "" {
-			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", w)
-		} else {
-			// Get the image url
-			url, err := pm.appCtxt.APIClient.Media.GetImageUrl(mediaTypeEntry.Text, titleEntry.Text)
-			if err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-			if url == "" {
-				dialog.ShowInformation("Info", fmt.Sprintf("No %s found with this name", mediaType), w)
-				return
-			}
-			// Call a new confirmation window
-			pm.ShowImageWindow(w, url, func(confirmedUrl string) {
-				// This code runs when the "Confirm" button is clicked in the new window
-				imageUrlEntry.SetText(confirmedUrl)
-			})
-		}
+	metadataForm, metadataEntryMap := createMetadataForm(appCtxt, mediaType)
 
-	})
-
+	// UI Buttons
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\n\nAll unsubmitted changes will be lost!", func(b bool) {
 			if b {
-				pm.GetHomeWindow()
-				w.Close()
+				appCtxt.PageManager.ShowHomePage()
 			}
-		}, w)
+		}, appCtxt.MainWindow)
 	})
 
 	submitButton := widget.NewButtonWithIcon("Submit", theme.ConfirmIcon(), func() {
@@ -156,7 +152,7 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 				widget.NewLabelWithStyle(fmt.Sprintf("Media Type: %s", mediaTypeEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 				widget.NewLabelWithStyle(fmt.Sprintf("Title: %s", titleEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 				widget.NewLabelWithStyle(fmt.Sprintf("Creator: %s", creatorEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
-				widget.NewLabelWithStyle(fmt.Sprintf("Release Year: %s", releaseYearEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+				widget.NewLabelWithStyle(fmt.Sprintf("Publication date: %s", pubDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 				widget.NewLabelWithStyle(fmt.Sprintf("Image URL: %s", imageUrlEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 				widget.NewLabelWithStyle(fmt.Sprintf("Start Date: %s", startDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 				widget.NewLabelWithStyle(fmt.Sprintf("End Date: %s", endDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
@@ -164,11 +160,14 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 			func(b bool) {
 				// If Confirmed. call the CreateMediumAndRecord client API function
 				if b {
-					_, _, err := pm.appCtxt.APIClient.Media.CreateMediumAndRecord(
+					// PLACEHOLDER
+					fmt.Println(metadataEntryMap)
+					// PLACEHOLDER
+					_, _, err := appCtxt.APIClient.Media.CreateMediumAndRecord(
 						titleEntry.Text,
 						mediaTypeEntry.Text,
 						creatorEntry.Text,
-						releaseYearEntry.Text,
+						pubDateEntry.Text,
 						imageUrlEntry.Text,
 						startDateEntry.Text,
 						endDateEntry.Text,
@@ -176,92 +175,133 @@ func (pm *GuiPageManager) GetCreateMediaWindow(mediaType string) {
 					if err != nil {
 						switch err {
 						case models.ErrUnauthorized:
-							if _, err2 := pm.appCtxt.APIClient.Auth.RefreshTokens(); err2 != nil {
+							if _, err2 := appCtxt.APIClient.Auth.RefreshTokens(); err2 != nil {
 								dialog.NewConfirm("Authorization problem", "There is a problem with your authorization,\nyou'll be redirected to Login page", func(b bool) {
-									pm.GetLoginWindow()
-									w.Close()
-								}, w)
+									appCtxt.PageManager.ShowLoginPage()
+								}, appCtxt.MainWindow)
 							} else {
-								dialog.ShowInformation("Information", "Client needed to refresh your acess token\nSorry for the inconvenience\nPlease try again, it should work now !", w)
+								dialog.ShowInformation("Information", "Client needed to refresh your acess token\nSorry for the inconvenience\nPlease try again, it should work now !", appCtxt.MainWindow)
 							}
 						case models.ErrServerIssue:
-							dialog.ShowInformation("Error", "Error with server, please retry later", w)
+							dialog.ShowInformation("Error", "Error with server, please retry later", appCtxt.MainWindow)
 						case models.ErrBadRequest:
-							dialog.ShowInformation("Error", "There is a problem with your request:\n- One field is missing in the form\nAND/OR\n- Start date is before end date", w)
+							dialog.ShowInformation("Error", "There is a problem with your request:\n- One field is missing in the form\nAND/OR\n- Start date is before end date\nPlease verify all fields", appCtxt.MainWindow)
 						case models.ErrConflict:
-							dialog.ShowInformation("Error", "A medium with the same couple title & media type already exists", w)
+							dialog.ShowInformation("Error", "A medium with the same couple title & media type already exists", appCtxt.MainWindow)
 						case models.ErrNotFound:
-							dialog.ShowInformation("Error", "Not found", w)
+							dialog.ShowInformation("Error", "Not found", appCtxt.MainWindow)
 						default:
-							dialog.ShowError(err, w)
+							dialog.ShowError(err, appCtxt.MainWindow)
 						}
 					} else {
 						log.Println("--GUI-- CreateMedia Form successful")
-						pm.GetHomeWindow()
-						w.Close()
+						dialog.ShowInformation("Created", "Media creation successful !", appCtxt.MainWindow)
+						appCtxt.PageManager.ShowHomePage()
 					}
 				}
-			}, w,
+			}, appCtxt.MainWindow,
 		)
 	})
 
-	// Group objects
-	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, releaseYearForm)
-	urlRow := container.NewBorder(nil, nil, nil, buttonGetImageUrl, imageUrlForm)
-	recordForm := widget.NewForm(startDateForm, endDateForm)
 	// metadataForm := widget.NewForm()
-	groupForms := container.NewVBox(mediaForm, urlRow, widget.NewSeparator(), recordForm)
-	submitRow := container.NewHBox(customSpacerHorizontal(100), submitButton, customSpacerHorizontal(100))
+	groupForms := container.NewVBox(mediaForm, urlRow, widget.NewSeparator(), metadataForm, widget.NewSeparator(), recordForm)
+	submitRow := container.NewBorder(nil, nil, customSpacerHorizontal(20), customSpacerHorizontal(20), submitButton)
 	statusRow := container.NewHBox(layout.NewSpacer(), statusLabel, layout.NewSpacer())
 	centralPart := container.NewVBox(groupForms, statusRow, submitRow)
 
 	// Create the global frame
 	globalContainer := container.NewBorder(pageTitleText, exitButton, nil, nil, centralPart)
 
-	// Set container to window
-	w.SetContent(globalContainer)
-	w.Show()
+	return globalContainer
 }
 
-func (pm *GuiPageManager) ShowImageWindow(parentWindow fyne.Window, url string, onConfirm func(string)) {
+func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Window, mediumTitle, mediumType, vgPlatform string, onConfirm func(string)) {
 	// Create the window
-	w := pm.appGui.NewWindow("Image Confirmation")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(640, 480))
+	secondaryWindow := fyne.CurrentApp().NewWindow("Search Results")
+	secondaryWindow.CenterOnScreen()
+	secondaryWindow.Resize(fyne.NewSize(640, 480))
 
-	// Fetch the image as a buffer
-	bufImage, err := pm.appCtxt.APIClient.Helpers.GetImage(url)
+	// Get results list
+	results, err := appCtxt.APIClient.Helpers.SearchMediaOnExternalApiByTitle(mediumType, mediumTitle, vgPlatform)
 	if err != nil {
-		dialog.ShowError(err, parentWindow)
-		w.Close()
+		if err == models.ErrNotFound {
+			dialog.ShowError(errors.New("no media found with this title"), parentWindow)
+		} else {
+			dialog.ShowError(fmt.Errorf("an error occured while trying to get search online results\n%v", err), parentWindow)
+		}
+		secondaryWindow.Close()
+		return
 	}
 
+	// Initialize with the first result
+	updateSearchResultContent(appCtxt, secondaryWindow, results, 0, onConfirm)
+
+	// Display window
+	secondaryWindow.Show()
+}
+
+func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, results []models.ShortOnlineSearchResult, i int, onConfirm func(string)) {
+
+	result := results[i]
+
+	// Create UI components
+	// Texts
+	pageTitleText := canvas.NewText(fmt.Sprintf("Result %v / %v", result.Num, result.TotalNumFound), color.White)
+	pageTitleText.TextSize = 20
+	pageTitleText.Alignment = fyne.TextAlignCenter
+	pageTitleText.TextStyle.Bold = true
+
+	titleText := canvas.NewText(fmt.Sprintf("Title: %s", result.Title), color.White)
+	titleText.TextSize = 16
+	titleText.Alignment = fyne.TextAlignCenter
+	titleText.TextStyle.Bold = true
+
+	statusText := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
+
+	// Fetch the image as a buffer
+	bufImage, err := appCtxt.APIClient.Helpers.GetImage(result.ImageUrl)
+	if err != nil {
+		dialog.ShowError(err, w)
+		w.Close()
+	}
 	// Create the image component
 	image := canvas.NewImageFromReader(bufImage, "image")
 	image.FillMode = canvas.ImageFillContain
 	image.Resize(fyne.NewSize(350, 250))
 
-	// Create UI components
-	// Texts
-	pageTitleText := canvas.NewText("Is image ok ?", color.White)
-	pageTitleText.TextSize = 20
-	pageTitleText.Alignment = fyne.TextAlignCenter
-	pageTitleText.TextStyle.Bold = true
-	statusText := widget.NewLabelWithStyle(url, fyne.TextAlignCenter, fyne.TextStyle{})
-
 	// Buttons
 	confirmButton := widget.NewButtonWithIcon("Confirm", theme.ConfirmIcon(), func() {
-		onConfirm(url)
 		w.Close()
 	})
 	cancelButton := widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
 		w.Close()
+	})
+	nextButton := widget.NewButtonWithIcon("Next result", theme.NavigateNextIcon(), func() {
+		if i+1 == result.TotalNumFound {
+			statusText.SetText("This is the last result")
+		} else {
+			updateSearchResultContent(appCtxt, w, results, i+1, onConfirm)
+		}
+	})
+	previousButton := widget.NewButtonWithIcon("Previous result", theme.NavigateBackIcon(), func() {
+		if i == 0 {
+			statusText.SetText("This is the first result")
+		} else {
+			updateSearchResultContent(appCtxt, w, results, i-1, onConfirm)
+		}
 	})
 
 	// Layout the elements
 	globalContainer := container.NewBorder(
 		pageTitleText, // Top
 		container.NewVBox( // Bottom
+			titleText,
+			container.NewHBox(
+				layout.NewSpacer(),
+				previousButton,
+				nextButton,
+				layout.NewSpacer(),
+			),
 			statusText,
 			container.NewHBox(
 				cancelButton,
@@ -276,5 +316,4 @@ func (pm *GuiPageManager) ShowImageWindow(parentWindow fyne.Window, url string, 
 
 	// Set container to window
 	w.SetContent(globalContainer)
-	w.Show()
 }

@@ -12,7 +12,7 @@ import (
 )
 
 const createUserMediumRecord = `-- name: CreateUserMediumRecord :one
-INSERT INTO users_media_records (id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration)
+INSERT INTO users_media_records (id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -22,9 +22,10 @@ VALUES (
     $3,
     $4,
     $5,
-    $6
+    $6,
+    $7
 )
-RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration
+RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments
 `
 
 type CreateUserMediumRecordParams struct {
@@ -34,6 +35,7 @@ type CreateUserMediumRecordParams struct {
 	StartDate  pgtype.Timestamp
 	EndDate    pgtype.Timestamp
 	Duration   pgtype.Interval
+	Comments   string
 }
 
 func (q *Queries) CreateUserMediumRecord(ctx context.Context, arg CreateUserMediumRecordParams) (UsersMediaRecord, error) {
@@ -44,6 +46,7 @@ func (q *Queries) CreateUserMediumRecord(ctx context.Context, arg CreateUserMedi
 		arg.StartDate,
 		arg.EndDate,
 		arg.Duration,
+		arg.Comments,
 	)
 	var i UsersMediaRecord
 	err := row.Scan(
@@ -56,6 +59,7 @@ func (q *Queries) CreateUserMediumRecord(ctx context.Context, arg CreateUserMedi
 		&i.StartDate,
 		&i.EndDate,
 		&i.Duration,
+		&i.Comments,
 	)
 	return i, err
 }
@@ -64,7 +68,7 @@ const deleteRecord = `-- name: DeleteRecord :one
 WITH deleted AS (
     DELETE FROM users_media_records
     WHERE id = $1
-    RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration
+    RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments
 )
 SELECT count(*) FROM deleted
 `
@@ -95,7 +99,7 @@ func (q *Queries) GetDatesFromRecord(ctx context.Context, id pgtype.UUID) (GetDa
 }
 
 const getRecordByID = `-- name: GetRecordByID :one
-SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration FROM users_media_records
+SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments FROM users_media_records
 WHERE id = $1
 `
 
@@ -112,6 +116,7 @@ func (q *Queries) GetRecordByID(ctx context.Context, id pgtype.UUID) (UsersMedia
 		&i.StartDate,
 		&i.EndDate,
 		&i.Duration,
+		&i.Comments,
 	)
 	return i, err
 }
@@ -125,6 +130,7 @@ SELECT
     records.start_date, 
     records.end_date, 
     records.duration, 
+    records.comments,
     media.media_type,
     media.title,
     media.creator,
@@ -145,11 +151,12 @@ type GetRecordsAndMediaByUserIDRow struct {
 	StartDate   pgtype.Timestamp
 	EndDate     pgtype.Timestamp
 	Duration    pgtype.Interval
+	Comments    string
 	MediaType   string
 	Title       string
 	Creator     string
-	ReleaseYear int32
-	ImageUrl    pgtype.Text
+	ReleaseYear string
+	ImageUrl    string
 	Metadata    []byte
 }
 
@@ -170,6 +177,7 @@ func (q *Queries) GetRecordsAndMediaByUserID(ctx context.Context, userID pgtype.
 			&i.StartDate,
 			&i.EndDate,
 			&i.Duration,
+			&i.Comments,
 			&i.MediaType,
 			&i.Title,
 			&i.Creator,
@@ -188,7 +196,7 @@ func (q *Queries) GetRecordsAndMediaByUserID(ctx context.Context, userID pgtype.
 }
 
 const getRecordsByUserID = `-- name: GetRecordsByUserID :many
-SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration FROM users_media_records
+SELECT id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments FROM users_media_records
 WHERE user_id = $1
 `
 
@@ -211,6 +219,7 @@ func (q *Queries) GetRecordsByUserID(ctx context.Context, userID pgtype.UUID) ([
 			&i.StartDate,
 			&i.EndDate,
 			&i.Duration,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}
@@ -233,9 +242,9 @@ func (q *Queries) ResetRecords(ctx context.Context) error {
 
 const updateRecord = `-- name: UpdateRecord :one
 UPDATE users_media_records
-SET is_finished = $2, start_date = $3, end_date = $4, duration = $5, updated_at = NOW()
+SET is_finished = $2, start_date = $3, end_date = $4, duration = $5, comments = $6, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration
+RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments
 `
 
 type UpdateRecordParams struct {
@@ -244,6 +253,7 @@ type UpdateRecordParams struct {
 	StartDate  pgtype.Timestamp
 	EndDate    pgtype.Timestamp
 	Duration   pgtype.Interval
+	Comments   string
 }
 
 func (q *Queries) UpdateRecord(ctx context.Context, arg UpdateRecordParams) (UsersMediaRecord, error) {
@@ -253,6 +263,7 @@ func (q *Queries) UpdateRecord(ctx context.Context, arg UpdateRecordParams) (Use
 		arg.StartDate,
 		arg.EndDate,
 		arg.Duration,
+		arg.Comments,
 	)
 	var i UsersMediaRecord
 	err := row.Scan(
@@ -265,6 +276,7 @@ func (q *Queries) UpdateRecord(ctx context.Context, arg UpdateRecordParams) (Use
 		&i.StartDate,
 		&i.EndDate,
 		&i.Duration,
+		&i.Comments,
 	)
 	return i, err
 }

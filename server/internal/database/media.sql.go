@@ -31,8 +31,8 @@ type CreateMediumParams struct {
 	MediaType   string
 	Title       string
 	Creator     string
-	ReleaseYear int32
-	ImageUrl    pgtype.Text
+	ReleaseYear string
+	ImageUrl    string
 	Metadata    []byte
 }
 
@@ -181,8 +181,8 @@ type UpdateMediumParams struct {
 	ID          pgtype.UUID
 	Title       string
 	Creator     string
-	ReleaseYear int32
-	ImageUrl    pgtype.Text
+	ReleaseYear string
+	ImageUrl    string
 	Metadata    []byte
 }
 

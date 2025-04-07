@@ -200,7 +200,7 @@ func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) string {
 		Title:       randTitle,
 		MediaType:   "book",
 		Creator:     "Test",
-		ReleaseYear: 2025,
+		ReleaseYear: "2025",
 	}
 
 	// Create medium via API request

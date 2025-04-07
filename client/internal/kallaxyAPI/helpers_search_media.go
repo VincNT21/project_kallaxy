@@ -19,6 +19,9 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 		if err != nil {
 			return results, err
 		}
+		if len(response.Docs) == 0 {
+			return nil, models.ErrNotFound
+		}
 		for i, found := range response.Docs {
 			results = append(results, models.ShortOnlineSearchResult{
 				Num:           i + 1,
@@ -91,7 +94,7 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 			})
 		}
 	default:
-		return results, errors.New("No external API is implemented for your media type")
+		return results, errors.New("no external API is implemented for your media type")
 	}
 
 	return results, nil
@@ -113,12 +116,17 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 		}
 		// Create metadata map
 		metadata := make(map[string]interface{})
-		metadata["page_count"] = string(bookDetails.NumberOfPages)
+		metadata["page_count"] = bookDetails.NumberOfPages
 		metadata["publishers"] = bookDetails.Publishers
 		if len(bookDetails.Isbn13) != 0 {
 			metadata["isbn13"] = bookDetails.Isbn13[0]
 		} else {
 			metadata["isbn13"] = ""
+		}
+		if len(bookDetails.Isbn10) != 0 {
+			metadata["isbn10"] = bookDetails.Isbn10[0]
+		} else {
+			metadata["isbn10"] = ""
 		}
 		metadata["subjects"] = bookDetails.Subjects
 		metadata["description"] = bookDetails.Description.Value
@@ -166,7 +174,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 			productionCieList = append(productionCieList, prodCie.Name)
 		}
 		metadata["production_companies"] = productionCieList
-		metadata["runtime"] = string(movieDetails.Runtime)
+		metadata["runtime"] = movieDetails.Runtime
 
 		genresList := []string{}
 		for _, genre := range movieDetails.Genres {
@@ -234,7 +242,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 		// Create metadata map
 		metadata := make(map[string]interface{})
 		metadata["description"] = vgDetails.DescriptionRaw
-		metadata["metacritic"] = string(vgDetails.Metacritic)
+		metadata["metacritic"] = vgDetails.Metacritic
 		metadata["platforms"] = findVideogamePlatforms(vgDetails)
 
 		genresList := []string{}
@@ -288,7 +296,8 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 			ImageUrl:  "",
 			Metadata:  metadata,
 		}
-
+	default:
+		return models.ClientMedium{}, errors.New("no external API available for this media type")
 	}
 
 	return results, nil
@@ -391,7 +400,7 @@ func (c *HelpersClient) GetBookISBN(worksKey string) (string, error) {
 
 	// Create query parameters
 	key := strings.TrimPrefix(worksKey, "/works/")
-	queryParameters := fmt.Sprintf("key=%", key)
+	queryParameters := fmt.Sprintf("key=%s", key)
 
 	// Make request
 	r, err := c.apiClient.makeHttpRequestWithQueryParameters(c.apiClient.Config.Endpoints.ExternalAPI.Books.GetISBN, queryParameters)
@@ -442,7 +451,7 @@ func (c *HelpersClient) GetBookISBN(worksKey string) (string, error) {
 func (c *HelpersClient) GetBookAuthor(authorKey string) (string, error) {
 	// Create query parameters
 	key := strings.TrimPrefix(authorKey, "/authors/")
-	queryParameters := fmt.Sprintf("author=%", key)
+	queryParameters := fmt.Sprintf("author=%s", key)
 
 	// Make request
 	r, err := c.apiClient.makeHttpRequestWithQueryParameters(c.apiClient.Config.Endpoints.ExternalAPI.Books.Author, queryParameters)
@@ -525,7 +534,7 @@ func findSeasonsDetails(seriesDetails models.ResponseTvDetails) []string {
 	var seasonsList []string
 	// Get info over each season
 	for _, season := range seriesDetails.Seasons {
-		seasonsList = append(seasonsList, fmt.Sprint("Season %v counts %v episodes", season.SeasonNumber, season.EpisodeCount))
+		seasonsList = append(seasonsList, fmt.Sprintf("Season %v counts %v episodes", season.SeasonNumber, season.EpisodeCount))
 	}
 
 	return seasonsList

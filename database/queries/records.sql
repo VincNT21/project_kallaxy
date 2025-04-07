@@ -1,5 +1,5 @@
 -- name: CreateUserMediumRecord :one
-INSERT INTO users_media_records (id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration)
+INSERT INTO users_media_records (id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -9,7 +9,8 @@ VALUES (
     $3,
     $4,
     $5,
-    $6
+    $6,
+    $7
 )
 RETURNING *;
 
@@ -26,6 +27,7 @@ SELECT
     records.start_date, 
     records.end_date, 
     records.duration, 
+    records.comments,
     media.media_type,
     media.title,
     media.creator,
@@ -43,7 +45,7 @@ WHERE id = $1;
 
 -- name: UpdateRecord :one
 UPDATE users_media_records
-SET is_finished = $2, start_date = $3, end_date = $4, duration = $5, updated_at = NOW()
+SET is_finished = $2, start_date = $3, end_date = $4, duration = $5, comments = $6, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 

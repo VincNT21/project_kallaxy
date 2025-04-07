@@ -12,3 +12,6 @@ client/config/appstate.json
 /client/gui/assets
 bundled.go
 client/config/cache.json
+client/config/metadata_fields_map.json
+.gitignore
+client/config/metadata_fields_specs.json

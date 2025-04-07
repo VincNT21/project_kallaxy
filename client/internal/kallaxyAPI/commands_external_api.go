@@ -483,7 +483,7 @@ func (c *ExternalAPIClient) SearchForBoardgameByTitle(boardgameTitle string) (mo
 
 	// Return data
 	log.Println("--DEBUG-- SearchForBoardgameByTitle() OK")
-	return boardgame, nil
+	return boardgames, nil
 }
 
 func (c *ExternalAPIClient) GetBoardgameDetails(boardgameID string) (models.ResponseBoardgameDetails, error) {

@@ -27,6 +27,7 @@ type ResponseBookISBN struct {
 	} `json:"description"`
 	Title         string   `json:"title"`
 	Publishers    []string `json:"publishers"`
+	Isbn10        []string `json:"isbn_10"`
 	Isbn13        []string `json:"isbn_13"`
 	NumberOfPages int      `json:"number_of_pages"`
 	FullTitle     string   `json:"full_title"`

@@ -15,8 +15,8 @@ type Medium struct {
 	UpdatedAt   pgtype.Timestamp
 	Title       string
 	Creator     string
-	ReleaseYear int32
-	ImageUrl    pgtype.Text
+	ReleaseYear string
+	ImageUrl    string
 	Metadata    []byte
 }
 
@@ -57,4 +57,5 @@ type UsersMediaRecord struct {
 	StartDate  pgtype.Timestamp
 	EndDate    pgtype.Timestamp
 	Duration   pgtype.Interval
+	Comments   string
 }

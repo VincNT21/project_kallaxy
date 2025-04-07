@@ -11,15 +11,11 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/VincNT21/kallaxy/client/context"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (pm *GuiPageManager) GetUserParametersWindow() {
-	// Create the window
-	w := pm.appGui.NewWindow("User Informations")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(400, 300))
-
+func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create UI objects
 	// Texts
 	statusLabel := widget.NewLabelWithStyle("You'll be automatically logged out if you update your personal info", fyne.TextAlignCenter, fyne.TextStyle{})
@@ -28,15 +24,15 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 	titleText.Alignment = fyne.TextAlignCenter
 	titleText.TextStyle.Bold = true
 
-	usernameLabel := widget.NewLabel(fmt.Sprintf("Username: %s", pm.appCtxt.APIClient.CurrentUser.Username))
-	emailLabel := widget.NewLabel(fmt.Sprintf("Email: %s", pm.appCtxt.APIClient.CurrentUser.Email))
+	usernameLabel := widget.NewLabel(fmt.Sprintf("Username: %s", appCtxt.APIClient.CurrentUser.Username))
+	emailLabel := widget.NewLabel(fmt.Sprintf("Email: %s", appCtxt.APIClient.CurrentUser.Email))
 
 	// Entries
 	passswordEntry := widget.NewPasswordEntry()
 	usernameEntry := widget.NewEntry()
-	usernameEntry.SetText(pm.appCtxt.APIClient.CurrentUser.Username)
+	usernameEntry.SetText(appCtxt.APIClient.CurrentUser.Username)
 	emailEntry := widget.NewEntry()
-	emailEntry.SetText(pm.appCtxt.APIClient.CurrentUser.Email)
+	emailEntry.SetText(appCtxt.APIClient.CurrentUser.Email)
 	// Group entries in a form
 	passwordForm := widget.NewFormItem("Password", passswordEntry)
 	usernameForm := widget.NewFormItem("Username", usernameEntry)
@@ -49,59 +45,56 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 	// Buttons
 	updateButton := widget.NewButtonWithIcon("Update info", theme.DocumentCreateIcon(), func() {
 		dialog.ShowForm("Confirm your password", "Confirm", "Cancel", confirmPasswordform, func(b bool) {
-			if err := pm.appCtxt.APIClient.Auth.ConfirmPassword(passswordEntry.Text); err != nil {
+			if err := appCtxt.APIClient.Auth.ConfirmPassword(passswordEntry.Text); err != nil {
 				statusLabel.SetText("Wrong password")
 			} else {
 				passswordEntry.SetText("")
 				dialog.ShowForm("ALL info required, including not updated fields", "Confirm", "Cancel", contentForm, func(b bool) {
 					if b {
 						// Call the Update User client API function
-						_, err := pm.appCtxt.APIClient.Users.UpdateUser(usernameEntry.Text, passswordEntry.Text, emailEntry.Text)
+						_, err := appCtxt.APIClient.Users.UpdateUser(usernameEntry.Text, passswordEntry.Text, emailEntry.Text)
 						if err != nil {
 							switch err {
 							case models.ErrUnauthorized:
-								if _, err2 := pm.appCtxt.APIClient.Auth.RefreshTokens(); err2 != nil {
+								if _, err2 := appCtxt.APIClient.Auth.RefreshTokens(); err2 != nil {
 									dialog.NewConfirm("Authorization problem", "There is a problem with your authorization,\nyou'll be redirected to Login page", func(b bool) {
-										pm.GetLoginWindow()
-										w.Close()
-									}, w)
+										appCtxt.PageManager.ShowLoginPage()
+									}, appCtxt.MainWindow)
 								} else {
-									dialog.ShowInformation("Information", "Client needed to refresh your acess token\nSorry for the inconvenience\nPlease try again, it should work now !", w)
+									dialog.ShowInformation("Information", "Client needed to refresh your acess token\nSorry for the inconvenience\nPlease try again, it should work now !", appCtxt.MainWindow)
 								}
 							case models.ErrServerIssue:
-								dialog.ShowInformation("Error", "Error with server, please retry later", w)
+								dialog.ShowInformation("Error", "Error with server, please retry later", appCtxt.MainWindow)
 							case models.ErrBadRequest:
 								statusLabel.SetText("User's info update failed: one field was not provided")
 							case models.ErrConflict:
 								statusLabel.SetText("User's info update failed: username or email already used")
 							default:
-								dialog.ShowError(err, w)
+								dialog.ShowError(err, appCtxt.MainWindow)
 							}
 						} else {
 							dialog.ShowConfirm("Information", "Info successfully updated !\nYou'll need to log in again", func(b bool) {
 								if b {
-									pm.GetLoginWindow()
-									w.Close()
+									appCtxt.PageManager.ShowLoginPage()
 								} else {
-									w.Close()
+									appCtxt.MainWindow.Close()
 								}
-							}, w)
+							}, appCtxt.MainWindow)
 						}
 					} else {
 						passswordEntry.SetText("")
 					}
-				}, w)
+				}, appCtxt.MainWindow)
 			}
-		}, w)
+		}, appCtxt.MainWindow)
 	})
 
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\nAll unsubmitted changes will be lost!", func(b bool) {
 			if b {
-				pm.GetHomeWindow()
-				w.Close()
+				appCtxt.PageManager.ShowHomePage()
 			}
-		}, w)
+		}, appCtxt.MainWindow)
 	})
 
 	// Group objects
@@ -110,9 +103,13 @@ func (pm *GuiPageManager) GetUserParametersWindow() {
 	bottomRow := container.NewHBox(updateButton, layout.NewSpacer(), exitButton)
 
 	// Create the global frame
-	globalContainer := container.NewVBox(layout.NewSpacer(), titleText, layout.NewSpacer(), centerRow, layout.NewSpacer(), statusLabel, layout.NewSpacer(), bottomRow)
+	globalContainer := container.NewBorder(
+		titleText,
+		container.NewVBox(statusLabel, bottomRow),
+		customSpacerHorizontal(100),
+		customSpacerHorizontal(100),
+		centerRow,
+	)
+	return globalContainer
 
-	// Set container to window
-	w.SetContent(globalContainer)
-	w.Show()
 }

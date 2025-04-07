@@ -9,16 +9,15 @@ import (
 
 	"github.com/VincNT21/kallaxy/server/internal/database"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type parametersCreateMedium struct {
-	Title       string            `json:"title"`
-	MediaType   string            `json:"media_type"`
-	Creator     string            `json:"creator"`
-	ReleaseYear int32             `json:"release_year"`
-	ImageUrl    string            `json:"image_url"`
-	Metadata    map[string]string `json:"metadata"`
+	Title       string                 `json:"title"`
+	MediaType   string                 `json:"media_type"`
+	Creator     string                 `json:"creator"`
+	ReleaseYear string                 `json:"release_year"`
+	ImageUrl    string                 `json:"image_url"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 
 // POST /api/media
@@ -35,16 +34,8 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Check if image_url was provided or not and parse it properly
-	var imageUrl pgtype.Text
-	if params.ImageUrl == "" {
-		imageUrl = pgtype.Text{Valid: false}
-	} else {
-		imageUrl = pgtype.Text{String: params.ImageUrl, Valid: true}
-	}
-
 	// Check if all required fields are provided
-	if params.Title == "" || params.MediaType == "" || params.Creator == "" || params.ReleaseYear == 0 {
+	if params.Title == "" || params.MediaType == "" || params.Creator == "" || params.ReleaseYear == "" {
 		respondWithError(w, 400, "Some required field is missing in request body", errors.New("a imperative field is missing in request's body"))
 		return
 	}
@@ -62,7 +53,7 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 		Title:       params.Title,
 		Creator:     params.Creator,
 		ReleaseYear: params.ReleaseYear,
-		ImageUrl:    imageUrl,
+		ImageUrl:    params.ImageUrl,
 		Metadata:    metadataBytes,
 	})
 	if err != nil {
@@ -217,7 +208,7 @@ type parametersUpdateMedium struct {
 	MediumID    string          `json:"medium_id"`
 	Title       string          `json:"title"`
 	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
+	ReleaseYear string          `json:"release_year"`
 	ImageUrl    string          `json:"image_url"`
 	Metadata    json.RawMessage `json:"metadata"`
 }
@@ -240,21 +231,13 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Check if image_url was provided or not and parse it properly
-	var imageUrl pgtype.Text
-	if params.ImageUrl == "" {
-		imageUrl = pgtype.Text{Valid: false}
-	} else {
-		imageUrl = pgtype.Text{String: params.ImageUrl, Valid: true}
-	}
-
 	// Call query function
 	medium, err := cfg.db.UpdateMedium(r.Context(), database.UpdateMediumParams{
 		ID:          mediumID,
 		Title:       params.Title,
 		Creator:     params.Creator,
 		ReleaseYear: params.ReleaseYear,
-		ImageUrl:    imageUrl,
+		ImageUrl:    params.ImageUrl,
 		Metadata:    params.Metadata,
 	})
 	if err != nil {

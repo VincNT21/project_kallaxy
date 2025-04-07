@@ -15,6 +15,7 @@ type parametersCreateUserMediumRecord struct {
 	MediumID  string `json:"medium_id"`
 	StartDate string `json:"start_date"`
 	EndDate   string `json:"end_date"`
+	Comments  string `json:"comments"`
 }
 
 // POST /api/records
@@ -82,6 +83,7 @@ func (cfg *apiConfig) handlerCreateUserMediumRecord(w http.ResponseWriter, r *ht
 		StartDate:  startDate,
 		EndDate:    endDate,
 		Duration:   interval,
+		Comments:   params.Comments,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -110,6 +112,7 @@ func (cfg *apiConfig) handlerCreateUserMediumRecord(w http.ResponseWriter, r *ht
 			StartDate:  record.StartDate,
 			EndDate:    record.EndDate,
 			Duration:   record.Duration.Days,
+			Comments:   record.Comments,
 		},
 	})
 }
@@ -147,6 +150,7 @@ func (cfg *apiConfig) handlerGetRecordsByUserID(w http.ResponseWriter, r *http.R
 			StartDate:  record.StartDate,
 			EndDate:    record.EndDate,
 			Duration:   record.Duration.Days,
+			Comments:   record.Comments,
 		})
 	}
 
@@ -195,6 +199,7 @@ func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r
 			StartDate:   medium.StartDate,
 			EndDate:     medium.EndDate,
 			Duration:    medium.Duration.Days,
+			Comments:    medium.Comments,
 			MediaType:   medium.MediaType,
 			Title:       medium.Title,
 			Creator:     medium.Creator,
@@ -219,6 +224,7 @@ type parametersUpdateRecord struct {
 	RecordID  string `json:"record_id"`
 	StartDate string `json:"start_date"`
 	EndDate   string `json:"end_date"`
+	Comments  string `json:"comments"`
 }
 
 // PUT /api/records
@@ -301,6 +307,7 @@ func (cfg *apiConfig) handlerUpdateRecord(w http.ResponseWriter, r *http.Request
 		StartDate:  startDate,
 		EndDate:    endDate,
 		Duration:   interval,
+		Comments:   params.Comments,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -323,6 +330,7 @@ func (cfg *apiConfig) handlerUpdateRecord(w http.ResponseWriter, r *http.Request
 			StartDate:  record.StartDate,
 			EndDate:    record.EndDate,
 			Duration:   record.Duration.Days,
+			Comments:   record.Comments,
 		},
 	})
 }

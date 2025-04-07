@@ -12,15 +12,11 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/VincNT21/kallaxy/client/context"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (pm *GuiPageManager) GetLoginWindow() {
-	// Create the window
-	w := pm.appGui.NewWindow("Kallaxy Login")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(800, 600))
-
+func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create UI objects
 	// Texts
 	pageTitleText := canvas.NewText("Please login", color.White)
@@ -39,7 +35,7 @@ func (pm *GuiPageManager) GetLoginWindow() {
 
 	// Buttons
 	loginButton := widget.NewButtonWithIcon("Login", theme.ConfirmIcon(), func() {
-		_, err := pm.appCtxt.APIClient.Auth.LoginUser(usernameEntry.Text, passwordEntry.Text)
+		_, err := appCtxt.APIClient.Auth.LoginUser(usernameEntry.Text, passwordEntry.Text)
 		if err != nil {
 			log.Printf("--GUI-- User %v failed to login\n", usernameEntry.Text)
 			switch err {
@@ -48,18 +44,12 @@ func (pm *GuiPageManager) GetLoginWindow() {
 			case models.ErrServerIssue:
 				statusLabel.SetText("Error with server, please retry later")
 			default:
-				dialog.ShowError(err, w)
+				dialog.ShowError(err, appCtxt.MainWindow)
 			}
-		}
-
-		if err == models.ErrUnauthorized {
-
 		} else {
 			log.Printf("--GUI-- User %v logged in\n", usernameEntry.Text)
-			pm.GetHomeWindow()
-			w.Close()
+			appCtxt.PageManager.ShowHomePage()
 		}
-
 	})
 
 	passwordLostButton := widget.NewButtonWithIcon("Password lost", theme.QuestionIcon(), func() {})
@@ -67,18 +57,15 @@ func (pm *GuiPageManager) GetLoginWindow() {
 	createNewUserButton := widget.NewButtonWithIcon("Create New User", theme.ContentAddIcon(), func() {
 		log.Printf("--GUI-- User %v wants to create a new user\n", usernameEntry.Text)
 		// Call the Create user window
-		pm.GetCreateUserWindow(func() {
-			// This part only runs if in Create user window, user confirm
-			statusLabel.SetText("New user created, please login")
-		})
+		appCtxt.PageManager.ShowCreateUserPage()
 	})
 
 	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
 			if b {
-				w.Close()
+				appCtxt.MainWindow.Close()
 			}
-		}, w)
+		}, appCtxt.MainWindow)
 	})
 
 	// Group objects in VBox container
@@ -93,20 +80,14 @@ func (pm *GuiPageManager) GetLoginWindow() {
 		container.NewVBox(layout.NewSpacer(), objectsContainer, layout.NewSpacer()),
 	)
 
-	// Set container to window and show it
-	w.SetContent(globalContainer)
-	w.Show()
+	// Send content container back to page manager
+	return globalContainer
 }
 
-func (pm *GuiPageManager) GetBackWindow() {
-	// Create the window
-	w := pm.appGui.NewWindow("Kallaxy back")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(800, 600))
-
+func createWelcomeBackContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create objects
 	// Text
-	pageTitleText := canvas.NewText(fmt.Sprintf("Welcome back %s !", pm.appCtxt.APIClient.CurrentUser.Username), color.White)
+	pageTitleText := canvas.NewText(fmt.Sprintf("Welcome back %s !", appCtxt.APIClient.CurrentUser.Username), color.White)
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextSize = 40
 	pageTitleText.TextStyle.Bold = true
@@ -114,32 +95,28 @@ func (pm *GuiPageManager) GetBackWindow() {
 	// Buttons
 	enterButton := widget.NewButtonWithIcon("Enter app", theme.LoginIcon(), func() {
 		// Call for RefreshTokens
-		_, err := pm.appCtxt.APIClient.Auth.RefreshTokens()
+		_, err := appCtxt.APIClient.Auth.RefreshTokens()
 		if err != nil {
 			log.Println("--GUI-- Error with RefeshTokens")
-			switch err {
-			case models.ErrUnauthorized:
-				dialog.ShowInformation("Error", "You need to login", w)
-			case models.ErrServerIssue:
-				dialog.ShowInformation("Error", "Error with server, please retry later", w)
-			default:
-				dialog.ShowError(err, w)
-			}
+			dialog.ShowConfirm("Error", "There is a problem with server\nYou need to login again", func(b bool) {
+				if b {
+					appCtxt.PageManager.ShowLoginPage()
+				}
+			}, appCtxt.MainWindow)
+		} else {
+			appCtxt.PageManager.ShowHomePage()
 		}
-		pm.GetHomeWindow()
-		w.Close()
 	})
 	notMeButton := widget.NewButtonWithIcon("Not you?", theme.CancelIcon(), func() {
-		pm.GetLoginWindow()
-		w.Close()
+		appCtxt.PageManager.ShowLoginPage()
 	})
 
 	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
 			if b {
-				w.Close()
+				appCtxt.MainWindow.Close()
 			}
-		}, w)
+		}, appCtxt.MainWindow)
 	})
 
 	// Group Buttons
@@ -154,7 +131,6 @@ func (pm *GuiPageManager) GetBackWindow() {
 		container.NewVBox(layout.NewSpacer(), buttonContainer, layout.NewSpacer()),
 	)
 
-	// Set container to window and show it
-	w.SetContent(globalContainer)
-	w.Show()
+	// Send content container back to page manager
+	return globalContainer
 }

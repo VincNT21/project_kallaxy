@@ -55,9 +55,9 @@ type User struct {
 - `updated_at`:     *string* (ISO 8601 datetime format) - Last time the medium's info was updated
 - `title`:          *string* - Medium's title
 - `creator`:        *string* - Medium's creator (author, director...)
-- `release_year`:   *int32* - Medium's year of publication
+- `release_year`:   *string* - Medium's date of publication
 - `image_url`:      *string* - A link to medium's cover
-- `metadata`:       *json.RawMessage* - A json object containing metatadata about the medium, according to media type (see below)
+- `metadata`:       *map[string]interface{]* - A json object containing metatadata about the medium, according to media type (see below)
 
 ### Example
 ```json
@@ -68,7 +68,7 @@ type User struct {
     "updated_at": "2025-03-26T14:20:23.525332",
     "title": "The Fellowship of the ring",
     "creator": "J.R.R. Tolkien",
-    "release_year": 1954,
+    "release_year": "1954",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }
@@ -102,6 +102,44 @@ type User struct {
     "start_date": "2025-03-26T14:20:23.525332",
     "end_date": "2025-03-31T08:47:29.205805",
     "duration": 4
+}
+```
+
+## Media with Record resource
+
+### Structure
+- `id`:             *string* (UUIDv4 format) - Record's unique identifier
+- `user_id`:        *string* (UUIDv4 format) - User concerned by the record
+- `media_id`:       *string* (UUIDv4 format) - Medium concerned by the record
+- `is_finished`:    *boolean* - Does user have finished reading/watching/playing the medium
+- `start_date`:     *string* (ISO 8601 datetime) - When user started to read/watch/play the medium
+- `end_date`:       *string* (ISO 8601 datetime) - When user finished reading/watching/playing the medium
+- `duration`:       *int32* - Auto-calculated days interval between start and end dates
+- `comments`: 		*string* - User's comment about medium
+- `media_type`:     *string* - Medium's type (book, movie, serie...)
+- `title`:          *string* - Medium's title
+- `creator`:        *string* - Medium's creator (author, director...)
+- `release_year`:   *string* - Medium's date of publication
+- `image_url`:      *string* - A link to medium's cover
+- `metadata`:       *map[string]interface{]* - A json object containing metatadata about the medium, according to media type
+
+### Example
+```json
+{
+    "id": "4aea83e5-36e2-47c3-a121-7e3db9ac72d1",
+    "user_id": "2a0d54f8-37b8-4e51-826d-6f9632c374a4",
+    "media_id": "3b75af06-e596-42ce-a953-bf235dfc9102",
+    "is_finished": true,
+    "start_date": "2025-03-26T14:20:23.525332",
+    "end_date": "2025-03-31T08:47:29.205805",
+    "duration": 4,
+	"comments": "my personnal review of this...",
+	"type": "book",
+    "title": "The Fellowship of the ring",
+    "creator": "J.R.R. Tolkien",
+    "release_year": "1954",
+    "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
+    "metadata": ""
 }
 ```
 

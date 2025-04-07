@@ -6,8 +6,8 @@ CREATE TABLE media (
     updated_at TIMESTAMP NOT NULL,
     title TEXT NOT NULL,
     creator TEXT NOT NULL,
-    release_year INTEGER NOT NULL,
-    image_url TEXT,
+    release_year TEXT NOT NULL,
+    image_url TEXT NOT NULL,
     metadata JSONB NOT NULL,
     UNIQUE (media_type, title)
 );

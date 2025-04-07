@@ -94,6 +94,9 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 
 	// Media endpoints
 	mux.Handle("POST /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateMedium)))
+	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMediumByTitleAndType)))
+	mux.Handle("GET /api/media/type", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMediaByType)))
+	mux.Handle("GET /api/media_records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetRecordsAndMediaByUserID)))
 	mux.Handle("PUT /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateMedium)))
 	mux.Handle("DELETE /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteMedium)))
 
@@ -108,6 +111,7 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
 	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
+	mux.Handle("GET /auth/login", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerConfirmPassword)))
 
 	// Reset Password endpoints
 	mux.HandleFunc("POST /auth/password_reset", apiCfg.handlerPasswordResetRequest)
@@ -121,9 +125,25 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
 
 	// Proxy endpoints (for external 3rd party API)
-	mux.HandleFunc("GET /external_api/book/search", apiCfg.handlerBookSearch)
-	mux.HandleFunc("GET /external_api/book/isbn", apiCfg.handlerBookByISBN)
-	mux.HandleFunc("GET /external_api/book/author", apiCfg.handlerBookAuthor)
+	// Books
+	mux.Handle("GET /external_api/book/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookSearch)))
+	mux.Handle("GET /external_api/book/isbn", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookByISBN)))
+	mux.Handle("GET /external_api/book/author", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBookAuthor)))
+	mux.Handle("GET /external_api/book/search_isbn", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetBookISBN)))
+
+	// Movies and TV shows
+	mux.Handle("GET /external_api/movie_tv/search_movie", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieSearch)))
+	mux.Handle("GET /external_api/movie_tv/search_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerTVSearch)))
+	mux.Handle("GET /external_api/movie_tv/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMultiSearch)))
+	mux.Handle("GET /external_api/movie_tv", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieTvDetails)))
+	mux.Handle("GET /external_api/movie_tv/movie_credits", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerMovieCreditsDetails)))
+
+	// Videogames
+	mux.Handle("GET /external_api/videogame/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameSearch)))
+	mux.Handle("GET /external_api/videogame", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerVideoGameDetails)))
+	// Boardgmes
+	mux.Handle("GET /external_api/boardgame/search", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBoardgameSearch)))
+	mux.Handle("GET /external_api/boardgame", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerBoardgameDetails)))
 
 	// Create a http server with our multiplexer
 	server := &http.Server{

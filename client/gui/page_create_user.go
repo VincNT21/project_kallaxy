@@ -9,15 +9,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/VincNT21/kallaxy/client/context"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (pm *GuiPageManager) GetCreateUserWindow(onConfirm func()) {
-	// Create the window
-	w := pm.appGui.NewWindow("Kallaxy New User")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(500, 200))
-
+func createUserContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create objects
 	// Texts
 	titleLabel := widget.NewLabelWithStyle("Please provide information for user creation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -44,7 +40,7 @@ func (pm *GuiPageManager) GetCreateUserWindow(onConfirm func()) {
 				func(b bool) {
 					if b {
 						// If user confims, call CreateUser API function
-						_, err := pm.appCtxt.APIClient.Users.CreateUser(usernameEntry.Text, passwordEntry.Text, emailEntry.Text)
+						_, err := appCtxt.APIClient.Users.CreateUser(usernameEntry.Text, passwordEntry.Text, emailEntry.Text)
 						if err != nil {
 							switch err {
 							case models.ErrBadRequest:
@@ -58,24 +54,22 @@ func (pm *GuiPageManager) GetCreateUserWindow(onConfirm func()) {
 							}
 						} else {
 							// Activate the callback onConfirm function
-							onConfirm()
-							w.Close()
+							dialog.ShowInformation("Created", "New user created !\nPlease login", appCtxt.MainWindow)
+							appCtxt.PageManager.ShowLoginPage()
 						}
 					}
 				},
-				w,
+				appCtxt.MainWindow,
 			)
 		},
 		OnCancel: func() {
 			log.Println("--GUI-- CreateUser Form cancelled")
-			w.Close()
+			appCtxt.PageManager.ShowLoginPage()
 		},
 	}
 
 	// Set the global frame
 	globalContainer := container.NewVBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), userForm, layout.NewSpacer(), statusLabel, layout.NewSpacer())
 
-	// Set container to window
-	w.SetContent(globalContainer)
-	w.Show()
+	return globalContainer
 }

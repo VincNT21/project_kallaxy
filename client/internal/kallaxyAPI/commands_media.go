@@ -92,48 +92,6 @@ func (c *MediaClient) CreateMedium(title, mediaType, creator, releaseYear, image
 	return medium, nil
 }
 
-func (c *MediaClient) GetImageUrl(mediumType, mediumTitleOrId string) (string, error) {
-	switch mediumType {
-	case "book":
-		return fmt.Sprintf("https://covers.openlibrary.org/b/isbn/%s-M.jpg", mediumTitleOrId), nil
-	case "movie":
-		movie, err := c.apiClient.External.SearchForMovie(mediumTitleOrId)
-		if err != nil {
-			return "", err
-		}
-		if len(movie.Results) == 0 {
-			return "", err
-		}
-		return fmt.Sprintf("https://image.tmdb.org/t/p/w200%s", movie.Results[0].PosterPath), nil
-	case "series":
-		series, err := c.apiClient.External.SearchForSeries(mediumTitleOrId)
-		if err != nil {
-			return "", err
-		}
-		if len(series.Results) == 0 {
-			return "", err
-		}
-		return fmt.Sprintf("https://image.tmdb.org/t/p/w200%s", series.Results[0].PosterPath), nil
-	case "videogame":
-		videogame, err := c.apiClient.External.SearchForVideogameOnSteam(mediumTitleOrId)
-		if err != nil {
-			return "", err
-		}
-		if len(videogame.Results) == 0 {
-			return "", err
-		}
-		return videogame.Results[0].BackgroundImage, err
-	case "boardgame":
-		boardgame, err := c.apiClient.External.SearchForBoardgame(mediumTitleOrId)
-		if err != nil {
-			return "", err
-		}
-		return boardgame.Items.Item.Image, nil
-	default:
-		return "", nil
-	}
-}
-
 func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
 
 	// Make request

@@ -9,6 +9,7 @@ CREATE TABLE users_media_records (
     start_date TIMESTAMP,
     end_date TIMESTAMP,
     duration INTERVAL DAY,
+    comments TEXT NOT NULL,
     UNIQUE (user_id, media_id)
 );
 

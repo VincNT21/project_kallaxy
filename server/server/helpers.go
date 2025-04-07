@@ -62,12 +62,12 @@ func convertDateToPgtype(stringdate string) (pgtype.Timestamp, error) {
 	return date, nil
 }
 
-func mapToBytes(metadata map[string]string) ([]byte, error) {
+func mapToBytes(metadata map[string]interface{}) ([]byte, error) {
 	return json.Marshal(metadata)
 }
 
-func bytesToMap(data []byte) (map[string]string, error) {
-	var metadata map[string]string
+func bytesToMap(data []byte) (map[string]interface{}, error) {
+	var metadata map[string]interface{}
 	if err := json.Unmarshal(data, &metadata); err != nil {
 		return nil, err
 	}

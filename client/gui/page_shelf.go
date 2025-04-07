@@ -10,40 +10,39 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/VincNT21/kallaxy/client/context"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (pm *GuiPageManager) GetShelfWindow() {
-	// Get all data from server
-	mediaRecords, err := pm.appCtxt.APIClient.Media.GetMediaWithRecords()
-	if err != nil || len(mediaRecords.MediaRecords) == 0 {
-		// TO HANDLE PROPERLY
-		return
-	}
-
-	// Create the window
-	w := pm.appGui.NewWindow("TITLE")
-	w.CenterOnScreen()
-	w.Resize(fyne.NewSize(1024, 768))
-
+func createShelfContent(appCtxt *context.AppContext, mediaRecords models.MediaWithRecords) *fyne.Container {
 	// Create UI Objects
 	// Texts
-	pageTitleText := canvas.NewText(fmt.Sprintf("%s's Kallaxy Shelf", pm.appCtxt.APIClient.CurrentUser.Username), color.White)
+	pageTitleText := canvas.NewText(fmt.Sprintf("%s's Kallaxy Shelf", appCtxt.APIClient.CurrentUser.Username), color.White)
 	pageTitleText.TextSize = 20
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextStyle.Bold = true
 
 	// Buttons
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
-		pm.GetHomeWindow()
-		w.Close()
+		appCtxt.PageManager.ShowHomePage()
 	})
 
 	// Create the Shelf
-	shelfContainer, err := pm.BuildMediaContainers(mediaRecords)
+	shelfContainer, err := buildMediaContainers(appCtxt, mediaRecords)
 	if err != nil {
-		// TO HANDLE PROPERLY
-		return
+		// If an error occured while building the Shelf, return a valid emergency container
+		errorContainer := container.NewVBox(
+			widget.NewLabel("Error while constructing your shelf"),
+			widget.NewButton("Return to home", func() {
+				appCtxt.PageManager.ShowHomePage()
+			}),
+		)
+		return container.NewBorder(
+			container.NewVBox(pageTitleText),
+			container.NewHBox(exitButton),
+			nil, nil,
+			errorContainer,
+		)
 	}
 
 	// Create the global frame
@@ -55,17 +54,15 @@ func (pm *GuiPageManager) GetShelfWindow() {
 		shelfContainer,
 	)
 
-	// Set container to window
-	w.SetContent(globalContainer)
-	w.Show()
+	return globalContainer
 }
 
-func (pm *GuiPageManager) BuildMediaContainers(mediaRecords models.MediaWithRecords) (*container.Scroll, error) {
+func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.MediaWithRecords) (*container.Scroll, error) {
 	// This function create a scrollable shelf container where each media type has a compartment
 	shelf := container.NewVBox()
 
 	// Get media types map
-	typesMap := pm.appCtxt.APIClient.Helpers.GetMediaTypes(mediaRecords)
+	typesMap := appCtxt.APIClient.Helpers.GetMediaTypes(mediaRecords)
 
 	// Iterate over each media type
 	for mediaType := range typesMap {
@@ -86,7 +83,7 @@ func (pm *GuiPageManager) BuildMediaContainers(mediaRecords models.MediaWithReco
 		mediaDisplay := container.NewGridWrap(fyne.NewSize(200, 500))
 		for _, medium := range mediaRecords.MediaRecords[mediaType] {
 			// Get image buffer
-			buffer, err := pm.appCtxt.APIClient.Helpers.GetImage(medium.ImageUrl)
+			buffer, err := appCtxt.APIClient.Helpers.GetImage(medium.ImageUrl)
 			if err != nil {
 				return container.NewVScroll(shelf), err
 			}
