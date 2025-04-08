@@ -50,19 +50,6 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 	imageUrlEntry := widget.NewEntry()
 	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
 
-	// Get info online button
-	buttonGetInfoOnline := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
-		if titleEntry.Text == "" {
-			// If title not provided
-			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", appCtxt.MainWindow)
-		} else {
-			// If title provided
-			initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", func(s string) {})
-		}
-
-	})
-	urlRow := container.NewBorder(nil, nil, nil, buttonGetInfoOnline, imageUrlForm)
-
 	// User's Record forms
 	// Date entries have a Action Button that calls a Date Picker dialog
 	startDateEntry := widget.NewEntry()
@@ -92,7 +79,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 			appCtxt.MainWindow,
 		)
 	})
-	startDateForm := widget.NewFormItem("Started on", startDateEntry)
+	startDateFormItem := widget.NewFormItem("Started on", startDateEntry)
 
 	endDateEntry := widget.NewEntry()
 	endDateEntry.SetPlaceHolder("2025/01/01")
@@ -121,18 +108,35 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 			appCtxt.MainWindow,
 		)
 	})
-	endDateForm := widget.NewFormItem("Completed on", endDateEntry)
+	endDateFormItem := widget.NewFormItem("Completed on", endDateEntry)
 
 	commentsEntry := widget.NewMultiLineEntry()
-	commentsForm := widget.NewFormItem("Personal comments", commentsEntry)
+	commentsFormItem := widget.NewFormItem("Personal comments", commentsEntry)
 
-	recordForm := widget.NewForm(startDateForm, endDateForm, commentsForm)
+	recordForm := widget.NewForm(startDateFormItem, endDateFormItem, commentsFormItem)
 
 	// Metadata formItems will depend on the media_type
-
 	metadataForm, metadataEntryMap := createMetadataForm(appCtxt, mediaType)
 
 	// UI Buttons
+	// Get info online button ("linked" to ImagURL form)
+	buttonGetInfoOnline := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
+		if titleEntry.Text == "" {
+			// If title not provided
+			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", appCtxt.MainWindow)
+		} else {
+			// If title provided
+			initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", func(selectedMedium models.ClientMedium) {
+				updateFormWithSearchResult(selectedMedium, mediaForm)
+				mediaForm.Refresh()
+				updateMetadataForm(appCtxt, selectedMedium, metadataEntryMap)
+				metadataForm.Refresh()
+			})
+		}
+
+	})
+	urlRow := container.NewBorder(nil, nil, nil, buttonGetInfoOnline, imageUrlForm)
+
 	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
 		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\n\nAll unsubmitted changes will be lost!", func(b bool) {
 			if b {
@@ -215,7 +219,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 	return globalContainer
 }
 
-func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Window, mediumTitle, mediumType, vgPlatform string, onConfirm func(string)) {
+func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Window, mediumTitle, mediumType, vgPlatform string, onConfirm func(models.ClientMedium)) {
 	// Create the window
 	secondaryWindow := fyne.CurrentApp().NewWindow("Search Results")
 	secondaryWindow.CenterOnScreen()
@@ -234,13 +238,13 @@ func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Wind
 	}
 
 	// Initialize with the first result
-	updateSearchResultContent(appCtxt, secondaryWindow, results, 0, onConfirm)
+	updateSearchResultContent(appCtxt, mediumType, secondaryWindow, results, 0, onConfirm)
 
 	// Display window
 	secondaryWindow.Show()
 }
 
-func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, results []models.ShortOnlineSearchResult, i int, onConfirm func(string)) {
+func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w fyne.Window, results []models.ShortOnlineSearchResult, i int, onConfirm func(models.ClientMedium)) {
 
 	result := results[i]
 
@@ -270,8 +274,9 @@ func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, resul
 	image.Resize(fyne.NewSize(350, 250))
 
 	// Buttons
-	confirmButton := widget.NewButtonWithIcon("Confirm", theme.ConfirmIcon(), func() {
-		w.Close()
+	detailsButton := widget.NewButtonWithIcon("Get details", theme.SearchIcon(), func() {
+		showSearchMediumDetails(appCtxt, mediaType, result.ApiID, result.ImageUrl, w, onConfirm)
+
 	})
 	cancelButton := widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
 		w.Close()
@@ -280,14 +285,16 @@ func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, resul
 		if i+1 == result.TotalNumFound {
 			statusText.SetText("This is the last result")
 		} else {
-			updateSearchResultContent(appCtxt, w, results, i+1, onConfirm)
+			// Show next page of results
+			updateSearchResultContent(appCtxt, mediaType, w, results, i+1, onConfirm)
 		}
 	})
 	previousButton := widget.NewButtonWithIcon("Previous result", theme.NavigateBackIcon(), func() {
 		if i == 0 {
 			statusText.SetText("This is the first result")
 		} else {
-			updateSearchResultContent(appCtxt, w, results, i-1, onConfirm)
+			// Show previous page of results
+			updateSearchResultContent(appCtxt, mediaType, w, results, i-1, onConfirm)
 		}
 	})
 
@@ -306,7 +313,7 @@ func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, resul
 			container.NewHBox(
 				cancelButton,
 				layout.NewSpacer(),
-				confirmButton,
+				detailsButton,
 			),
 		),
 		nil,   // Left
@@ -316,4 +323,70 @@ func updateSearchResultContent(appCtxt *context.AppContext, w fyne.Window, resul
 
 	// Set container to window
 	w.SetContent(globalContainer)
+}
+
+func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID, imageUrl string, parentWindow fyne.Window, onConfirm func(models.ClientMedium)) {
+	// Get details for medium on external API
+	medium, err := appCtxt.APIClient.Helpers.SearchMediumDetailsOnExternalApi(mediaType, mediumApiID)
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("couldn't get details about medium: %v", err), parentWindow)
+		return
+	}
+
+	// Prepare results
+	titleText := canvas.NewText(fmt.Sprintf("Title: %s", medium.Title), color.White)
+	titleText.TextSize = 16
+	creatorText := canvas.NewText(fmt.Sprintf("Creator: %s", medium.Creator), color.White)
+	creatorText.TextSize = 16
+	pubDateText := canvas.NewText(fmt.Sprintf("Publication date: %s", medium.PubDate), color.White)
+	pubDateText.TextSize = 16
+	// Add metadata ?
+
+	// Display them in a dialog box
+	dialog.ShowCustomConfirm(
+		"Details",
+		"Confirm",
+		"Dismiss",
+		container.NewVBox(titleText, creatorText, pubDateText),
+		func(b bool) {
+			if b {
+				// If user confirms, call OnConfirm callback function
+				medium.ImageUrl = imageUrl // Insert back the proper image url
+				onConfirm(medium)
+			}
+		},
+		parentWindow,
+	)
+
+}
+
+func updateFormWithSearchResult(result models.ClientMedium, form *widget.Form) {
+	for _, item := range form.Items {
+		entry, isEntry := item.Widget.(*widget.Entry)
+		if !isEntry {
+			continue
+		}
+		// Update based on field name
+		switch item.Text {
+		case "Title":
+			entry.SetText(result.Title)
+		case "Creator":
+			entry.SetText(result.Creator)
+		case "Publication date":
+			entry.SetText(result.PubDate)
+		}
+
+	}
+}
+
+func updateMetadataForm(appCtxt *context.AppContext, result models.ClientMedium, entryMap map[string]*widget.Entry) {
+	// Iterate through each field/widget on the entry map
+	for field, entryWidget := range entryMap {
+		// Check if field exists in the metadata
+		if metadataValue, exists := result.Metadata[field]; exists {
+			// If yes, convert the interface{} value to string and set the entry
+			stringValue := formatMetadataValueForEntry(appCtxt, field, metadataValue)
+			entryWidget.SetText(stringValue)
+		}
+	}
 }

@@ -177,3 +177,98 @@ func (c *AuthClient) ConfirmPassword(password string) error {
 	log.Println("--DEBUG-- ConfirmPassword() OK")
 	return nil
 }
+
+type parametersGetResetLink struct {
+	Email string `json:"email"`
+}
+
+func (c *AuthClient) SendPasswordResetLink(email string) (models.RequestPasswordReset, error) {
+	params := parametersGetResetLink{
+		Email: email,
+	}
+
+	// Make request
+	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.PasswordReset.RequestToken, params)
+	if err != nil {
+		log.Printf("--ERROR-- with SendPasswordResetLink(): %v\n", err)
+		return models.RequestPasswordReset{}, err
+	}
+	defer r.Body.Close()
+
+	// Check response's status code
+	if r.StatusCode != 200 {
+		log.Printf("--ERROR-- with SendPasswordResetLink(). Response status code: %v\n", r.StatusCode)
+		switch r.StatusCode {
+		case 400:
+			return models.RequestPasswordReset{}, models.ErrBadRequest
+		case 401:
+			return models.RequestPasswordReset{}, models.ErrUnauthorized
+		case 404:
+			return models.RequestPasswordReset{}, models.ErrNotFound
+		case 409:
+			return models.RequestPasswordReset{}, models.ErrConflict
+		case 500:
+			return models.RequestPasswordReset{}, models.ErrServerIssue
+		default:
+			return models.RequestPasswordReset{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
+		}
+	}
+
+	// Decode response
+	var passwordLinkToken models.RequestPasswordReset
+	err = json.NewDecoder(r.Body).Decode(&passwordLinkToken)
+	if err != nil {
+		log.Printf("--ERROR-- with SendPasswordResetLink(): %v\n", err)
+		return models.RequestPasswordReset{}, err
+	}
+
+	// Return data
+	log.Println("--DEBUG-- SendPasswordResetLink() OK")
+	return passwordLinkToken, nil
+}
+
+func (c *AuthClient) SetNewPassword(password, token string) (models.User, error) {
+	params := models.RequestNewPassword{
+		ResetToken:  token,
+		NewPassword: password,
+	}
+
+	// Make request
+	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.PasswordReset.CreateNewPassword, params)
+	if err != nil {
+		log.Printf("--ERROR-- with SetNewPassword(): %v\n", err)
+		return models.User{}, err
+	}
+	defer r.Body.Close()
+
+	// Check response's status code
+	if r.StatusCode != 200 {
+		log.Printf("--ERROR-- with SetNewPassword(). Response status code: %v\n", r.StatusCode)
+		switch r.StatusCode {
+		case 400:
+			return models.User{}, models.ErrBadRequest
+		case 401:
+			return models.User{}, models.ErrUnauthorized
+		case 404:
+			return models.User{}, models.ErrNotFound
+		case 409:
+			return models.User{}, models.ErrConflict
+		case 500:
+			return models.User{}, models.ErrServerIssue
+		default:
+			return models.User{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
+		}
+	}
+
+	// Decode response
+	var user models.User
+	err = json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		log.Printf("--ERROR-- with SetNewPassword(): %v\n", err)
+		return models.User{}, err
+	}
+
+	// Return data
+	log.Println("--DEBUG-- SetNewPassword() OK")
+	return user, nil
+}

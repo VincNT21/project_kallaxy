@@ -20,6 +20,7 @@ type responsePasswordResetRequest struct {
 	Message    string `json:"message"`
 	ResetLink  string `json:"reset_link"`
 	ResetToken string `json:"reset_token"`
+	Username   string `json:"username"`
 }
 
 // POST /auth/password_reset
@@ -71,6 +72,7 @@ func (cfg *apiConfig) handlerPasswordResetRequest(w http.ResponseWriter, r *http
 		Message:    "Password reset initiated",
 		ResetLink:  resetLink,
 		ResetToken: token,
+		Username:   user.Username,
 	})
 
 	// In production, this would send an email instead

@@ -227,7 +227,7 @@ func initApiConfig(baseURL string) *APIConfig {
 					},
 					GetDetails: Endpoint{
 						Method: "GET",
-						Path:   "/external_api/movie_tv/",
+						Path:   "/external_api/movie_tv",
 					},
 					GetMovieCredits: Endpoint{
 						Method: "GET",

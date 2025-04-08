@@ -49,11 +49,14 @@ func (c *HelpersClient) GetImage(imageUrl string) (*bytes.Buffer, error) {
 }
 
 func (c *HelpersClient) GetFromCache(key string) (*bytes.Buffer, bool) {
-	data, exists := c.apiClient.Cache.Get(key)
-	if !exists {
+	data, exists := c.apiClient.Cache.Get(key)                 // In stored cache
+	dataTemp, existsTemp := c.apiClient.Cache.GetFromTemp(key) // In temp cache
+	if !exists && !existsTemp {
 		return nil, false
+	} else if exists {
+		return bytes.NewBuffer(data), true
 	}
-	return bytes.NewBuffer(data), true
+	return bytes.NewBuffer(dataTemp), true
 }
 
 func (c *HelpersClient) FetchImage(imageUrl string) (*bytes.Buffer, error) {
@@ -87,8 +90,8 @@ func (c *HelpersClient) FetchImage(imageUrl string) (*bytes.Buffer, error) {
 		return nil, err
 	}
 
-	// Store data in cache using the URL as the key
-	c.apiClient.Cache.Add(imageUrl, resizedImageData)
+	// Store data in temp cache using the URL as the key
+	c.apiClient.Cache.AddToTemp(imageUrl, resizedImageData)
 
 	// Return data
 	return bytes.NewBuffer(resizedImageData), nil

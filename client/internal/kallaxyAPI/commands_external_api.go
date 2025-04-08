@@ -278,7 +278,7 @@ func (c *ExternalAPIClient) SearchForSeriesByTitle(seriesTitle string) (models.R
 }
 
 func (c *ExternalAPIClient) GetSeriesDetails(seriesID string) (models.ResponseTvDetails, error) {
-
+	fmt.Printf("series ID: %s\n", seriesID)
 	params := parametersGetMoviesTvDetails{
 		TvID: seriesID,
 	}

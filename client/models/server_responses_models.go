@@ -55,12 +55,6 @@ type Records struct {
 	Records []Record `json:"records"`
 }
 
-type PasswordResetRequest struct {
-	Message    string `json:"message"`
-	ResetLink  string `json:"reset_link"`
-	ResetToken string `json:"reset_token"`
-}
-
 type ResponseVerifyResetToken struct {
 	Valid bool   `json:"valid"`
 	Email string `json:"email"`

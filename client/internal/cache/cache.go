@@ -16,7 +16,8 @@ type cacheEntry struct {
 
 type Cache struct {
 	mu       sync.RWMutex
-	entries  map[string]cacheEntry
+	entries  map[string]cacheEntry // is stored locally at the end of session
+	temp     map[string]cacheEntry // is not stored
 	interval time.Duration
 }
 
@@ -35,6 +36,7 @@ const localStorageCachePath = "/home/vincnt/workspace/project_kallaxy/client/con
 func NewCache() *Cache {
 	c := &Cache{
 		entries:  make(map[string]cacheEntry),
+		temp:     make(map[string]cacheEntry),
 		interval: time.Duration(time.Hour * 720), // Making 1 month interval
 	}
 	return c
@@ -49,6 +51,7 @@ func NewCacheFromFile() *Cache {
 	}
 	c := &Cache{
 		entries:  entries,
+		temp:     make(map[string]cacheEntry),
 		interval: time.Duration(time.Hour * 720), // Making 1 month interval
 	}
 	return c
@@ -59,7 +62,20 @@ func (c *Cache) Add(key string, val []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Add to cache
 	c.entries[key] = cacheEntry{
+		createdAt: time.Now().UTC(),
+		val:       val,
+	}
+}
+
+func (c *Cache) AddToTemp(key string, val []byte) {
+	// Handle mutex
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Add to temp cache
+	c.temp[key] = cacheEntry{
 		createdAt: time.Now().UTC(),
 		val:       val,
 	}
@@ -71,6 +87,19 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 	defer c.mu.RUnlock()
 
 	entry, found := c.entries[key]
+	// Check if cache entry exists and if it's not too old
+	if !found || time.Since(entry.createdAt) > c.interval {
+		return nil, false
+	}
+	return entry.val, true
+}
+
+func (c *Cache) GetFromTemp(key string) ([]byte, bool) {
+	// Handle mutex
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	entry, found := c.temp[key]
 	// Check if cache entry exists and if it's not too old
 	if !found || time.Since(entry.createdAt) > c.interval {
 		return nil, false

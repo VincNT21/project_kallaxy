@@ -19,7 +19,12 @@ func createMetadataForm(appCtxt *context.AppContext, mediaType string) (*widget.
 	fields := appCtxt.MetadataFieldsMap[mediaType]
 
 	for _, field := range fields {
-		entry := widget.NewEntry()
+		var entry *widget.Entry
+		if field == "overview" || field == "description" {
+			entry = widget.NewMultiLineEntry()
+		} else {
+			entry = widget.NewEntry()
+		}
 		form.Append(field, entry)
 		entryMap[field] = entry
 	}

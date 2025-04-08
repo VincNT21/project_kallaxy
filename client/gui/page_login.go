@@ -52,7 +52,9 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 		}
 	})
 
-	passwordLostButton := widget.NewButtonWithIcon("Password lost", theme.QuestionIcon(), func() {})
+	passwordLostButton := widget.NewButtonWithIcon("Password lost", theme.QuestionIcon(), func() {
+		showPasswordLostSecondaryWindow(appCtxt)
+	})
 
 	createNewUserButton := widget.NewButtonWithIcon("Create New User", theme.ContentAddIcon(), func() {
 		log.Printf("--GUI-- User %v wants to create a new user\n", usernameEntry.Text)

@@ -129,7 +129,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 			metadata["isbn10"] = ""
 		}
 		metadata["subjects"] = bookDetails.Subjects
-		metadata["description"] = bookDetails.Description.Value
+		metadata["description"] = formatOverview(bookDetails.Description.Value)
 
 		// Get author(s)
 		authorsList := []string{}
@@ -167,7 +167,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 		// Create metadata map
 		metadata := make(map[string]interface{})
 		metadata["imdb_id"] = movieDetails.ImdbID
-		metadata["overview"] = movieDetails.Overview
+		metadata["overview"] = formatOverview(movieDetails.Overview)
 
 		productionCieList := []string{}
 		for _, prodCie := range movieDetails.ProductionCompanies {
@@ -203,7 +203,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 
 		// Create metadata map
 		metadata := make(map[string]interface{})
-		metadata["overview"] = seriesDetails.Overview
+		metadata["overview"] = formatOverview(seriesDetails.Overview)
 		metadata["status"] = seriesDetails.Status
 		metadata["number_of_seasons"] = seriesDetails.NumberOfSeasons
 		metadata["number_of_episodes"] = seriesDetails.NumberOfEpisodes
@@ -241,7 +241,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 
 		// Create metadata map
 		metadata := make(map[string]interface{})
-		metadata["description"] = vgDetails.DescriptionRaw
+		metadata["description"] = formatOverview(vgDetails.DescriptionRaw)
 		metadata["metacritic"] = vgDetails.Metacritic
 		metadata["platforms"] = findVideogamePlatforms(vgDetails)
 
@@ -534,10 +534,17 @@ func findSeasonsDetails(seriesDetails models.ResponseTvDetails) []string {
 	var seasonsList []string
 	// Get info over each season
 	for _, season := range seriesDetails.Seasons {
-		seasonsList = append(seasonsList, fmt.Sprintf("Season %v counts %v episodes", season.SeasonNumber, season.EpisodeCount))
+		if season.SeasonNumber != 0 {
+			seasonsList = append(seasonsList, fmt.Sprintf("Season %v counts %v episodes", season.SeasonNumber, season.EpisodeCount))
+		}
 	}
 
 	return seasonsList
+}
+
+func formatOverview(overview string) string {
+	splitted := strings.Split(overview, ". ")
+	return strings.Join(splitted, "\n")
 }
 
 func findVideogamePlatforms(vgDetails models.ResponseVideogameDetails) []string {
