@@ -241,7 +241,7 @@ func initApiConfig(baseURL string) *APIConfig {
 					},
 					GetDetails: Endpoint{
 						Method: "GET",
-						Path:   "/external_api/videogame/",
+						Path:   "/external_api/videogame",
 					},
 				},
 				Boardgames: BoardgamesProxy{

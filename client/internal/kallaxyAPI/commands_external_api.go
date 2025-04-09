@@ -21,25 +21,6 @@ func (c *ExternalAPIClient) SearchForBookByTitle(bookTitle string) (models.Respo
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SearchForBookByTitle(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseBooksSearch{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseBooksSearch{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseBooksSearch{}, models.ErrNotFound
-		case 409:
-			return models.ResponseBooksSearch{}, models.ErrConflict
-		case 500:
-			return models.ResponseBooksSearch{}, models.ErrServerIssue
-		default:
-			return models.ResponseBooksSearch{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var books models.ResponseBooksSearch
 	err = json.NewDecoder(r.Body).Decode(&books)
@@ -64,25 +45,6 @@ func (c *ExternalAPIClient) GetBookDetails(isbn string) (models.ResponseBookISBN
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetBookDetails(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseBookISBN{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseBookISBN{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseBookISBN{}, models.ErrNotFound
-		case 409:
-			return models.ResponseBookISBN{}, models.ErrConflict
-		case 500:
-			return models.ResponseBookISBN{}, models.ErrServerIssue
-		default:
-			return models.ResponseBookISBN{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var book models.ResponseBookISBN
 	err = json.NewDecoder(r.Body).Decode(&book)
@@ -106,25 +68,6 @@ func (c *ExternalAPIClient) SearchForMovieByTitle(movieTitle string) (models.Res
 		return models.ResponseMovieSearch{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SearchForMovieByTitle(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseMovieSearch{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseMovieSearch{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseMovieSearch{}, models.ErrNotFound
-		case 409:
-			return models.ResponseMovieSearch{}, models.ErrConflict
-		case 500:
-			return models.ResponseMovieSearch{}, models.ErrServerIssue
-		default:
-			return models.ResponseMovieSearch{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var movie models.ResponseMovieSearch
@@ -159,25 +102,6 @@ func (c *ExternalAPIClient) GetMovieDetails(movieID string) (models.ResponseMovi
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetMovieDetails(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseMovieDetails{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseMovieDetails{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseMovieDetails{}, models.ErrNotFound
-		case 409:
-			return models.ResponseMovieDetails{}, models.ErrConflict
-		case 500:
-			return models.ResponseMovieDetails{}, models.ErrServerIssue
-		default:
-			return models.ResponseMovieDetails{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var movieDetails models.ResponseMovieDetails
 	err = json.NewDecoder(r.Body).Decode(&movieDetails)
@@ -202,25 +126,6 @@ func (c *ExternalAPIClient) GetMovieCredits(movieID string) (models.ResponseMovi
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetMovieCredits(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseMovieCredits{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseMovieCredits{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseMovieCredits{}, models.ErrNotFound
-		case 409:
-			return models.ResponseMovieCredits{}, models.ErrConflict
-		case 500:
-			return models.ResponseMovieCredits{}, models.ErrServerIssue
-		default:
-			return models.ResponseMovieCredits{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var movieCredits models.ResponseMovieCredits
 	err = json.NewDecoder(r.Body).Decode(&movieCredits)
@@ -244,25 +149,6 @@ func (c *ExternalAPIClient) SearchForSeriesByTitle(seriesTitle string) (models.R
 		return models.ResponseTvSearch{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SearchForSeriesByTitle(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseTvSearch{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseTvSearch{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseTvSearch{}, models.ErrNotFound
-		case 409:
-			return models.ResponseTvSearch{}, models.ErrConflict
-		case 500:
-			return models.ResponseTvSearch{}, models.ErrServerIssue
-		default:
-			return models.ResponseTvSearch{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var series models.ResponseTvSearch
@@ -290,25 +176,6 @@ func (c *ExternalAPIClient) GetSeriesDetails(seriesID string) (models.ResponseTv
 		return models.ResponseTvDetails{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetSeriesDetails(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseTvDetails{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseTvDetails{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseTvDetails{}, models.ErrNotFound
-		case 409:
-			return models.ResponseTvDetails{}, models.ErrConflict
-		case 500:
-			return models.ResponseTvDetails{}, models.ErrServerIssue
-		default:
-			return models.ResponseTvDetails{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var seriesDetails models.ResponseTvDetails
@@ -368,25 +235,6 @@ func (c *ExternalAPIClient) SearchForVideogameOnPlatformByTitle(videogameTitle, 
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SearchForVideogameOnPlatformByTitle(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseVideogameSearch{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseVideogameSearch{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseVideogameSearch{}, models.ErrNotFound
-		case 409:
-			return models.ResponseVideogameSearch{}, models.ErrConflict
-		case 500:
-			return models.ResponseVideogameSearch{}, models.ErrServerIssue
-		default:
-			return models.ResponseVideogameSearch{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var videogame models.ResponseVideogameSearch
 	err = json.NewDecoder(r.Body).Decode(&videogame)
@@ -410,25 +258,6 @@ func (c *ExternalAPIClient) GetVideogameDetails(videogameID string) (models.Resp
 		return models.ResponseVideogameDetails{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetVideogameDetails(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseVideogameDetails{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseVideogameDetails{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseVideogameDetails{}, models.ErrNotFound
-		case 409:
-			return models.ResponseVideogameDetails{}, models.ErrConflict
-		case 500:
-			return models.ResponseVideogameDetails{}, models.ErrServerIssue
-		default:
-			return models.ResponseVideogameDetails{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var vgDetails models.ResponseVideogameDetails
@@ -454,25 +283,6 @@ func (c *ExternalAPIClient) SearchForBoardgameByTitle(boardgameTitle string) (mo
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SearchForBoardgameByTitle(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseBoardgameSearch{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseBoardgameSearch{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseBoardgameSearch{}, models.ErrNotFound
-		case 409:
-			return models.ResponseBoardgameSearch{}, models.ErrConflict
-		case 500:
-			return models.ResponseBoardgameSearch{}, models.ErrServerIssue
-		default:
-			return models.ResponseBoardgameSearch{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var boardgames models.ResponseBoardgameSearch
 	err = json.NewDecoder(r.Body).Decode(&boardgames)
@@ -496,25 +306,6 @@ func (c *ExternalAPIClient) GetBoardgameDetails(boardgameID string) (models.Resp
 		return models.ResponseBoardgameDetails{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetBoardgameDetails(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ResponseBoardgameDetails{}, models.ErrBadRequest
-		case 401:
-			return models.ResponseBoardgameDetails{}, models.ErrUnauthorized
-		case 404:
-			return models.ResponseBoardgameDetails{}, models.ErrNotFound
-		case 409:
-			return models.ResponseBoardgameDetails{}, models.ErrConflict
-		case 500:
-			return models.ResponseBoardgameDetails{}, models.ErrServerIssue
-		default:
-			return models.ResponseBoardgameDetails{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var bgDetails models.ResponseBoardgameDetails

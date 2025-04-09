@@ -2,7 +2,6 @@ package kallaxyapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -62,23 +61,6 @@ func (c *MediaClient) CreateMedium(title, mediaType, creator, releaseYear, image
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 201 {
-		log.Printf("--ERROR-- with CreateMedium(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.Medium{}, models.ErrBadRequest
-		case 401:
-			return models.Medium{}, models.ErrUnauthorized
-		case 409:
-			return models.Medium{}, models.ErrConflict
-		case 500:
-			return models.Medium{}, models.ErrServerIssue
-		default:
-			return models.Medium{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var medium models.Medium
 	err = json.NewDecoder(r.Body).Decode(&medium)
@@ -101,25 +83,6 @@ func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
 		return models.MediaWithRecords{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetMediaWithRecords(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.MediaWithRecords{}, models.ErrBadRequest
-		case 401:
-			return models.MediaWithRecords{}, models.ErrUnauthorized
-		case 404:
-			return models.MediaWithRecords{}, models.ErrNotFound
-		case 409:
-			return models.MediaWithRecords{}, models.ErrConflict
-		case 500:
-			return models.MediaWithRecords{}, models.ErrServerIssue
-		default:
-			return models.MediaWithRecords{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var mediaRecords models.MediaWithRecords

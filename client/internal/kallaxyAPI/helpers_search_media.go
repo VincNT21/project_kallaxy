@@ -32,10 +32,13 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 				ApiID:         found.Key,
 			})
 		}
-	case "movies":
+	case "movie":
 		response, err := c.apiClient.External.SearchForMovieByTitle(mediumTitle)
 		if err != nil {
 			return results, err
+		}
+		if len(response.Results) == 0 {
+			return nil, models.ErrNotFound
 		}
 		for i, found := range response.Results {
 			results = append(results, models.ShortOnlineSearchResult{
@@ -52,6 +55,9 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 		if err != nil {
 			return results, err
 		}
+		if len(response.Results) == 0 {
+			return nil, models.ErrNotFound
+		}
 		for i, found := range response.Results {
 			results = append(results, models.ShortOnlineSearchResult{
 				Num:           i + 1,
@@ -66,6 +72,9 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 		response, err := c.apiClient.External.SearchForVideogameOnPlatformByTitle(mediumTitle, videogamePlatform)
 		if err != nil {
 			return results, err
+		}
+		if len(response.Results) == 0 {
+			return nil, models.ErrNotFound
 		}
 		for i, found := range response.Results {
 			results = append(results, models.ShortOnlineSearchResult{
@@ -82,13 +91,16 @@ func (c *HelpersClient) SearchMediaOnExternalApiByTitle(mediaType, mediumTitle, 
 		if err != nil {
 			return results, err
 		}
+		if len(response.Items.Item) == 0 {
+			return nil, models.ErrNotFound
+		}
 		totalCount, _ := strconv.Atoi(response.Items.Total)
 		for i, found := range response.Items.Item {
 			results = append(results, models.ShortOnlineSearchResult{
 				Num:           i + 1,
 				TotalNumFound: totalCount,
 				Title:         found.Name.Value,
-				ImageUrl:      "for image, click GetImage",
+				ImageUrl:      "",
 				PubDate:       found.Yearpublished.Value,
 				ApiID:         found.ID,
 			})
@@ -104,11 +116,19 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 	var results models.ClientMedium
 	switch mediaType {
 	case "book":
-		// First, need to get Book ISBN from selected work key
-		bookIsbn, err := c.apiClient.Helpers.GetBookISBN(mediumID)
-		if err != nil {
-			return models.ClientMedium{}, err
+		var bookIsbn string
+		// First, check if mediumID provided is an ISBN or a works/key
+		if strings.Contains(mediumID, "works") {
+			// If works/key need to get Book ISBN from selected work key
+			isbn, err := c.apiClient.Helpers.GetBookISBN(mediumID)
+			if err != nil {
+				return models.ClientMedium{}, err
+			}
+			bookIsbn = isbn
+		} else {
+			bookIsbn = mediumID
 		}
+
 		// Make request to server proxy for details
 		bookDetails, err := c.apiClient.External.GetBookDetails(bookIsbn)
 		if err != nil {
@@ -283,7 +303,7 @@ func (c *HelpersClient) SearchMediumDetailsOnExternalApi(mediaType, mediumID str
 		metadata["expansions"] = addDetails["expansions"]
 		metadata["implementations"] = addDetails["implementations"]
 		metadata["artists"] = addDetails["artists"]
-		metadata["main_publisher"] = addDetails["main_publisher"][0]
+		metadata["main_publishers"] = addDetails["main_publishers"]
 		metadata["min_players"] = bgDetails.Items.Item.Minplayers.Value
 		metadata["max_players"] = bgDetails.Items.Item.Maxplayers.Value
 
@@ -323,23 +343,6 @@ func (c *HelpersClient) SearchMediumInDB(mediaType, mediumTitle string) (models.
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 201 {
-		log.Printf("--ERROR-- with SearchMediumInDB(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.Medium{}, models.ErrBadRequest
-		case 401:
-			return models.Medium{}, models.ErrUnauthorized
-		case 404:
-			return models.Medium{}, models.ErrNotFound
-		case 500:
-			return models.Medium{}, models.ErrServerIssue
-		default:
-			return models.Medium{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Decode response
 	var medium models.Medium
 	err = json.NewDecoder(r.Body).Decode(&medium)
@@ -363,25 +366,6 @@ func (c *HelpersClient) GetBoardgameImageUrl(id string) (string, error) {
 		return "", err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetBoardgameImageUrl(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return "", models.ErrBadRequest
-		case 401:
-			return "", models.ErrUnauthorized
-		case 404:
-			return "", models.ErrNotFound
-		case 409:
-			return "", models.ErrConflict
-		case 500:
-			return "", models.ErrServerIssue
-		default:
-			return "", fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var response models.ResponseBoardgameDetails
@@ -409,25 +393,6 @@ func (c *HelpersClient) GetBookISBN(worksKey string) (string, error) {
 		return "", err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetBookISBN(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return "", models.ErrBadRequest
-		case 401:
-			return "", models.ErrUnauthorized
-		case 404:
-			return "", models.ErrNotFound
-		case 409:
-			return "", models.ErrConflict
-		case 500:
-			return "", models.ErrServerIssue
-		default:
-			return "", fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var bookIsbn models.BookISBN
@@ -460,25 +425,6 @@ func (c *HelpersClient) GetBookAuthor(authorKey string) (string, error) {
 		return "", err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with GetBookISBN(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return "", models.ErrBadRequest
-		case 401:
-			return "", models.ErrUnauthorized
-		case 404:
-			return "", models.ErrNotFound
-		case 409:
-			return "", models.ErrConflict
-		case 500:
-			return "", models.ErrServerIssue
-		default:
-			return "", fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var bookAuthor models.ResponseBookAuthor
@@ -578,6 +524,9 @@ func findBoardgameCrewAndDetails(bgDetails models.ResponseBoardgameDetails) map[
 		case "boardgameexpansion":
 			crew["expansions"] = append(crew["expansions"], link.Value)
 		case "boardgameimplementation":
+			if strings.Contains(link.Value, "Promo") || strings.Contains(link.Value, "Goodie") || strings.Contains(link.Value, "Goodies") {
+				continue
+			}
 			crew["implementations"] = append(crew["implementations"], link.Value)
 		case "boardgamedesigner":
 			crew["designers"] = append(crew["designer"], link.Value)
@@ -588,11 +537,15 @@ func findBoardgameCrewAndDetails(bgDetails models.ResponseBoardgameDetails) map[
 		}
 	}
 
-	// Iterate a second time to find the first publisher only
+	// Iterate a second time to find the first three publisher only
+	publisherCount := 0
 	for _, link := range bgDetails.Items.Item.Link {
 		if link.Type == "boardgamepublisher" {
-			crew["original_publisher"] = append(crew["original_publisher"], link.Value)
-			break
+			crew["main_publishers"] = append(crew["main_publishers"], link.Value)
+			publisherCount++
+			if publisherCount >= 3 {
+				break
+			}
 		}
 	}
 

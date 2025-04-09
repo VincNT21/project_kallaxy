@@ -31,7 +31,7 @@ func (cfg *apiConfig) handlerVideoGameSearch(w http.ResponseWriter, r *http.Requ
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
 }
@@ -61,7 +61,7 @@ func (cfg *apiConfig) handlerVideoGameDetails(w http.ResponseWriter, r *http.Req
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
 }

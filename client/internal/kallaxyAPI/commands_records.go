@@ -2,7 +2,6 @@ package kallaxyapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -47,25 +46,6 @@ func (c *RecordsClient) CreateRecord(mediumID, startDate, endDate string) (model
 		return models.Record{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 201 {
-		log.Printf("--ERROR-- with CreateRecord(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.Record{}, models.ErrBadRequest
-		case 401:
-			return models.Record{}, models.ErrUnauthorized
-		case 404:
-			return models.Record{}, models.ErrNotFound
-		case 409:
-			return models.Record{}, models.ErrConflict
-		case 500:
-			return models.Record{}, models.ErrServerIssue
-		default:
-			return models.Record{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var record models.Record

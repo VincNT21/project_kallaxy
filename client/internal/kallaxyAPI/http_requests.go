@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/VincNT21/kallaxy/client/models"
 )
 
 func (c *APIClient) makeHttpRequest(endpoint Endpoint, params interface{}) (*http.Response, error) {
@@ -32,6 +34,25 @@ func (c *APIClient) makeHttpRequest(endpoint Endpoint, params interface{}) (*htt
 		return &http.Response{}, fmt.Errorf("couldn't Do Request: %v", err)
 	}
 
+	// Check response's status code
+	if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 203 {
+		log.Printf("--ERROR-- with %s request to %s. Response status code: %v\n", endpoint.Method, endpoint.Path, resp.StatusCode)
+		switch resp.StatusCode {
+		case 400:
+			return nil, models.ErrBadRequest
+		case 401:
+			return nil, models.ErrUnauthorized
+		case 404:
+			return nil, models.ErrNotFound
+		case 409:
+			return nil, models.ErrConflict
+		case 500:
+			return nil, models.ErrServerIssue
+		default:
+			return nil, fmt.Errorf("unknown error status code: %v", resp.StatusCode)
+		}
+	}
+
 	// Return response
 	return resp, nil
 }
@@ -54,6 +75,25 @@ func (c *APIClient) makeHttpRequestWithResfreshToken(endpoint Endpoint) (*http.R
 		return &http.Response{}, fmt.Errorf("couldn't Do Request: %v", err)
 	}
 
+	// Check response's status code
+	if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 203 {
+		log.Printf("--ERROR-- with %s request to %s. Response status code: %v\n", endpoint.Method, endpoint.Path, resp.StatusCode)
+		switch resp.StatusCode {
+		case 400:
+			return nil, models.ErrBadRequest
+		case 401:
+			return nil, models.ErrUnauthorized
+		case 404:
+			return nil, models.ErrNotFound
+		case 409:
+			return nil, models.ErrConflict
+		case 500:
+			return nil, models.ErrServerIssue
+		default:
+			return nil, fmt.Errorf("unknown error status code: %v", resp.StatusCode)
+		}
+	}
+
 	// Return response
 	return resp, nil
 }
@@ -74,6 +114,24 @@ func (c *APIClient) makeHttpRequestWithQueryParameters(endpoint Endpoint, queryP
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return &http.Response{}, fmt.Errorf("couldn't Do Request: %v", err)
+	}
+	// Check response's status code
+	if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 203 {
+		log.Printf("--ERROR-- with %s request to %s. Response status code: %v\n", endpoint.Method, endpoint.Path, resp.StatusCode)
+		switch resp.StatusCode {
+		case 400:
+			return nil, models.ErrBadRequest
+		case 401:
+			return nil, models.ErrUnauthorized
+		case 404:
+			return nil, models.ErrNotFound
+		case 409:
+			return nil, models.ErrConflict
+		case 500:
+			return nil, models.ErrServerIssue
+		default:
+			return nil, fmt.Errorf("unknown error status code: %v", resp.StatusCode)
+		}
 	}
 
 	// Return response

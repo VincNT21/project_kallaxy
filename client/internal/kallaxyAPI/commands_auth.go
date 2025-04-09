@@ -2,7 +2,6 @@ package kallaxyapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/VincNT21/kallaxy/client/models"
@@ -26,19 +25,6 @@ func (c *AuthClient) LoginUser(username, password string) (models.TokensAndUser,
 		return models.TokensAndUser{}, err
 	}
 	defer resp.Body.Close()
-
-	// Check response's status code
-	if resp.StatusCode != 201 {
-		log.Printf("--ERROR-- with loginUser(). Response status code: %v\n", resp.StatusCode)
-		switch resp.StatusCode {
-		case 401:
-			return models.TokensAndUser{}, models.ErrUnauthorized
-		case 500:
-			return models.TokensAndUser{}, models.ErrServerIssue
-		default:
-			return models.TokensAndUser{}, fmt.Errorf("unknown error status code: %v", resp.StatusCode)
-		}
-	}
 
 	// Decode response
 	var tokensUser models.TokensAndUser
@@ -72,21 +58,6 @@ func (c *AuthClient) LogoutUser() error {
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 204 {
-		log.Printf("--ERROR-- with LogoutUser(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 401:
-			return models.ErrUnauthorized
-		case 404:
-			return models.ErrNotFound
-		case 500:
-			return models.ErrServerIssue
-		default:
-			return fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
 	// Delete CurrentUser data in memory
 	c.apiClient.CurrentUser.RefreshToken = ""
 	c.apiClient.CurrentUser.ID = ""
@@ -107,19 +78,6 @@ func (c *AuthClient) RefreshTokens() (models.Tokens, error) {
 		return models.Tokens{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 201 {
-		log.Printf("--ERROR-- with RefreshTokens(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 401:
-			return models.Tokens{}, models.ErrUnauthorized
-		case 500:
-			return models.Tokens{}, models.ErrServerIssue
-		default:
-			return models.Tokens{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var tokens models.Tokens
@@ -154,26 +112,7 @@ func (c *AuthClient) ConfirmPassword(password string) error {
 	}
 	defer r.Body.Close()
 
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with ConfirmPassword(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.ErrBadRequest
-		case 401:
-			return models.ErrUnauthorized
-		case 404:
-			return models.ErrNotFound
-		case 409:
-			return models.ErrConflict
-		case 500:
-			return models.ErrServerIssue
-		default:
-			return fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
-
-	// Return error
+	// Return ok
 	log.Println("--DEBUG-- ConfirmPassword() OK")
 	return nil
 }
@@ -194,25 +133,6 @@ func (c *AuthClient) SendPasswordResetLink(email string) (models.RequestPassword
 		return models.RequestPasswordReset{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SendPasswordResetLink(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.RequestPasswordReset{}, models.ErrBadRequest
-		case 401:
-			return models.RequestPasswordReset{}, models.ErrUnauthorized
-		case 404:
-			return models.RequestPasswordReset{}, models.ErrNotFound
-		case 409:
-			return models.RequestPasswordReset{}, models.ErrConflict
-		case 500:
-			return models.RequestPasswordReset{}, models.ErrServerIssue
-		default:
-			return models.RequestPasswordReset{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var passwordLinkToken models.RequestPasswordReset
@@ -240,25 +160,6 @@ func (c *AuthClient) SetNewPassword(password, token string) (models.User, error)
 		return models.User{}, err
 	}
 	defer r.Body.Close()
-
-	// Check response's status code
-	if r.StatusCode != 200 {
-		log.Printf("--ERROR-- with SetNewPassword(). Response status code: %v\n", r.StatusCode)
-		switch r.StatusCode {
-		case 400:
-			return models.User{}, models.ErrBadRequest
-		case 401:
-			return models.User{}, models.ErrUnauthorized
-		case 404:
-			return models.User{}, models.ErrNotFound
-		case 409:
-			return models.User{}, models.ErrConflict
-		case 500:
-			return models.User{}, models.ErrServerIssue
-		default:
-			return models.User{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
-		}
-	}
 
 	// Decode response
 	var user models.User

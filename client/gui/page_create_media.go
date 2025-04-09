@@ -121,14 +121,69 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 	// UI Buttons
 	// Get info online button ("linked" to ImagURL form)
 	buttonGetInfoOnline := widget.NewButtonWithIcon("Get Info Online\nfrom title", theme.DownloadIcon(), func() {
+		if mediaType == "book" {
+			// In case of book, ask for ISBN
+			titleLine1 := canvas.NewText("Book search is more efficient with provided ISBN", color.White)
+			titleLine1.Alignment = fyne.TextAlignCenter
+			titleLine1.TextSize = 14
+			titleLine2 := canvas.NewText("If you have one, please enter it", color.White)
+			titleLine2.Alignment = fyne.TextAlignCenter
+			titleLine2.TextSize = 14
+			titleLine3 := canvas.NewText("or continue with search by Title", color.White)
+			titleLine3.Alignment = fyne.TextAlignCenter
+			titleLine3.TextSize = 14
+			isbnEntry := widget.NewEntry()
+			isbnEntry.SetPlaceHolder("ISBN 10 or ISBN 13, numbers only")
+			dialog.ShowCustomConfirm(
+				"Book search",
+				"Search with ISBN",
+				"Search with title only",
+				container.NewVBox(titleLine1, titleLine2, titleLine3, layout.NewSpacer(), isbnEntry, layout.NewSpacer()),
+				func(b bool) {
+					if b {
+						showSearchMediumDetails(appCtxt, "book", isbnEntry.Text, "", appCtxt.MainWindow, metadataEntryMap, func(selectedMedium models.ClientMedium) {
+							// OnConfirm function
+							updateFormWithSearchResult(selectedMedium, mediaForm)
+							mediaForm.Refresh()
+							imageUrlEntry.SetText(selectedMedium.ImageUrl)
+							imageUrlForm.Refresh()
+							updateMetadataForm(appCtxt, selectedMedium, metadataEntryMap)
+							metadataForm.Refresh()
+						})
+					} else {
+						if titleEntry.Text == "" {
+							// If title not provided
+							dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", appCtxt.MainWindow)
+							return
+						}
+						initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", metadataEntryMap, func(selectedMedium models.ClientMedium) {
+							// OnConfirm function
+							updateFormWithSearchResult(selectedMedium, mediaForm)
+							mediaForm.Refresh()
+							imageUrlEntry.SetText(selectedMedium.ImageUrl)
+							imageUrlForm.Refresh()
+							updateMetadataForm(appCtxt, selectedMedium, metadataEntryMap)
+							metadataForm.Refresh()
+						})
+					}
+				},
+				appCtxt.MainWindow,
+			)
+			return
+		}
+		// Normal case (not book)
 		if titleEntry.Text == "" {
 			// If title not provided
 			dialog.ShowInformation("Info", "You need to provide a title before clicking on this !", appCtxt.MainWindow)
+			return
 		} else {
-			// If title provided
-			initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", func(selectedMedium models.ClientMedium) {
+			// Search function
+			initSearchResultContent(appCtxt, appCtxt.MainWindow, titleEntry.Text, mediaType, "", metadataEntryMap, func(selectedMedium models.ClientMedium) {
+				// OnConfirm function
 				updateFormWithSearchResult(selectedMedium, mediaForm)
 				mediaForm.Refresh()
+				imageUrlEntry.SetText(selectedMedium.ImageUrl)
+				imageUrlForm.Refresh()
 				updateMetadataForm(appCtxt, selectedMedium, metadataEntryMap)
 				metadataForm.Refresh()
 			})
@@ -219,7 +274,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 	return globalContainer
 }
 
-func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Window, mediumTitle, mediumType, vgPlatform string, onConfirm func(models.ClientMedium)) {
+func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Window, mediumTitle, mediumType, vgPlatform string, entryMap map[string]*widget.Entry, onConfirm func(models.ClientMedium)) {
 	// Create the window
 	secondaryWindow := fyne.CurrentApp().NewWindow("Search Results")
 	secondaryWindow.CenterOnScreen()
@@ -238,13 +293,13 @@ func initSearchResultContent(appCtxt *context.AppContext, parentWindow fyne.Wind
 	}
 
 	// Initialize with the first result
-	updateSearchResultContent(appCtxt, mediumType, secondaryWindow, results, 0, onConfirm)
+	updateSearchResultContent(appCtxt, mediumType, secondaryWindow, results, 0, entryMap, onConfirm)
 
 	// Display window
 	secondaryWindow.Show()
 }
 
-func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w fyne.Window, results []models.ShortOnlineSearchResult, i int, onConfirm func(models.ClientMedium)) {
+func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w fyne.Window, results []models.ShortOnlineSearchResult, i int, entryMap map[string]*widget.Entry, onConfirm func(models.ClientMedium)) {
 
 	result := results[i]
 
@@ -262,20 +317,40 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 
 	statusText := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 
-	// Fetch the image as a buffer
-	bufImage, err := appCtxt.APIClient.Helpers.GetImage(result.ImageUrl)
-	if err != nil {
-		dialog.ShowError(err, w)
-		w.Close()
+	// Inside function lo load image
+	var imageObj fyne.CanvasObject
+	loadImage := func() fyne.CanvasObject {
+		// Fetch the image as a buffer
+		imageUrl := result.ImageUrl
+		if mediaType == "boardgame" {
+			actualImageUrl, err := appCtxt.APIClient.Helpers.GetBoardgameImageUrl(result.ApiID)
+			fmt.Println(actualImageUrl)
+			if err != nil {
+				statusText.SetText("Could not find image URL")
+				return createFallbackImage()
+			}
+			imageUrl = actualImageUrl
+			result.ImageUrl = actualImageUrl
+		}
+
+		bufImage, err := appCtxt.APIClient.Helpers.GetImage(imageUrl)
+		if err != nil {
+			statusText.SetText(fmt.Sprintf("Error loading image: %v\n", err))
+			return createFallbackImage()
+		}
+		// Create the image component
+		image := canvas.NewImageFromReader(bufImage, "image")
+		image.FillMode = canvas.ImageFillContain
+		image.SetMinSize(fyne.NewSize(350, 250))
+
+		return image
 	}
-	// Create the image component
-	image := canvas.NewImageFromReader(bufImage, "image")
-	image.FillMode = canvas.ImageFillContain
-	image.Resize(fyne.NewSize(350, 250))
+
+	imageObj = loadImage()
 
 	// Buttons
 	detailsButton := widget.NewButtonWithIcon("Get details", theme.SearchIcon(), func() {
-		showSearchMediumDetails(appCtxt, mediaType, result.ApiID, result.ImageUrl, w, onConfirm)
+		showSearchMediumDetails(appCtxt, mediaType, result.ApiID, result.ImageUrl, w, entryMap, onConfirm)
 
 	})
 	cancelButton := widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
@@ -286,7 +361,7 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 			statusText.SetText("This is the last result")
 		} else {
 			// Show next page of results
-			updateSearchResultContent(appCtxt, mediaType, w, results, i+1, onConfirm)
+			updateSearchResultContent(appCtxt, mediaType, w, results, i+1, entryMap, onConfirm)
 		}
 	})
 	previousButton := widget.NewButtonWithIcon("Previous result", theme.NavigateBackIcon(), func() {
@@ -294,7 +369,7 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 			statusText.SetText("This is the first result")
 		} else {
 			// Show previous page of results
-			updateSearchResultContent(appCtxt, mediaType, w, results, i-1, onConfirm)
+			updateSearchResultContent(appCtxt, mediaType, w, results, i-1, entryMap, onConfirm)
 		}
 	})
 
@@ -316,21 +391,30 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 				detailsButton,
 			),
 		),
-		nil,   // Left
-		nil,   // Right
-		image, // Center
+		nil,      // Left
+		nil,      // Right
+		imageObj, // Center
 	)
 
 	// Set container to window
 	w.SetContent(globalContainer)
 }
 
-func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID, imageUrl string, parentWindow fyne.Window, onConfirm func(models.ClientMedium)) {
+func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID, imageUrl string, parentWindow fyne.Window, entryMap map[string]*widget.Entry, onConfirm func(models.ClientMedium)) {
 	// Get details for medium on external API
 	medium, err := appCtxt.APIClient.Helpers.SearchMediumDetailsOnExternalApi(mediaType, mediumApiID)
 	if err != nil {
 		dialog.ShowError(fmt.Errorf("couldn't get details about medium: %v", err), parentWindow)
 		return
+	}
+
+	// Add image Url and set empty fields to "unknown"
+	medium.ImageUrl = imageUrl // Insert back the proper image url
+	if medium.Creator == "" {
+		medium.Creator = "unknown"
+	}
+	if medium.PubDate == "" {
+		medium.PubDate = "unknown"
 	}
 
 	// Prepare results
@@ -341,18 +425,19 @@ func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID
 	pubDateText := canvas.NewText(fmt.Sprintf("Publication date: %s", medium.PubDate), color.White)
 	pubDateText.TextSize = 16
 	// Add metadata ?
+	metadataBox := createMetadataTextContainer(appCtxt, entryMap, medium)
 
 	// Display them in a dialog box
 	dialog.ShowCustomConfirm(
 		"Details",
 		"Confirm",
 		"Dismiss",
-		container.NewVBox(titleText, creatorText, pubDateText),
+		container.NewVBox(titleText, creatorText, pubDateText, metadataBox),
 		func(b bool) {
 			if b {
 				// If user confirms, call OnConfirm callback function
-				medium.ImageUrl = imageUrl // Insert back the proper image url
 				onConfirm(medium)
+				parentWindow.Close()
 			}
 		},
 		parentWindow,

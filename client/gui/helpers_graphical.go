@@ -5,6 +5,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 )
 
 func customSeparatorForShelf() *canvas.Rectangle {
@@ -24,4 +26,20 @@ func customSpacerVertical(height float32) fyne.CanvasObject {
 	spacer := canvas.NewRectangle(color.Transparent)
 	spacer.SetMinSize(fyne.NewSize(1, height))
 	return spacer
+}
+
+func createFallbackImage() fyne.CanvasObject {
+	// Create a container with an icon and text
+	brokenIcon := canvas.NewImageFromResource(theme.ErrorIcon())
+	brokenIcon.SetMinSize(fyne.NewSize(50, 50))
+
+	messageText := canvas.NewText("Image not available", color.White)
+	messageText.Alignment = fyne.TextAlignCenter
+
+	return container.NewCenter(
+		container.NewVBox(
+			brokenIcon,
+			messageText,
+		),
+	)
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -33,8 +34,9 @@ func (cfg *apiConfig) handlerBookSearch(w http.ResponseWriter, r *http.Request) 
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
 
@@ -68,8 +70,9 @@ func (cfg *apiConfig) handlerBookByISBN(w http.ResponseWriter, r *http.Request) 
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
 
@@ -99,15 +102,15 @@ func (cfg *apiConfig) handlerBookAuthor(w http.ResponseWriter, r *http.Request) 
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
 
 // GET /external_api/book/search_isbn (query parameters: "?key=xxxx")
 func (cfg *apiConfig) handlerGetBookISBN(w http.ResponseWriter, r *http.Request) {
-	type response struct {
+	type responseISBN struct {
 		ISBN10 string `json:"isbn10"`
 		ISBN13 string `json:"isbn13"`
 	}
@@ -143,7 +146,12 @@ func (cfg *apiConfig) handlerGetBookISBN(w http.ResponseWriter, r *http.Request)
 	}
 	defer resp.Body.Close()
 
-	// Parse response
+	if resp.StatusCode != 200 {
+		respondWithError(w, resp.StatusCode, fmt.Sprintf("request to %s return status code: %v", apiURL, resp.StatusCode), fmt.Errorf("request to %s return status code: %v", apiURL, resp.StatusCode))
+		return
+	}
+
+	// Parse response from API
 	var bookInfo responseFromApiExtract
 	err = json.NewDecoder(resp.Body).Decode(&bookInfo)
 	if err != nil || len(bookInfo.Entries) == 0 {
@@ -151,10 +159,20 @@ func (cfg *apiConfig) handlerGetBookISBN(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Create response for client
+	var response responseISBN
+	if len(bookInfo.Entries[0].Isbn10) == 0 {
+		response.ISBN10 = ""
+	} else {
+		response.ISBN10 = bookInfo.Entries[0].Isbn10[0]
+	}
+	if len(bookInfo.Entries[0].Isbn13) == 0 {
+		response.ISBN13 = ""
+	} else {
+		response.ISBN13 = bookInfo.Entries[0].Isbn13[0]
+	}
+
 	// Send the response
-	respondWithJson(w, 200, response{
-		ISBN10: bookInfo.Entries[0].Isbn10[0],
-		ISBN13: bookInfo.Entries[0].Isbn13[0],
-	})
+	respondWithJson(w, 200, response)
 
 }

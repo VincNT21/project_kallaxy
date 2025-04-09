@@ -36,7 +36,7 @@ func (cfg *apiConfig) handlerMovieSearch(w http.ResponseWriter, r *http.Request)
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
 }
@@ -67,7 +67,7 @@ func (cfg *apiConfig) handlerTVSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
 }
@@ -98,7 +98,7 @@ func (cfg *apiConfig) handlerMultiSearch(w http.ResponseWriter, r *http.Request)
 	}
 	defer resp.Body.Close()
 
-	// Pass though the response
+	// Pass through the response
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)
 }

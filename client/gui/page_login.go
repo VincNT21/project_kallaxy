@@ -18,12 +18,22 @@ import (
 
 func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create UI objects
-	// Texts
+	// Top title
 	pageTitleText := canvas.NewText("Please login", color.White)
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextSize = 40
 	pageTitleText.TextStyle.Bold = true
 
+	// Bottom exit button
+	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
+		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
+			if b {
+				appCtxt.MainWindow.Close()
+			}
+		}, appCtxt.MainWindow)
+	})
+
+	// Status label
 	statusLabel := widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{})
 
 	// Entries
@@ -41,8 +51,10 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 			switch err {
 			case models.ErrUnauthorized:
 				statusLabel.SetText("Bad username/password")
+				statusLabel.Refresh()
 			case models.ErrServerIssue:
 				statusLabel.SetText("Error with server, please retry later")
+				statusLabel.Refresh()
 			default:
 				dialog.ShowError(err, appCtxt.MainWindow)
 			}
@@ -62,16 +74,15 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 		appCtxt.PageManager.ShowCreateUserPage()
 	})
 
-	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
-		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
-			if b {
-				appCtxt.MainWindow.Close()
-			}
-		}, appCtxt.MainWindow)
-	})
-
 	// Group objects in VBox container
-	objectsContainer := container.NewVBox(usernameEntry, passwordEntry, loginButton, passwordLostButton, createNewUserButton)
+	objectsContainer := container.NewVBox(
+		usernameEntry,
+		passwordEntry,
+		loginButton,
+		passwordLostButton,
+		createNewUserButton,
+		statusLabel,
+	)
 
 	// Create the global frame
 	globalContainer := container.NewBorder(
@@ -88,11 +99,20 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 
 func createWelcomeBackContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create objects
-	// Text
+	// Top title
 	pageTitleText := canvas.NewText(fmt.Sprintf("Welcome back %s !", appCtxt.APIClient.CurrentUser.Username), color.White)
 	pageTitleText.Alignment = fyne.TextAlignCenter
 	pageTitleText.TextSize = 40
 	pageTitleText.TextStyle.Bold = true
+
+	// Bottom exit button
+	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
+		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
+			if b {
+				appCtxt.MainWindow.Close()
+			}
+		}, appCtxt.MainWindow)
+	})
 
 	// Buttons
 	enterButton := widget.NewButtonWithIcon("Enter app", theme.LoginIcon(), func() {
@@ -111,14 +131,6 @@ func createWelcomeBackContent(appCtxt *context.AppContext) *fyne.Container {
 	})
 	notMeButton := widget.NewButtonWithIcon("Not you?", theme.CancelIcon(), func() {
 		appCtxt.PageManager.ShowLoginPage()
-	})
-
-	exitButton := widget.NewButtonWithIcon("Exit App", theme.CancelIcon(), func() {
-		dialog.ShowConfirm("Exit", "Are you sure you want to exit Kallaxy App ?", func(b bool) {
-			if b {
-				appCtxt.MainWindow.Close()
-			}
-		}, appCtxt.MainWindow)
 	})
 
 	// Group Buttons

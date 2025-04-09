@@ -45,7 +45,7 @@ func InitMetadataFieldsMap() map[string][]string {
 			"expansions",
 			"implementations",
 			"artists",
-			"main_publisher",
+			"main_publishers",
 			"min_players",
 			"max_players",
 		},
@@ -87,7 +87,7 @@ func InitMetadataFieldsSpecs() map[string]FieldSpec {
 		"expansions":      {FieldType: "list"},
 		"implementations": {FieldType: "list"},
 		"artists":         {FieldType: "list"},
-		"main_publisher":  {FieldType: "string"},
+		"main_publishers": {FieldType: "list"},
 		"min_players":     {FieldType: "int"},
 		"max_players":     {FieldType: "int"},
 	}

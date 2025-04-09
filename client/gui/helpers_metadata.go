@@ -2,13 +2,20 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/VincNT21/kallaxy/client/context"
+	"github.com/VincNT21/kallaxy/client/models"
 )
 
+// Create a Form with metadata fields, based on mediaType
+// Return the form and an metadata entryMap (will serve for further operations)
 func createMetadataForm(appCtxt *context.AppContext, mediaType string) (*widget.Form, map[string]*widget.Entry) {
 
 	// Create var
@@ -32,6 +39,8 @@ func createMetadataForm(appCtxt *context.AppContext, mediaType string) (*widget.
 	return form, entryMap
 }
 
+// Extract values from Metadata form (based on given entryMap)
+// Return values as a map[string]interface{}
 func extractMetadataValues(appCtxt *context.AppContext, entryMap map[string]*widget.Entry) map[string]interface{} {
 
 	result := make(map[string]interface{})
@@ -44,6 +53,9 @@ func extractMetadataValues(appCtxt *context.AppContext, entryMap map[string]*wid
 	return result
 }
 
+// Function used when extracting metadata text value to correct server type
+// For each metadata field, verify on local FieldSpecs map which type it's supposed to be
+// Process and return the value parsed in correct type
 func processMetadataFieldValue(appCtxt *context.AppContext, fieldName, textValue string) interface{} {
 	// Define type specifications for each metadata field
 	spec, exists := appCtxt.MetadataFieldsSpecs[fieldName]
@@ -78,6 +90,9 @@ func processMetadataFieldValue(appCtxt *context.AppContext, fieldName, textValue
 	}
 }
 
+// Function used when filling metadata form with result values
+// For each metadata field, verify on local FieldSpecs map which type it's supposed to be
+// Process and return the value parsed as string
 func formatMetadataValueForEntry(appCtxt *context.AppContext, fieldName string, value interface{}) string {
 	// Define type specifications for each metadata field
 	spec, exists := appCtxt.MetadataFieldsSpecs[fieldName]
@@ -125,4 +140,24 @@ func formatMetadataValueForEntry(appCtxt *context.AppContext, fieldName string, 
 	default:
 		return fmt.Sprintf("%v", value)
 	}
+}
+
+// Used for display details when user search medium online
+// Create a canvas.Text of type "<medatada_field>: <result.metadata_value>"
+func createMetadataTextContainer(appCtxt *context.AppContext, entryMap map[string]*widget.Entry, result models.ClientMedium) *fyne.Container {
+	metadataContainer := container.NewVBox()
+	for field, _ := range entryMap {
+		var metadataValue string
+		if field == "description" || field == "overview" {
+			metadataStringValue := formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
+			splitted := strings.Split(metadataStringValue, ". ")
+			metadataValue = strings.Join(splitted, "\n")
+		} else {
+			metadataValue = formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
+		}
+		line := canvas.NewText(fmt.Sprintf("%v: %v", field, metadataValue), color.White)
+		line.TextSize = 14
+		metadataContainer.Add(line)
+	}
+	return metadataContainer
 }
