@@ -1,9 +1,12 @@
 package gui
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 	"github.com/VincNT21/kallaxy/client/context"
+	"github.com/VincNT21/kallaxy/client/models"
 )
 
 type GuiPageManager struct {
@@ -62,6 +65,14 @@ func (pm *GuiPageManager) ShowShelfPage() {
 	content := createShelfContent(pm.appCtxt, mediaRecords)
 	pm.mainWindow.SetContent(content)
 	pm.mainWindow.SetTitle("Kallaxy - My Shelf")
+	// Resize if needed
+	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
+}
+
+func (pm *GuiPageManager) ShowCompartmentMediaPage(mediaType string, mediaList []models.MediumWithRecord) {
+	content := createMediaListContent(pm.appCtxt, mediaType, mediaList)
+	pm.mainWindow.SetContent(content)
+	pm.mainWindow.SetTitle(fmt.Sprintf("Kallaxy - My Shelf %s Compartment", mediaType))
 	// Resize if needed
 	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
 }

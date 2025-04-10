@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"image/color"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -67,7 +68,10 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 	// Iterate over each media type
 	for mediaType := range typesMap {
 		// Create the top separator
-		topText := canvas.NewText(mediaType, color.White)
+		topTextButton := widget.NewButton(strings.ToTitle(mediaType), func() {
+			appCtxt.PageManager.ShowCompartmentMediaPage(mediaType, mediaRecords.MediaRecords[mediaType])
+		})
+		topText := canvas.NewText(strings.ToTitle(mediaType), color.White)
 		topText.Alignment = fyne.TextAlignCenter
 		topText.TextSize = 20
 
@@ -76,7 +80,7 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 			customSeparatorForShelf(),
 			customSeparatorForShelf(),
 			customSeparatorForShelf(),
-			topText,
+			topTextButton,
 		)
 
 		// Create all images for media of this type into a Grid Wrap
@@ -87,9 +91,10 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 			if err != nil {
 				return container.NewVScroll(shelf), err
 			}
+
 			image := canvas.NewImageFromReader(buffer, medium.Title)
-			image.SetMinSize(fyne.NewSize(25, 50))
 			image.FillMode = canvas.ImageFillContain
+
 			mediaDisplay.Add(image)
 		}
 
@@ -113,4 +118,32 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 
 	// Return the completed shelf
 	return scrollableShelf, nil
+}
+
+func createMediaListContent(appCtxt *context.AppContext, mediaType string, mediaList []models.MediumWithRecord) *fyne.Container {
+	// Get the tree populated from helper function
+	tree := createAndPopulateTree(appCtxt, mediaList)
+
+	// Make the tree scrollable
+	scrollableTree := container.NewVScroll(tree)
+	scrollableTree.SetMinSize(fyne.NewSize(800, 600))
+
+	// Interface
+	pageTitle := canvas.NewText(fmt.Sprintf("My Shelf Compartment - %s", mediaType), color.White)
+	pageTitle.Alignment = fyne.TextAlignCenter
+	pageTitle.TextSize = 18
+
+	backButton := widget.NewButtonWithIcon("Back to Shelf", theme.ContentUndoIcon(), func() {
+		appCtxt.PageManager.ShowShelfPage()
+	})
+
+	// Organize global container
+	globalContainer := container.NewBorder(
+		pageTitle,
+		backButton,
+		nil, nil,
+		scrollableTree,
+	)
+
+	return globalContainer
 }

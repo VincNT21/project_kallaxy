@@ -197,10 +197,10 @@ func (ctx *TestContext) CreateTestMediumRandom(t *testing.T) string {
 	randTitle := rand.Text()
 
 	testBook := parametersCreateMedium{
-		Title:       randTitle,
-		MediaType:   "book",
-		Creator:     "Test",
-		ReleaseYear: "2025",
+		Title:     randTitle,
+		MediaType: "book",
+		Creator:   "Test",
+		PubDate:   "2025",
 	}
 
 	// Create medium via API request

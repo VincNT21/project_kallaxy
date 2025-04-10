@@ -134,7 +134,7 @@ SELECT
     media.media_type,
     media.title,
     media.creator,
-    media.release_year,
+    media.pub_date,
     media.image_url,
     media.metadata
 FROM users_media_records AS records
@@ -144,20 +144,20 @@ WHERE records.user_id = $1
 `
 
 type GetRecordsAndMediaByUserIDRow struct {
-	ID          pgtype.UUID
-	UserID      pgtype.UUID
-	MediaID     pgtype.UUID
-	IsFinished  pgtype.Bool
-	StartDate   pgtype.Timestamp
-	EndDate     pgtype.Timestamp
-	Duration    pgtype.Interval
-	Comments    string
-	MediaType   string
-	Title       string
-	Creator     string
-	ReleaseYear string
-	ImageUrl    string
-	Metadata    []byte
+	ID         pgtype.UUID
+	UserID     pgtype.UUID
+	MediaID    pgtype.UUID
+	IsFinished pgtype.Bool
+	StartDate  pgtype.Timestamp
+	EndDate    pgtype.Timestamp
+	Duration   pgtype.Interval
+	Comments   string
+	MediaType  string
+	Title      string
+	Creator    string
+	PubDate    string
+	ImageUrl   string
+	Metadata   []byte
 }
 
 func (q *Queries) GetRecordsAndMediaByUserID(ctx context.Context, userID pgtype.UUID) ([]GetRecordsAndMediaByUserIDRow, error) {
@@ -181,7 +181,7 @@ func (q *Queries) GetRecordsAndMediaByUserID(ctx context.Context, userID pgtype.
 			&i.MediaType,
 			&i.Title,
 			&i.Creator,
-			&i.ReleaseYear,
+			&i.PubDate,
 			&i.ImageUrl,
 			&i.Metadata,
 		); err != nil {

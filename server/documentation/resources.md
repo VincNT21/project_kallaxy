@@ -55,9 +55,9 @@ type User struct {
 - `updated_at`:     *string* (ISO 8601 datetime format) - Last time the medium's info was updated
 - `title`:          *string* - Medium's title
 - `creator`:        *string* - Medium's creator (author, director...)
-- `release_year`:   *string* - Medium's date of publication
+- `pub_date`:   *string* - Medium's date of publication
 - `image_url`:      *string* - A link to medium's cover
-- `metadata`:       *map[string]interface{]* - A json object containing metatadata about the medium, according to media type (see below)
+- `metadata`:       *map[string]interface{}* - A json object containing metatadata about the medium, according to media type (see below)
 
 ### Example
 ```json
@@ -68,7 +68,7 @@ type User struct {
     "updated_at": "2025-03-26T14:20:23.525332",
     "title": "The Fellowship of the ring",
     "creator": "J.R.R. Tolkien",
-    "release_year": "1954",
+    "pub_date": "1954",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }
@@ -119,9 +119,9 @@ type User struct {
 - `media_type`:     *string* - Medium's type (book, movie, serie...)
 - `title`:          *string* - Medium's title
 - `creator`:        *string* - Medium's creator (author, director...)
-- `release_year`:   *string* - Medium's date of publication
+- `pub_date`:   *string* - Medium's date of publication
 - `image_url`:      *string* - A link to medium's cover
-- `metadata`:       *map[string]interface{]* - A json object containing metatadata about the medium, according to media type
+- `metadata`:       *map[string]interface{}* - A json object containing metatadata about the medium, according to media type
 
 ### Example
 ```json
@@ -137,7 +137,7 @@ type User struct {
 	"type": "book",
     "title": "The Fellowship of the ring",
     "creator": "J.R.R. Tolkien",
-    "release_year": "1954",
+    "pub_date": "1954",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }
@@ -213,9 +213,9 @@ type parametersCreateMedium struct {
 	Title       string          `json:"title"`
 	MediaType   string          `json:"media_type"`
 	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
+	PubDate string           `json:"pub_date"`
 	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 ```
 
@@ -224,9 +224,9 @@ type parametersUpdateMedium struct {
 	MediumID    string          `json:"medium_id"`
 	Title       string          `json:"title"`
 	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
+	PubDate 	string           `json:"pub_date"`
 	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 ```
 
@@ -320,9 +320,9 @@ type Medium struct {
 	UpdatedAt   string          `json:"updated_at"`
 	Title       string          `json:"title"`
 	Creator     string          `json:"creator"`
-	ReleaseYear int32           `json:"release_year"`
+	PubDate 	string           `json:"pub_date"`
 	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 ```
 

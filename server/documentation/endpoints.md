@@ -303,11 +303,11 @@
 * `media_type` - *string*  
 *Couple `title` & `media_type` needs to be unique across server's database*
 * `creator` - *string*
-* `release year` - *int32*
+* `pub_date` - *string*
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - map[string]string (according to media type see resources [metadata](resources.md#metadata-for-media))
+* `metadata` - map[string]interface{} (according to media type see resources [metadata](resources.md#metadata-for-media))
 
 
 *Example*:
@@ -316,7 +316,7 @@
     "title": "The Fellowship of the Ring",
     "media_type": "book",
     "creator": "J.R.R Tolkien",
-    "release_year": 1954,
+    "pub_date": "1954/02/01",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }
@@ -425,11 +425,11 @@
 * `medium_id` - *string* (in format UUIDv4, see [resource documentation](resources.md#uuid))
 * unique `title` - *string*
 * `creator` - *string*
-* `release year` - *int32*
+* `pub_date` - *string*
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - map[string]string (according to media type see resources [metadata](resources.md#metadata-for-media))
+* `metadata` - map[string]interface{} (according to media type see resources [metadata](resources.md#metadata-for-media))
 
 >**`media_type` cannot be updated**  
 >Even if a field is not updated, client still need to send old info (no comparison is done in server, all are replaced).
@@ -441,7 +441,7 @@
     "medium_id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc",
     "title": "The Two Towers",
     "creator": "J.R.R Tolkien",
-    "release_year": 1954,
+    "pub_date": "1954/02/01",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
     "metadata": ""
 }

@@ -83,7 +83,7 @@ func (c *HelpersClient) FetchImage(imageUrl string) (*bytes.Buffer, error) {
 	}
 
 	// Resize image before caching and returning
-	// (to max dimensions of 200x200)
+	// (to max dimensions of 400x400)
 	resizedImageData, err := resizeImage(imageData, 400, 400)
 	if err != nil {
 		log.Printf("--ERROR-- with FetchImage(), couldn't resize image: %v\n", err)

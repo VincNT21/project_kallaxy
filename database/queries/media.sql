@@ -1,5 +1,5 @@
 -- name: CreateMedium :one
-INSERT INTO media (id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata)
+INSERT INTO media (id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata)
 VALUES (
     gen_random_uuid(),
     $1,
@@ -15,7 +15,7 @@ RETURNING *;
 
 -- name: UpdateMedium :one
 UPDATE media
-SET title = $2, creator = $3, release_year = $4, image_url = $5, metadata = $6, updated_at = NOW()
+SET title = $2, creator = $3, pub_date = $4, image_url = $5, metadata = $6, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 

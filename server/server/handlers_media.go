@@ -12,12 +12,12 @@ import (
 )
 
 type parametersCreateMedium struct {
-	Title       string                 `json:"title"`
-	MediaType   string                 `json:"media_type"`
-	Creator     string                 `json:"creator"`
-	ReleaseYear string                 `json:"release_year"`
-	ImageUrl    string                 `json:"image_url"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	Title     string                 `json:"title"`
+	MediaType string                 `json:"media_type"`
+	Creator   string                 `json:"creator"`
+	PubDate   string                 `json:"pub_date"`
+	ImageUrl  string                 `json:"image_url"`
+	Metadata  map[string]interface{} `json:"metadata"`
 }
 
 // POST /api/media
@@ -35,7 +35,7 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check if all required fields are provided
-	if params.Title == "" || params.MediaType == "" || params.Creator == "" || params.ReleaseYear == "" {
+	if params.Title == "" || params.MediaType == "" || params.Creator == "" || params.PubDate == "" {
 		respondWithError(w, 400, "Some required field is missing in request body", errors.New("a imperative field is missing in request's body"))
 		return
 	}
@@ -49,12 +49,12 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 
 	// Call query function
 	medium, err := cfg.db.CreateMedium(r.Context(), database.CreateMediumParams{
-		MediaType:   params.MediaType,
-		Title:       params.Title,
-		Creator:     params.Creator,
-		ReleaseYear: params.ReleaseYear,
-		ImageUrl:    params.ImageUrl,
-		Metadata:    metadataBytes,
+		MediaType: params.MediaType,
+		Title:     params.Title,
+		Creator:   params.Creator,
+		PubDate:   params.PubDate,
+		ImageUrl:  params.ImageUrl,
+		Metadata:  metadataBytes,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -77,15 +77,15 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	// Respond
 	respondWithJson(w, 201, response{
 		Medium: Medium{
-			ID:          medium.ID,
-			MediaType:   medium.MediaType,
-			CreatedAt:   medium.CreatedAt,
-			UpdatedAt:   medium.UpdatedAt,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    metadataMap,
+			ID:        medium.ID,
+			MediaType: medium.MediaType,
+			CreatedAt: medium.CreatedAt,
+			UpdatedAt: medium.UpdatedAt,
+			Title:     medium.Title,
+			Creator:   medium.Creator,
+			PubDate:   medium.PubDate,
+			ImageUrl:  medium.ImageUrl,
+			Metadata:  metadataMap,
 		},
 	})
 }
@@ -133,15 +133,15 @@ func (cfg *apiConfig) handlerGetMediumByTitleAndType(w http.ResponseWriter, r *h
 	// Respond
 	respondWithJson(w, 200, response{
 		Medium: Medium{
-			ID:          medium.ID,
-			MediaType:   medium.MediaType,
-			CreatedAt:   medium.CreatedAt,
-			UpdatedAt:   medium.UpdatedAt,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    metadataMap,
+			ID:        medium.ID,
+			MediaType: medium.MediaType,
+			CreatedAt: medium.CreatedAt,
+			UpdatedAt: medium.UpdatedAt,
+			Title:     medium.Title,
+			Creator:   medium.Creator,
+			PubDate:   medium.PubDate,
+			ImageUrl:  medium.ImageUrl,
+			Metadata:  metadataMap,
 		},
 	})
 
@@ -187,15 +187,15 @@ func (cfg *apiConfig) handlerGetMediaByType(w http.ResponseWriter, r *http.Reque
 		}
 
 		response.Media = append(response.Media, Medium{
-			ID:          medium.ID,
-			MediaType:   medium.MediaType,
-			CreatedAt:   medium.CreatedAt,
-			UpdatedAt:   medium.UpdatedAt,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    metadataMap,
+			ID:        medium.ID,
+			MediaType: medium.MediaType,
+			CreatedAt: medium.CreatedAt,
+			UpdatedAt: medium.UpdatedAt,
+			Title:     medium.Title,
+			Creator:   medium.Creator,
+			PubDate:   medium.PubDate,
+			ImageUrl:  medium.ImageUrl,
+			Metadata:  metadataMap,
 		})
 	}
 
@@ -205,12 +205,12 @@ func (cfg *apiConfig) handlerGetMediaByType(w http.ResponseWriter, r *http.Reque
 }
 
 type parametersUpdateMedium struct {
-	MediumID    string          `json:"medium_id"`
-	Title       string          `json:"title"`
-	Creator     string          `json:"creator"`
-	ReleaseYear string          `json:"release_year"`
-	ImageUrl    string          `json:"image_url"`
-	Metadata    json.RawMessage `json:"metadata"`
+	MediumID string                 `json:"medium_id"`
+	Title    string                 `json:"title"`
+	Creator  string                 `json:"creator"`
+	PubDate  string                 `json:"pub_date"`
+	ImageUrl string                 `json:"image_url"`
+	Metadata map[string]interface{} `json:"metadata"`
 }
 
 // PUT /api/media
@@ -231,15 +231,23 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Convert metadata map to []byte
+	metadataBytes, err := mapToBytes(params.Metadata)
+	if err != nil {
+		respondWithError(w, 500, "couldn't convert metadata map for database", err)
+		return
+	}
+
 	// Call query function
 	medium, err := cfg.db.UpdateMedium(r.Context(), database.UpdateMediumParams{
-		ID:          mediumID,
-		Title:       params.Title,
-		Creator:     params.Creator,
-		ReleaseYear: params.ReleaseYear,
-		ImageUrl:    params.ImageUrl,
-		Metadata:    params.Metadata,
+		ID:       mediumID,
+		Title:    params.Title,
+		Creator:  params.Creator,
+		PubDate:  params.PubDate,
+		ImageUrl: params.ImageUrl,
+		Metadata: metadataBytes,
 	})
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondWithError(w, 404, "No medium with given ID in database", err)
@@ -264,15 +272,15 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 
 	// Respond
 	respondWithJson(w, 200, Medium{
-		ID:          medium.ID,
-		MediaType:   medium.MediaType,
-		CreatedAt:   medium.CreatedAt,
-		UpdatedAt:   medium.UpdatedAt,
-		Title:       medium.Title,
-		Creator:     medium.Creator,
-		ReleaseYear: medium.ReleaseYear,
-		ImageUrl:    medium.ImageUrl,
-		Metadata:    metadataMap,
+		ID:        medium.ID,
+		MediaType: medium.MediaType,
+		CreatedAt: medium.CreatedAt,
+		UpdatedAt: medium.UpdatedAt,
+		Title:     medium.Title,
+		Creator:   medium.Creator,
+		PubDate:   medium.PubDate,
+		ImageUrl:  medium.ImageUrl,
+		Metadata:  metadataMap,
 	})
 }
 

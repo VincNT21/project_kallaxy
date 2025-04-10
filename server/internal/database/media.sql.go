@@ -12,7 +12,7 @@ import (
 )
 
 const createMedium = `-- name: CreateMedium :one
-INSERT INTO media (id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata)
+INSERT INTO media (id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata)
 VALUES (
     gen_random_uuid(),
     $1,
@@ -24,16 +24,16 @@ VALUES (
     $5,
     $6
 )
-RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
+RETURNING id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata
 `
 
 type CreateMediumParams struct {
-	MediaType   string
-	Title       string
-	Creator     string
-	ReleaseYear string
-	ImageUrl    string
-	Metadata    []byte
+	MediaType string
+	Title     string
+	Creator   string
+	PubDate   string
+	ImageUrl  string
+	Metadata  []byte
 }
 
 func (q *Queries) CreateMedium(ctx context.Context, arg CreateMediumParams) (Medium, error) {
@@ -41,7 +41,7 @@ func (q *Queries) CreateMedium(ctx context.Context, arg CreateMediumParams) (Med
 		arg.MediaType,
 		arg.Title,
 		arg.Creator,
-		arg.ReleaseYear,
+		arg.PubDate,
 		arg.ImageUrl,
 		arg.Metadata,
 	)
@@ -53,7 +53,7 @@ func (q *Queries) CreateMedium(ctx context.Context, arg CreateMediumParams) (Med
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Creator,
-		&i.ReleaseYear,
+		&i.PubDate,
 		&i.ImageUrl,
 		&i.Metadata,
 	)
@@ -64,7 +64,7 @@ const deleteMedium = `-- name: DeleteMedium :one
 WITH deleted AS (
     DELETE FROM media
     WHERE id = $1
-    RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
+    RETURNING id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata
 )
 SELECT count(*) FROM deleted
 `
@@ -77,7 +77,7 @@ func (q *Queries) DeleteMedium(ctx context.Context, id pgtype.UUID) (int64, erro
 }
 
 const getMediaByType = `-- name: GetMediaByType :many
-SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+SELECT id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata FROM media
 WHERE LOWER(media_type) = LOWER($1)
 `
 
@@ -97,7 +97,7 @@ func (q *Queries) GetMediaByType(ctx context.Context, lower string) ([]Medium, e
 			&i.UpdatedAt,
 			&i.Title,
 			&i.Creator,
-			&i.ReleaseYear,
+			&i.PubDate,
 			&i.ImageUrl,
 			&i.Metadata,
 		); err != nil {
@@ -112,7 +112,7 @@ func (q *Queries) GetMediaByType(ctx context.Context, lower string) ([]Medium, e
 }
 
 const getMediumByID = `-- name: GetMediumByID :one
-SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+SELECT id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata FROM media
 WHERE id = $1
 `
 
@@ -126,7 +126,7 @@ func (q *Queries) GetMediumByID(ctx context.Context, id pgtype.UUID) (Medium, er
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Creator,
-		&i.ReleaseYear,
+		&i.PubDate,
 		&i.ImageUrl,
 		&i.Metadata,
 	)
@@ -134,7 +134,7 @@ func (q *Queries) GetMediumByID(ctx context.Context, id pgtype.UUID) (Medium, er
 }
 
 const getMediumByTitleAndType = `-- name: GetMediumByTitleAndType :one
-SELECT id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata FROM media
+SELECT id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata FROM media
 WHERE LOWER(title) = LOWER($1)
 AND LOWER(media_type) = LOWER($2)
 `
@@ -154,7 +154,7 @@ func (q *Queries) GetMediumByTitleAndType(ctx context.Context, arg GetMediumByTi
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Creator,
-		&i.ReleaseYear,
+		&i.PubDate,
 		&i.ImageUrl,
 		&i.Metadata,
 	)
@@ -172,18 +172,18 @@ func (q *Queries) ResetMedia(ctx context.Context) error {
 
 const updateMedium = `-- name: UpdateMedium :one
 UPDATE media
-SET title = $2, creator = $3, release_year = $4, image_url = $5, metadata = $6, updated_at = NOW()
+SET title = $2, creator = $3, pub_date = $4, image_url = $5, metadata = $6, updated_at = NOW()
 WHERE id = $1
-RETURNING id, media_type, created_at, updated_at, title, creator, release_year, image_url, metadata
+RETURNING id, media_type, created_at, updated_at, title, creator, pub_date, image_url, metadata
 `
 
 type UpdateMediumParams struct {
-	ID          pgtype.UUID
-	Title       string
-	Creator     string
-	ReleaseYear string
-	ImageUrl    string
-	Metadata    []byte
+	ID       pgtype.UUID
+	Title    string
+	Creator  string
+	PubDate  string
+	ImageUrl string
+	Metadata []byte
 }
 
 func (q *Queries) UpdateMedium(ctx context.Context, arg UpdateMediumParams) (Medium, error) {
@@ -191,7 +191,7 @@ func (q *Queries) UpdateMedium(ctx context.Context, arg UpdateMediumParams) (Med
 		arg.ID,
 		arg.Title,
 		arg.Creator,
-		arg.ReleaseYear,
+		arg.PubDate,
 		arg.ImageUrl,
 		arg.Metadata,
 	)
@@ -203,7 +203,7 @@ func (q *Queries) UpdateMedium(ctx context.Context, arg UpdateMediumParams) (Med
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Creator,
-		&i.ReleaseYear,
+		&i.PubDate,
 		&i.ImageUrl,
 		&i.Metadata,
 	)

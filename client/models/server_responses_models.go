@@ -24,15 +24,15 @@ type TokensAndUser struct {
 }
 
 type Medium struct {
-	ID          string            `json:"id"`
-	MediaType   string            `json:"media_type"`
-	CreatedAt   string            `json:"created_at"`
-	UpdatedAt   string            `json:"updated_at"`
-	Title       string            `json:"title"`
-	Creator     string            `json:"creator"`
-	ReleaseYear int32             `json:"release_year"`
-	ImageUrl    string            `json:"image_url"`
-	Metadata    map[string]string `json:"metadata"`
+	ID        string                 `json:"id"`
+	MediaType string                 `json:"media_type"`
+	CreatedAt string                 `json:"created_at"`
+	UpdatedAt string                 `json:"updated_at"`
+	Title     string                 `json:"title"`
+	Creator   string                 `json:"creator"`
+	PubDate   string                 `json:"pub_date"`
+	ImageUrl  string                 `json:"image_url"`
+	Metadata  map[string]interface{} `json:"metadata"`
 }
 
 type ListMedia struct {
@@ -61,19 +61,19 @@ type ResponseVerifyResetToken struct {
 }
 
 type MediumWithRecord struct {
-	ID          string            `json:"record_id"`
-	UserID      string            `json:"user_id"`
-	MediaID     string            `json:"medium_id"`
-	IsFinished  bool              `json:"is_finished"`
-	StartDate   string            `json:"start_date"`
-	EndDate     string            `json:"end_date"`
-	Duration    int32             `json:"duration"`
-	MediaType   string            `json:"media_type"`
-	Title       string            `json:"title"`
-	Creator     string            `json:"creator"`
-	ReleaseYear int32             `json:"release_year"`
-	ImageUrl    string            `json:"image_url"`
-	Metadata    map[string]string `json:"metadata"`
+	ID         string                 `json:"record_id"`
+	UserID     string                 `json:"user_id"`
+	MediaID    string                 `json:"medium_id"`
+	IsFinished bool                   `json:"is_finished"`
+	StartDate  string                 `json:"start_date"`
+	EndDate    string                 `json:"end_date"`
+	Duration   int32                  `json:"duration"`
+	MediaType  string                 `json:"media_type"`
+	Title      string                 `json:"title"`
+	Creator    string                 `json:"creator"`
+	PubDate    string                 `json:"pub_date"`
+	ImageUrl   string                 `json:"image_url"`
+	Metadata   map[string]interface{} `json:"metadata"`
 }
 
 type MediaWithRecords struct {

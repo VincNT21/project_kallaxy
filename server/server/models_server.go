@@ -18,15 +18,15 @@ type Tokens struct {
 }
 
 type Medium struct {
-	ID          pgtype.UUID            `json:"id"`
-	MediaType   string                 `json:"media_type"`
-	CreatedAt   pgtype.Timestamp       `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp       `json:"updated_at"`
-	Title       string                 `json:"title"`
-	Creator     string                 `json:"creator"`
-	ReleaseYear string                 `json:"release_year"`
-	ImageUrl    string                 `json:"image_url"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	ID        pgtype.UUID            `json:"id"`
+	MediaType string                 `json:"media_type"`
+	CreatedAt pgtype.Timestamp       `json:"created_at"`
+	UpdatedAt pgtype.Timestamp       `json:"updated_at"`
+	Title     string                 `json:"title"`
+	Creator   string                 `json:"creator"`
+	PubDate   string                 `json:"pub_date"`
+	ImageUrl  string                 `json:"image_url"`
+	Metadata  map[string]interface{} `json:"metadata"`
 }
 
 type Record struct {
@@ -43,18 +43,18 @@ type Record struct {
 }
 
 type MediumWithRecord struct {
-	ID          pgtype.UUID            `json:"record_id"`
-	UserID      pgtype.UUID            `json:"user_id"`
-	MediaID     pgtype.UUID            `json:"medium_id"`
-	IsFinished  pgtype.Bool            `json:"is_finished"`
-	StartDate   pgtype.Timestamp       `json:"start_date"`
-	EndDate     pgtype.Timestamp       `json:"end_date"`
-	Duration    int32                  `json:"duration"`
-	Comments    string                 `json:"comments"`
-	MediaType   string                 `json:"media_type"`
-	Title       string                 `json:"title"`
-	Creator     string                 `json:"creator"`
-	ReleaseYear string                 `json:"release_year"`
-	ImageUrl    string                 `json:"image_url"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	ID         pgtype.UUID            `json:"record_id"`
+	UserID     pgtype.UUID            `json:"user_id"`
+	MediaID    pgtype.UUID            `json:"medium_id"`
+	IsFinished pgtype.Bool            `json:"is_finished"`
+	StartDate  pgtype.Timestamp       `json:"start_date"`
+	EndDate    pgtype.Timestamp       `json:"end_date"`
+	Duration   int32                  `json:"duration"`
+	Comments   string                 `json:"comments"`
+	MediaType  string                 `json:"media_type"`
+	Title      string                 `json:"title"`
+	Creator    string                 `json:"creator"`
+	PubDate    string                 `json:"pub_date"`
+	ImageUrl   string                 `json:"image_url"`
+	Metadata   map[string]interface{} `json:"metadata"`
 }

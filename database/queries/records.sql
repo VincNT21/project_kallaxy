@@ -31,7 +31,7 @@ SELECT
     media.media_type,
     media.title,
     media.creator,
-    media.release_year,
+    media.pub_date,
     media.image_url,
     media.metadata
 FROM users_media_records AS records

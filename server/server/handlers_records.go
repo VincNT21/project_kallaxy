@@ -192,20 +192,20 @@ func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r
 		}
 		// Create the MediumWithRecord object
 		mediumRecord := MediumWithRecord{
-			ID:          medium.ID,
-			UserID:      medium.UserID,
-			MediaID:     medium.MediaID,
-			IsFinished:  medium.IsFinished,
-			StartDate:   medium.StartDate,
-			EndDate:     medium.EndDate,
-			Duration:    medium.Duration.Days,
-			Comments:    medium.Comments,
-			MediaType:   medium.MediaType,
-			Title:       medium.Title,
-			Creator:     medium.Creator,
-			ReleaseYear: medium.ReleaseYear,
-			ImageUrl:    medium.ImageUrl,
-			Metadata:    metadataMap,
+			ID:         medium.ID,
+			UserID:     medium.UserID,
+			MediaID:    medium.MediaID,
+			IsFinished: medium.IsFinished,
+			StartDate:  medium.StartDate,
+			EndDate:    medium.EndDate,
+			Duration:   medium.Duration.Days,
+			Comments:   medium.Comments,
+			MediaType:  medium.MediaType,
+			Title:      medium.Title,
+			Creator:    medium.Creator,
+			PubDate:    medium.PubDate,
+			ImageUrl:   medium.ImageUrl,
+			Metadata:   metadataMap,
 		}
 
 		// Get the appropriate media type key

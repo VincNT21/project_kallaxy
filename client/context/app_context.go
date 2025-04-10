@@ -3,6 +3,7 @@ package context
 import (
 	"fyne.io/fyne/v2"
 	kallaxyapi "github.com/VincNT21/kallaxy/client/internal/kallaxyAPI"
+	"github.com/VincNT21/kallaxy/client/models"
 )
 
 type AppContext struct {
@@ -21,6 +22,7 @@ type PageManager interface {
 	ShowCreateMediaPage(mediaType string)
 	ShowShelfPage()
 	ShowParametersPage()
+	ShowCompartmentMediaPage(mediaType string, mediaList []models.MediumWithRecord)
 }
 
 // Create and configured the shared AppContext

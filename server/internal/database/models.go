@@ -9,15 +9,15 @@ import (
 )
 
 type Medium struct {
-	ID          pgtype.UUID
-	MediaType   string
-	CreatedAt   pgtype.Timestamp
-	UpdatedAt   pgtype.Timestamp
-	Title       string
-	Creator     string
-	ReleaseYear string
-	ImageUrl    string
-	Metadata    []byte
+	ID        pgtype.UUID
+	MediaType string
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+	Title     string
+	Creator   string
+	PubDate   string
+	ImageUrl  string
+	Metadata  []byte
 }
 
 type PasswordResetToken struct {

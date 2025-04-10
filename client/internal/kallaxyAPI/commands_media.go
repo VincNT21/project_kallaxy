@@ -3,15 +3,14 @@ package kallaxyapi
 import (
 	"encoding/json"
 	"log"
-	"strconv"
 
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, releaseYear, imageUrl, startDate, endDate string) (models.Medium, models.Record, error) {
+func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, pubDate, imageUrl, startDate, endDate string, metadata map[string]interface{}) (models.Medium, models.Record, error) {
 
 	// Make request for Medium creation in a goroutine
-	medium, err := c.apiClient.Media.CreateMedium(title, mediaType, creator, releaseYear, imageUrl)
+	medium, err := c.apiClient.Media.CreateMedium(title, mediaType, creator, pubDate, imageUrl, metadata)
 	if err != nil {
 		log.Printf("--ERROR-- with CreateMediumAndRecord(): %v\n", err)
 		return models.Medium{}, models.Record{}, err
@@ -24,33 +23,36 @@ func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, releaseYe
 		return models.Medium{}, models.Record{}, err
 	}
 
+	// Get image from temp Cache and put it in local cache
+	if imageUrl != "" {
+		dataTemp, exists := c.apiClient.Cache.GetFromTemp(imageUrl)
+		if exists {
+			c.apiClient.Cache.Add(imageUrl, dataTemp)
+		}
+	}
+
 	// Return data
 	return medium, record, nil
 }
 
-func (c *MediaClient) CreateMedium(title, mediaType, creator, releaseYear, imageUrl string) (models.Medium, error) {
+func (c *MediaClient) CreateMedium(title, mediaType, creator, pubDate, imageUrl string, metadata map[string]interface{}) (models.Medium, error) {
 	type parametersCreateMedium struct {
-		Title       string          `json:"title"`
-		MediaType   string          `json:"media_type"`
-		Creator     string          `json:"creator"`
-		ReleaseYear int32           `json:"release_year"`
-		ImageUrl    string          `json:"image_url"`
-		Metadata    json.RawMessage `json:"metadata"`
-	}
-
-	// Convert input data to match server's requirement
-	releaseYearInt, err := strconv.Atoi(releaseYear)
-	if err != nil {
-		return models.Medium{}, nil
+		Title     string                 `json:"title"`
+		MediaType string                 `json:"media_type"`
+		Creator   string                 `json:"creator"`
+		PubDate   string                 `json:"pub_date"`
+		ImageUrl  string                 `json:"image_url"`
+		Metadata  map[string]interface{} `json:"metadata"`
 	}
 
 	// Parameters for Create Medium request
 	params := parametersCreateMedium{
-		Title:       title,
-		MediaType:   mediaType,
-		Creator:     creator,
-		ReleaseYear: int32(releaseYearInt),
-		ImageUrl:    imageUrl,
+		Title:     title,
+		MediaType: mediaType,
+		Creator:   creator,
+		PubDate:   pubDate,
+		ImageUrl:  imageUrl,
+		Metadata:  metadata,
 	}
 
 	// Make request for Medium creation

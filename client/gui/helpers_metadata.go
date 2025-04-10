@@ -53,7 +53,7 @@ func extractMetadataValues(appCtxt *context.AppContext, entryMap map[string]*wid
 	return result
 }
 
-// Function used when extracting metadata text value to correct server type
+// Format metadata values FROM string TO correct server type (string, int, list)
 // For each metadata field, verify on local FieldSpecs map which type it's supposed to be
 // Process and return the value parsed in correct type
 func processMetadataFieldValue(appCtxt *context.AppContext, fieldName, textValue string) interface{} {
@@ -90,7 +90,7 @@ func processMetadataFieldValue(appCtxt *context.AppContext, fieldName, textValue
 	}
 }
 
-// Function used when filling metadata form with result values
+// Format metadata values FROM server's type (string, int, list) TO string
 // For each metadata field, verify on local FieldSpecs map which type it's supposed to be
 // Process and return the value parsed as string
 func formatMetadataValueForEntry(appCtxt *context.AppContext, fieldName string, value interface{}) string {
@@ -147,14 +147,8 @@ func formatMetadataValueForEntry(appCtxt *context.AppContext, fieldName string, 
 func createMetadataTextContainer(appCtxt *context.AppContext, entryMap map[string]*widget.Entry, result models.ClientMedium) *fyne.Container {
 	metadataContainer := container.NewVBox()
 	for field, _ := range entryMap {
-		var metadataValue string
-		if field == "description" || field == "overview" {
-			metadataStringValue := formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
-			splitted := strings.Split(metadataStringValue, ". ")
-			metadataValue = strings.Join(splitted, "\n")
-		} else {
-			metadataValue = formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
-		}
+
+		metadataValue := formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
 		line := canvas.NewText(fmt.Sprintf("%v: %v", field, metadataValue), color.White)
 		line.TextSize = 14
 		metadataContainer.Add(line)

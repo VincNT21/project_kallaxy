@@ -46,7 +46,6 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 
 	mediaForm := widget.NewForm(titleForm, mediaTypeForm, creatorForm, pubDateForm)
 
-	// ImageUrl row (with "get info online" button)
 	imageUrlEntry := widget.NewEntry()
 	imageUrlForm := widget.NewForm(widget.NewFormItem("Image URL", imageUrlEntry))
 
@@ -171,6 +170,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 			)
 			return
 		}
+
 		// Normal case (not book)
 		if titleEntry.Text == "" {
 			// If title not provided
@@ -219,9 +219,10 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 			func(b bool) {
 				// If Confirmed. call the CreateMediumAndRecord client API function
 				if b {
-					// PLACEHOLDER
-					fmt.Println(metadataEntryMap)
-					// PLACEHOLDER
+					// Get proper metadata field (according to fields specs)
+					metadataParsed := extractMetadataValues(appCtxt, metadataEntryMap)
+
+					// Make request to server
 					_, _, err := appCtxt.APIClient.Media.CreateMediumAndRecord(
 						titleEntry.Text,
 						mediaTypeEntry.Text,
@@ -230,6 +231,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 						imageUrlEntry.Text,
 						startDateEntry.Text,
 						endDateEntry.Text,
+						metadataParsed,
 					)
 					if err != nil {
 						switch err {
@@ -408,8 +410,17 @@ func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID
 		return
 	}
 
+	var urlImage string
+	if mediaType == "book" && parentWindow == appCtxt.MainWindow {
+		// This means that showSearchMediumDetails is called for a "Search by ISBN"
+		// No imageUrl is provided, need to find it online
+		urlImage = fmt.Sprintf("https://covers.openlibrary.org/b/isbn/%s-M.jpg", mediumApiID)
+	} else {
+		urlImage = imageUrl
+	}
+
 	// Add image Url and set empty fields to "unknown"
-	medium.ImageUrl = imageUrl // Insert back the proper image url
+	medium.ImageUrl = urlImage // Insert back the proper image url
 	if medium.Creator == "" {
 		medium.Creator = "unknown"
 	}
@@ -424,20 +435,41 @@ func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID
 	creatorText.TextSize = 16
 	pubDateText := canvas.NewText(fmt.Sprintf("Publication date: %s", medium.PubDate), color.White)
 	pubDateText.TextSize = 16
-	// Add metadata ?
+
 	metadataBox := createMetadataTextContainer(appCtxt, entryMap, medium)
+
+	// Inside function lo load image
+	var imageObj fyne.CanvasObject
+	loadImage := func() fyne.CanvasObject {
+		// Fetch the image as a buffer
+		bufImage, err := appCtxt.APIClient.Helpers.GetImage(urlImage)
+		if err != nil {
+			return createFallbackImage()
+		}
+		// Create the image component
+		image := canvas.NewImageFromReader(bufImage, "image")
+		image.FillMode = canvas.ImageFillContain
+		image.SetMinSize(fyne.NewSize(350, 250))
+
+		return image
+	}
+
+	imageObj = loadImage()
 
 	// Display them in a dialog box
 	dialog.ShowCustomConfirm(
 		"Details",
 		"Confirm",
 		"Dismiss",
-		container.NewVBox(titleText, creatorText, pubDateText, metadataBox),
+		container.NewVBox(imageObj, titleText, creatorText, pubDateText, metadataBox),
 		func(b bool) {
 			if b {
 				// If user confirms, call OnConfirm callback function
 				onConfirm(medium)
-				parentWindow.Close()
+
+				if parentWindow != appCtxt.MainWindow {
+					parentWindow.Close()
+				}
 			}
 		},
 		parentWindow,
