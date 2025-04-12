@@ -8,6 +8,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/VincNT21/kallaxy/client/context"
@@ -56,7 +58,7 @@ Node Types to handle :
 
 */
 
-func createAndPopulateTree(appCtxt *context.AppContext, mediaList []models.MediumWithRecord) *widget.Tree {
+func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaList []models.MediumWithRecord) *widget.Tree {
 	// Prepare a map for Tree widget data
 	treeData := make(map[string][]string) // Parent -> Children IDs
 	nodes := make(map[string]TreeNode)    // NodeID -> TreeNode
@@ -88,6 +90,7 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaList []models.Mediu
 			ID:       mediaNodeID,
 			ParentID: parent,
 			Title:    medium.Title,
+			Value:    medium.MediaID, // Value field will hold MediaID for edit/delete functions
 			NodeType: "medium_title",
 		}
 
@@ -217,7 +220,7 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaList []models.Mediu
 				branchContainer := container.NewHBox()
 				return branchContainer
 			} else {
-				leafContainer := container.NewVBox()
+				leafContainer := container.NewHBox()
 				return leafContainer
 			}
 
@@ -226,92 +229,87 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaList []models.Mediu
 		// Callback function to update a node's widget with its data
 		func(uid string, branch bool, obj fyne.CanvasObject) {
 			node := nodes[uid]
-			// Update depends on NodeType and on branch/leaf
-			if branch {
-				branchContainer := obj.(*fyne.Container)
-				// Clear the container first
-				branchContainer.Objects = nil
-				branchContainer.Refresh()
+			// Update depends on NodeType
 
-				// Branch nodes will use a canvas.Text
-				branchTextObject := canvas.NewText(node.Title, color.White)
-				branchTextObject.Resize(fyne.NewSize(branchContainer.MinSize().Width, 100)) // Seems useless
+			branchContainer := obj.(*fyne.Container)
+			// Clear the container first
+			branchContainer.Objects = nil
+			branchContainer.Refresh()
 
-				switch node.NodeType {
-				case "main_title":
-					// Main titles will have bold bigger text
-					branchTextObject.TextSize = 16
-					branchTextObject.TextStyle.Bold = true
-					branchContainer.Add(branchTextObject)
-				case "sub_title":
-					// Sub title will have medium text
-					branchTextObject.TextSize = 14
-					branchContainer.Add(branchTextObject)
-				case "medium_title":
-					// Medium title will have medium text
-					// color depends of category (finished, in progress, unstarted)
-					branchTextObject.TextSize = 14
-					switch node.ParentID {
-					case "Finished":
-						greenColor := color.RGBA{R: 0, G: 255, B: 0, A: 255}
-						branchTextObject.Color = greenColor
-					case "In Progress":
-						orangeColor := color.RGBA{R: 255, G: 120, B: 0, A: 255}
-						branchTextObject.Color = orangeColor
-					case "Unstarted":
-						fmt.Println("UNSTARTED")
-						redColor := color.RGBA{R: 255, G: 0, B: 0, A: 255}
-						branchTextObject.Color = redColor
-					}
-					branchContainer.Add(branchTextObject)
+			// Branch nodes will use a canvas.Text
+			branchTextObject := canvas.NewText(node.Title, color.White)
+			branchTextObject.Resize(fyne.NewSize(branchContainer.MinSize().Width, 100)) // Seems useless
 
-				case "metadata_main":
-					// Metadata title will have medium text
-					// and a "expand all" button
-					branchTextObject.TextSize = 14
-					expandButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropDown), func() {
-						ExpandBranches(tree, treeData, node.ID)
-					})
-					collapseButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropUp), func() {
-						CollapseBranches(tree, treeData, node.ID)
-					})
-
-					branchContainer.Add(branchTextObject)
-					branchContainer.Add(collapseButton)
-					branchContainer.Add(expandButton)
-
-				default:
-					log.Printf("--GUI-- Tree branch's unexpected nodeType: %v", node.NodeType)
+			switch node.NodeType {
+			case "main_title":
+				// Main titles will have bold bigger text
+				branchTextObject.TextSize = 16
+				branchTextObject.TextStyle.Bold = true
+				branchContainer.Add(branchTextObject)
+			case "sub_title":
+				// Sub title will have medium text
+				branchTextObject.TextSize = 14
+				branchContainer.Add(branchTextObject)
+			case "medium_title":
+				// Medium title will have medium text and edit/delete button
+				// color depends of category (finished, in progress, unstarted)
+				branchTextObject.TextSize = 14
+				switch node.ParentID {
+				case "Finished":
+					greenColor := color.RGBA{R: 0, G: 255, B: 0, A: 255}
+					branchTextObject.Color = greenColor
+				case "In Progress":
+					orangeColor := color.RGBA{R: 255, G: 120, B: 0, A: 255}
+					branchTextObject.Color = orangeColor
+				case "Unstarted":
+					redColor := color.RGBA{R: 255, G: 0, B: 0, A: 255}
+					branchTextObject.Color = redColor
 				}
+				branchContainer.Add(branchTextObject)
+				// Edit/delete buttons
+				mediumEditButton := widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
+					buttonFuncMediumEdit(appCtxt, node, mediaType, mediaList)
+				})
+				mediumDeleteButton := widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
+					buttonFuncMediumDelete(appCtxt, node)
+				})
 
-			} else {
-				// Leaf nodes will use a widget.Label
-				leafContainer := obj.(*fyne.Container)
-				// Clear the container first
-				leafContainer.Objects = nil
-				leafContainer.Refresh()
+				branchContainer.Add(mediumEditButton)
+				branchContainer.Add(mediumDeleteButton)
 
-				switch node.NodeType {
-				case "single_line":
-					// Use a single canvas.Text
-					leafTextObject := canvas.NewText(node.Value, color.White)
-					leafContainer.Add(leafTextObject)
-				case "single_line_with_title":
-					// Use two canvas.Text : one for title, one for value
-					leafTitleObject := canvas.NewText(node.Title, color.White)
-					leafValueObject := canvas.NewText(node.Value, color.White)
-					leafContainer.Add(container.NewHBox(leafTitleObject, leafValueObject))
-				case "multi_line":
-					// Use a scrollable label widget
-					leafTextObject := widget.NewLabel(node.Value)
-					scrollable := container.NewVScroll(leafTextObject)
-					leafContainer.Add(scrollable)
-				default:
-					log.Printf("--GUI-- Tree leaf's unexpected nodeType: %v", node.NodeType)
-				}
+			case "metadata_main":
+				// Metadata title will have medium text
+				// and a "expand all" button
+				branchTextObject.TextSize = 14
+				expandButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropDown), func() {
+					buttonFuncExpandBranches(tree, treeData, node.ID)
+				})
+				collapseButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropUp), func() {
+					buttonFuncCollapseBranches(tree, treeData, node.ID)
+				})
 
+				branchContainer.Add(branchTextObject)
+				branchContainer.Add(collapseButton)
+				branchContainer.Add(expandButton)
+
+			case "single_line":
+				// Use a single canvas.Text
+				leafTextObject := canvas.NewText(node.Value, color.White)
+				branchContainer.Add(leafTextObject)
+			case "single_line_with_title":
+				// Use two canvas.Text : one for title, one for value
+				leafTitleObject := canvas.NewText(node.Title, color.White)
+				leafValueObject := canvas.NewText(node.Value, color.White)
+				branchContainer.Add(container.NewHBox(leafTitleObject, leafValueObject))
+			case "multi_line":
+				// Use a scrollable label widget
+				leafTextObject := widget.NewLabel(node.Value)
+				scrollable := container.NewVScroll(leafTextObject)
+				branchContainer.Add(scrollable)
+
+			default:
+				log.Printf("--GUI-- Tree unexpected nodeType: %v", node.NodeType)
 			}
-
 		},
 	)
 
@@ -323,7 +321,8 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaList []models.Mediu
 	return tree
 }
 
-func ExpandBranches(tree *widget.Tree, treeData map[string][]string, uid string) {
+// Button function
+func buttonFuncExpandBranches(tree *widget.Tree, treeData map[string][]string, uid string) {
 	// Step 1: Open the current branch
 	tree.OpenBranch(uid)
 
@@ -335,11 +334,12 @@ func ExpandBranches(tree *widget.Tree, treeData map[string][]string, uid string)
 
 	// Step 3: For each child, call function recursively to open it and all it's children.
 	for _, child := range children {
-		ExpandBranches(tree, treeData, child)
+		buttonFuncExpandBranches(tree, treeData, child)
 	}
 }
 
-func CollapseBranches(tree *widget.Tree, treeData map[string][]string, uid string) {
+// Button function
+func buttonFuncCollapseBranches(tree *widget.Tree, treeData map[string][]string, uid string) {
 	// Step 1: Retrieve child UIDs for this branch
 	children, exists := treeData[uid]
 	if !exists {
@@ -348,7 +348,80 @@ func CollapseBranches(tree *widget.Tree, treeData map[string][]string, uid strin
 
 	// Step 2 : For each child, call function recursively to close all children and close it
 	for _, child := range children {
-		CollapseBranches(tree, treeData, child)
+		buttonFuncCollapseBranches(tree, treeData, child)
 		tree.CloseBranch(uid)
 	}
+}
+
+// Button function
+func buttonFuncMediumEdit(appCtxt *context.AppContext, node TreeNode, mediaType string, mediaList []models.MediumWithRecord) {
+	// Ask if user wants to edit their personal record or the medium itself
+	var editDialog dialog.Dialog
+
+	line1 := canvas.NewText("What do you want to edit ?", color.White)
+	line1.Alignment = fyne.TextAlignCenter
+
+	mediumEditButton := widget.NewButton("Medium's info", func() {
+		appCtxt.PageManager.ShowUpdateMediaPage(mediaType, node.Value, mediaList)
+		editDialog.Hide()
+	})
+
+	recordEditButton := widget.NewButton("My personal record", func() {
+		appCtxt.PageManager.ShowUpdateRecordPage(mediaType, node.Value, mediaList)
+		editDialog.Hide()
+	})
+
+	editDialog = dialog.NewCustom("Edit Medium", "Cancel", container.NewVBox(
+		line1,
+		container.NewHBox(layout.NewSpacer(), mediumEditButton, layout.NewSpacer(), recordEditButton, layout.NewSpacer()),
+	), appCtxt.MainWindow)
+
+	editDialog.Show()
+}
+
+// Button function
+func buttonFuncMediumDelete(appCtxt *context.AppContext, node TreeNode) {
+	// First dialog : sure to delete ?
+	dialog.ShowConfirm("Confirm", fmt.Sprintf("Are you sure you want to delete this medium: %s ?", node.Title), func(b bool) {
+		if b {
+			// If yes, second dialog : what to delete ?
+			line0 := canvas.NewText("What do you want to delete ?", color.White)
+			line0.Alignment = fyne.TextAlignCenter
+			line1 := canvas.NewText("This medium AND your personal record about it", color.White)
+			line1.Alignment = fyne.TextAlignCenter
+			line2 := canvas.NewText("OR", color.White)
+			line2.Alignment = fyne.TextAlignCenter
+			line3 := canvas.NewText("Just your personal record", color.White)
+			line3.Alignment = fyne.TextAlignCenter
+			line4 := canvas.NewText("(This allows you or other user to retrieve this medium later from server's database)", color.White)
+			line4.Alignment = fyne.TextAlignCenter
+			dialog.ShowCustomConfirm(
+				"Confirm",
+				"Medium and Record",
+				"Only Record",
+				container.NewVBox(line0, line1, line2, line3, line4),
+				func(b bool) {
+					// Call for delete commands, according to anwser
+					// With a third dialog : last warning
+					if b { // Medium and record delete
+						dialog.ShowConfirm("Last Warning", "Are you sure you want to delete both the medium and your record ?", func(b bool) {
+							if b {
+								appCtxt.APIClient.Media.DeleteMedium(node.Value) // Deleting a medium will automatically delete linked record on cascade
+								dialog.ShowInformation("Info", "Medium and Record deleted !", appCtxt.MainWindow)
+								appCtxt.PageManager.ShowHomePage()
+							}
+						}, appCtxt.MainWindow)
+					} else { // Record delete only
+						dialog.ShowConfirm("Last Warning", "Are you sure you want to delete your personal record about this medium ?", func(b bool) {
+							if b {
+								appCtxt.APIClient.Records.DeleteRecord(node.Value)
+								dialog.ShowInformation("Info", "Personal Record deleted !", appCtxt.MainWindow)
+								appCtxt.PageManager.ShowHomePage()
+							}
+						}, appCtxt.MainWindow)
+					}
+				},
+				appCtxt.MainWindow)
+		}
+	}, appCtxt.MainWindow)
 }

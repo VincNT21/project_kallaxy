@@ -22,7 +22,9 @@ type PageManager interface {
 	ShowCreateMediaPage(mediaType string)
 	ShowShelfPage()
 	ShowParametersPage()
-	ShowCompartmentMediaPage(mediaType string, mediaList []models.MediumWithRecord)
+	ShowCompartmentTreePage(mediaType string, mediaList []models.MediumWithRecord)
+	ShowUpdateMediaPage(mediaType, mediumID string, mediaList []models.MediumWithRecord)
+	ShowUpdateRecordPage(mediaType, mediumID string, mediaList []models.MediumWithRecord)
 }
 
 // Create and configured the shared AppContext

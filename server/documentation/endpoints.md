@@ -22,7 +22,7 @@
   - [4.2. GET /api/records -- Get all records by user's ID](#42-get-apirecords----get-all-records-by-users-id)
   - [GET /api/media\_records -- Get all user's record and related media](#get-apimedia_records----get-all-users-record-and-related-media)
   - [4.3. PUT /api/records -- Update a record's start and/ord end date](#43-put-apirecords----update-a-records-start-andord-end-date)
-  - [4.4. DELETE /api/records -- Delete a record](#44-delete-apirecords----delete-a-record)
+  - [4.4. DELETE /api/records -- Delete a record with its medium ID](#44-delete-apirecords----delete-a-record-with-its-medium-id)
 - [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
   - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
   - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
@@ -359,7 +359,7 @@
 
 -> *Error Response status code to handle* : 
 
-    - 400 Bad Request - Client didn't provide a correct query parameter.
+    - 400 Bad Request - Client didn't provide correct body's parameters.
     - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
     - 404 Not Found - No medium with given title in database
 
@@ -625,9 +625,9 @@
 -> *OK Response body example* :
 > See resource [Record](resources.md#record-resource)
 
-### 4.4. DELETE /api/records -- Delete a record
+### 4.4. DELETE /api/records -- Delete a record with its medium ID
 -> *Description* :
->Delete a record based on given record's ID  
+>Delete a record based on medium's ID (from request body) and user's ID (from request header's access token)
 >Empty response's body
 
 -> *Request headers* :
@@ -636,18 +636,18 @@
 
 -> *Request body* :
 >**REQUIRED**:
-* `record_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#uuid))  
+* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#uuid))  
 
 *Example*:
 ```json
 {
-    "record_id": "3b75af06-e596-42ce-a953-bf235dfc9102"
+    "medium_id": "3b75af06-e596-42ce-a953-bf235dfc9102"
 }
 ```
 -> *Error Response status code to handle* : 
 
     - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
-    - 404 Not Found - No record found with given record's ID
+    - 404 Not Found - No record found with given medium's ID and user's ID
 
 -> *OK Response status code expected* :
 

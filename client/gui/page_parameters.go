@@ -28,13 +28,13 @@ func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 	emailLabel := widget.NewLabel(fmt.Sprintf("Email: %s", appCtxt.APIClient.CurrentUser.Email))
 
 	// Entries
-	passswordEntry := widget.NewPasswordEntry()
+	passwordEntry := widget.NewPasswordEntry()
 	usernameEntry := widget.NewEntry()
 	usernameEntry.SetText(appCtxt.APIClient.CurrentUser.Username)
 	emailEntry := widget.NewEntry()
 	emailEntry.SetText(appCtxt.APIClient.CurrentUser.Email)
 	// Group entries in a form
-	passwordForm := widget.NewFormItem("Password", passswordEntry)
+	passwordForm := widget.NewFormItem("Password", passwordEntry)
 	usernameForm := widget.NewFormItem("Username", usernameEntry)
 	emailForm := widget.NewFormItem("Email", emailEntry)
 	contentForm := []*widget.FormItem{usernameForm, emailForm, passwordForm}
@@ -44,20 +44,49 @@ func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 
 	// Buttons
 	updateButton := widget.NewButtonWithIcon("Update info", theme.DocumentCreateIcon(), func() {
-		dialog.ShowForm("Confirm your password", "Confirm", "Cancel", confirmPasswordform, func(b bool) {
-			if err := appCtxt.APIClient.Auth.ConfirmPassword(passswordEntry.Text); err != nil {
+		buttonFuncUpdateUserInfo(appCtxt, confirmPasswordform, contentForm, passwordEntry, usernameEntry, emailEntry, statusLabel)
+	})
+
+	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
+		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\nAll unsubmitted changes will be lost!", func(b bool) {
+			if b {
+				appCtxt.PageManager.ShowHomePage()
+			}
+		}, appCtxt.MainWindow)
+	})
+
+	// Group objects
+	textColumn := container.NewVBox(layout.NewSpacer(), usernameLabel, emailLabel, statusLabel, layout.NewSpacer(), updateButton, layout.NewSpacer())
+	centerRow := container.NewHBox(layout.NewSpacer(), textColumn, layout.NewSpacer())
+
+	// Create the global frame
+	globalContainer := container.NewBorder(
+		titleText,
+		exitButton,
+		customSpacerHorizontal(100),
+		customSpacerHorizontal(100),
+		centerRow,
+	)
+	return globalContainer
+
+}
+
+func buttonFuncUpdateUserInfo(appCtxt *context.AppContext, confirmPasswordform, contentForm []*widget.FormItem, passwordEntry, usernameEntry, emailEntry *widget.Entry, statusLabel *widget.Label) {
+	dialog.ShowForm("Confirm your password", "Confirm", "Cancel", confirmPasswordform, func(b bool) {
+		if b {
+			if err := appCtxt.APIClient.Auth.ConfirmPassword(passwordEntry.Text); err != nil {
 				statusLabel.SetText("Wrong password")
 			} else {
-				passswordEntry.SetText("")
+				passwordEntry.SetText("")
 				dialog.ShowForm("ALL info required, including not updated fields", "Confirm", "Cancel", contentForm, func(b bool) {
 					if b {
 						// Call the Update User client API function
-						_, err := appCtxt.APIClient.Users.UpdateUser(usernameEntry.Text, passswordEntry.Text, emailEntry.Text)
+						_, err := appCtxt.APIClient.Users.UpdateUser(usernameEntry.Text, passwordEntry.Text, emailEntry.Text)
 						if err != nil {
 							switch err {
 							case models.ErrUnauthorized:
 								if _, err2 := appCtxt.APIClient.Auth.RefreshTokens(); err2 != nil {
-									dialog.NewConfirm("Authorization problem", "There is a problem with your authorization,\nyou'll be redirected to Login page", func(b bool) {
+									dialog.ShowConfirm("Authorization problem", "There is a problem with your authorization,\nyou'll be redirected to Login page", func(b bool) {
 										appCtxt.PageManager.ShowLoginPage()
 									}, appCtxt.MainWindow)
 								} else {
@@ -82,34 +111,14 @@ func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 							}, appCtxt.MainWindow)
 						}
 					} else {
-						passswordEntry.SetText("")
+						passwordEntry.SetText("")
 					}
 				}, appCtxt.MainWindow)
 			}
-		}, appCtxt.MainWindow)
-	})
+		}
+	}, appCtxt.MainWindow)
+}
 
-	exitButton := widget.NewButtonWithIcon("Homepage", theme.HomeIcon(), func() {
-		dialog.ShowConfirm("Exit", "Are you sure you want to go back to Homepage ?\nAll unsubmitted changes will be lost!", func(b bool) {
-			if b {
-				appCtxt.PageManager.ShowHomePage()
-			}
-		}, appCtxt.MainWindow)
-	})
-
-	// Group objects
-	textColumn := container.NewVBox(usernameLabel, layout.NewSpacer(), emailLabel)
-	centerRow := container.NewHBox(layout.NewSpacer(), textColumn, layout.NewSpacer())
-	bottomRow := container.NewHBox(updateButton, layout.NewSpacer(), exitButton)
-
-	// Create the global frame
-	globalContainer := container.NewBorder(
-		titleText,
-		container.NewVBox(statusLabel, bottomRow),
-		customSpacerHorizontal(100),
-		customSpacerHorizontal(100),
-		centerRow,
-	)
-	return globalContainer
+func buttonFuncDeleteUser(appCtxt *context.AppContext) {
 
 }

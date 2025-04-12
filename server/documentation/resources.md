@@ -255,7 +255,7 @@ type parametersUpdateRecord struct {
 
 ```go
 type parametersDeleteRecord struct {
-	RecordID string `json:"record_id"`
+	MediumID string `json:"medium_id"`
 }
 ```
 

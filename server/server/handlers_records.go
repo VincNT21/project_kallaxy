@@ -336,11 +336,14 @@ func (cfg *apiConfig) handlerUpdateRecord(w http.ResponseWriter, r *http.Request
 }
 
 type parametersDeleteRecord struct {
-	RecordID string `json:"record_id"`
+	MediumID string `json:"medium_id"`
 }
 
 // DELETE /api/records
 func (cfg *apiConfig) handlerDeleteRecord(w http.ResponseWriter, r *http.Request) {
+
+	// Get userID from access token
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
 
 	// Parse data from request body
 	var params parametersDeleteRecord
@@ -350,21 +353,24 @@ func (cfg *apiConfig) handlerDeleteRecord(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Convert RecordID to pgtype.UUID
-	recordID, err := convertIdToPgtype(params.RecordID)
+	// Convert MediumID to pgtype.UUID
+	mediumID, err := convertIdToPgtype(params.MediumID)
 	if err != nil {
 		respondWithError(w, 400, "record_id not in good format", err)
 		return
 	}
 
 	// Call query function
-	count, err := cfg.db.DeleteRecord(r.Context(), recordID)
+	count, err := cfg.db.DeleteRecord(r.Context(), database.DeleteRecordParams{
+		MediaID: mediumID,
+		UserID:  userID,
+	})
 	if err != nil {
 		respondWithError(w, 500, "couldn't delete record in database", err)
 		return
 	}
 	if count == 0 {
-		respondWithError(w, 404, "No record with given ID in database", nil)
+		respondWithError(w, 404, "No record with given IDs in database", nil)
 		return
 	}
 

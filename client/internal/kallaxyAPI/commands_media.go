@@ -2,6 +2,7 @@ package kallaxyapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/VincNT21/kallaxy/client/models"
@@ -9,7 +10,7 @@ import (
 
 func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, pubDate, imageUrl, startDate, endDate string, metadata map[string]interface{}) (models.Medium, models.Record, error) {
 
-	// Make request for Medium creation in a goroutine
+	// Make request for Medium creation
 	medium, err := c.apiClient.Media.CreateMedium(title, mediaType, creator, pubDate, imageUrl, metadata)
 	if err != nil {
 		log.Printf("--ERROR-- with CreateMediumAndRecord(): %v\n", err)
@@ -97,4 +98,104 @@ func (c *MediaClient) GetMediaWithRecords() (models.MediaWithRecords, error) {
 	// Return data
 	log.Println("--DEBUG-- GetMediaWithRecords() OK")
 	return mediaRecords, nil
+}
+
+func (c *MediaClient) UpdateMedium(mediumId, title, creator, pubDate, imageUrl string, metadata map[string]interface{}) (models.ClientMedium, error) {
+	type parametersUpdateMedium struct {
+		MediumID string                 `json:"medium_id"`
+		Title    string                 `json:"title"`
+		Creator  string                 `json:"creator"`
+		PubDate  string                 `json:"pub_date"`
+		ImageUrl string                 `json:"image_url"`
+		Metadata map[string]interface{} `json:"metadata"`
+	}
+
+	params := parametersUpdateMedium{
+		MediumID: mediumId,
+		Title:    title,
+		Creator:  creator,
+		PubDate:  pubDate,
+		ImageUrl: imageUrl,
+		Metadata: metadata,
+	}
+
+	// Make request
+	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.Media.UpdateMedia, params)
+	if err != nil {
+		log.Printf("--ERROR-- with UpdateMedium(): %v\n", err)
+		return models.ClientMedium{}, err
+	}
+	defer r.Body.Close()
+
+	// Check response's status code
+	if r.StatusCode != 200 {
+		log.Printf("--ERROR-- with UpdateMedium(). Response status code: %v\n", r.StatusCode)
+		switch r.StatusCode {
+		case 400:
+			return models.ClientMedium{}, models.ErrBadRequest
+		case 401:
+			return models.ClientMedium{}, models.ErrUnauthorized
+		case 404:
+			return models.ClientMedium{}, models.ErrNotFound
+		case 409:
+			return models.ClientMedium{}, models.ErrConflict
+		case 500:
+			return models.ClientMedium{}, models.ErrServerIssue
+		default:
+			return models.ClientMedium{}, fmt.Errorf("unknown error status code: %v", r.StatusCode)
+		}
+	}
+
+	// Decode response
+	var updatedMedium models.ClientMedium
+	err = json.NewDecoder(r.Body).Decode(&updatedMedium)
+	if err != nil {
+		log.Printf("--ERROR-- with UpdateMedium(): %v\n", err)
+		return models.ClientMedium{}, err
+	}
+
+	// Return data
+	log.Println("--DEBUG-- UpdateMedium() OK")
+	return updatedMedium, nil
+}
+
+func (c *MediaClient) DeleteMedium(mediumID string) error {
+	type parametersDeleteMedium struct {
+		MediumID string `json:"medium_id"`
+	}
+
+	params := parametersDeleteMedium{
+		MediumID: mediumID,
+	}
+
+	// Make request
+	r, err := c.apiClient.makeHttpRequest(c.apiClient.Config.Endpoints.Media.DeleteMedia, params)
+	if err != nil {
+		log.Printf("--ERROR-- with DeleteMedium(): %v\n", err)
+		return err
+	}
+	defer r.Body.Close()
+
+	// Check response's status code
+	if r.StatusCode != 200 {
+		log.Printf("--ERROR-- with DeleteMedium(). Response status code: %v\n", r.StatusCode)
+		switch r.StatusCode {
+		case 400:
+			return models.ErrBadRequest
+		case 401:
+			return models.ErrUnauthorized
+		case 404:
+			return models.ErrNotFound
+		case 409:
+			return models.ErrConflict
+		case 500:
+			return models.ErrServerIssue
+		default:
+			return fmt.Errorf("unknown error status code: %v", r.StatusCode)
+		}
+	}
+
+	// Return
+	log.Println("--DEBUG-- DeleteMedium() OK")
+	return nil
 }

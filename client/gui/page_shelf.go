@@ -69,7 +69,7 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 	for mediaType := range typesMap {
 		// Create the top separator
 		topTextButton := widget.NewButton(strings.ToTitle(mediaType), func() {
-			appCtxt.PageManager.ShowCompartmentMediaPage(mediaType, mediaRecords.MediaRecords[mediaType])
+			appCtxt.PageManager.ShowCompartmentTreePage(mediaType, mediaRecords.MediaRecords[mediaType])
 		})
 		topText := canvas.NewText(strings.ToTitle(mediaType), color.White)
 		topText.Alignment = fyne.TextAlignCenter
@@ -120,9 +120,9 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 	return scrollableShelf, nil
 }
 
-func createMediaListContent(appCtxt *context.AppContext, mediaType string, mediaList []models.MediumWithRecord) *fyne.Container {
+func createMediaTreeContent(appCtxt *context.AppContext, mediaType string, mediaList []models.MediumWithRecord) *fyne.Container {
 	// Get the tree populated from helper function
-	tree := createAndPopulateTree(appCtxt, mediaList)
+	tree := createAndPopulateTree(appCtxt, mediaType, mediaList)
 
 	// Make the tree scrollable
 	scrollableTree := container.NewVScroll(tree)

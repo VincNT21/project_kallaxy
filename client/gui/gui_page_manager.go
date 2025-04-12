@@ -56,6 +56,36 @@ func (pm *GuiPageManager) ShowCreateMediaPage(mediaType string) {
 	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
 }
 
+func (pm *GuiPageManager) ShowUpdateMediaPage(mediaType, mediumID string, mediaList []models.MediumWithRecord) {
+	// Find wanted medium by title from given mediaList
+	mediumWithRecord := models.MediumWithRecord{}
+	for _, medium := range mediaList {
+		if medium.MediaID == mediumID {
+			mediumWithRecord = medium
+		}
+	}
+	content := createMediaEditingContent(pm.appCtxt, mediaType, mediumWithRecord)
+	pm.mainWindow.SetContent(content)
+	pm.mainWindow.SetTitle("Kallawy - Update media")
+	// Resize if needed
+	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
+}
+
+func (pm *GuiPageManager) ShowUpdateRecordPage(mediaType, mediumID string, mediaList []models.MediumWithRecord) {
+	// Find wanted medium by title from given mediaList
+	mediumWithRecord := models.MediumWithRecord{}
+	for _, medium := range mediaList {
+		if medium.MediaID == mediumID {
+			mediumWithRecord = medium
+		}
+	}
+	content := createEditRecordContent(pm.appCtxt, mediaType, mediumWithRecord)
+	pm.mainWindow.SetContent(content)
+	pm.mainWindow.SetTitle("Kallawy - Update record")
+	// Resize if needed
+	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
+}
+
 func (pm *GuiPageManager) ShowShelfPage() {
 	mediaRecords, err := pm.appCtxt.APIClient.Media.GetMediaWithRecords()
 	if err != nil || len(mediaRecords.MediaRecords) == 0 {
@@ -69,8 +99,8 @@ func (pm *GuiPageManager) ShowShelfPage() {
 	pm.mainWindow.Resize(fyne.NewSize(1024, 768))
 }
 
-func (pm *GuiPageManager) ShowCompartmentMediaPage(mediaType string, mediaList []models.MediumWithRecord) {
-	content := createMediaListContent(pm.appCtxt, mediaType, mediaList)
+func (pm *GuiPageManager) ShowCompartmentTreePage(mediaType string, mediaList []models.MediumWithRecord) {
+	content := createMediaTreeContent(pm.appCtxt, mediaType, mediaList)
 	pm.mainWindow.SetContent(content)
 	pm.mainWindow.SetTitle(fmt.Sprintf("Kallaxy - My Shelf %s Compartment", mediaType))
 	// Resize if needed

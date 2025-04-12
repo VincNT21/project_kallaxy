@@ -52,7 +52,8 @@ RETURNING *;
 -- name: DeleteRecord :one
 WITH deleted AS (
     DELETE FROM users_media_records
-    WHERE id = $1
+    WHERE media_id = $1
+    AND user_id = $2
     RETURNING *
 )
 SELECT count(*) FROM deleted;

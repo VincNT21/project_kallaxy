@@ -67,14 +67,20 @@ func (q *Queries) CreateUserMediumRecord(ctx context.Context, arg CreateUserMedi
 const deleteRecord = `-- name: DeleteRecord :one
 WITH deleted AS (
     DELETE FROM users_media_records
-    WHERE id = $1
+    WHERE media_id = $1
+    AND user_id = $2
     RETURNING id, created_at, updated_at, user_id, media_id, is_finished, start_date, end_date, duration, comments
 )
 SELECT count(*) FROM deleted
 `
 
-func (q *Queries) DeleteRecord(ctx context.Context, id pgtype.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, deleteRecord, id)
+type DeleteRecordParams struct {
+	MediaID pgtype.UUID
+	UserID  pgtype.UUID
+}
+
+func (q *Queries) DeleteRecord(ctx context.Context, arg DeleteRecordParams) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteRecord, arg.MediaID, arg.UserID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

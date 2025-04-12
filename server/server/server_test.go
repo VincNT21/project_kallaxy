@@ -1891,7 +1891,7 @@ func TestDeleteRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersDeleteRecord{
-				RecordID: recordID,
+				MediumID: recordID,
 			},
 			expectedStatus: 200,
 			expectResponse: false,
@@ -1911,7 +1911,7 @@ func TestDeleteRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersDeleteRecord{
-				RecordID: "ba983bd8-36ce-4d1b-ad24-2b65240f9921",
+				MediumID: "ba983bd8-36ce-4d1b-ad24-2b65240f9921",
 			},
 			expectedStatus: 404,
 		},
@@ -1921,7 +1921,7 @@ func TestDeleteRecord(t *testing.T) {
 				"Authorization": fmt.Sprintf("Bearer %s", ctx.UserAcessToken),
 			},
 			requestBody: parametersDeleteRecord{
-				RecordID: "wrongID",
+				MediumID: "wrongID",
 			},
 			expectedStatus: 400,
 		},

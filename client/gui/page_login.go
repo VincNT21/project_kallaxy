@@ -45,23 +45,7 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 
 	// Buttons
 	loginButton := widget.NewButtonWithIcon("Login", theme.ConfirmIcon(), func() {
-		_, err := appCtxt.APIClient.Auth.LoginUser(usernameEntry.Text, passwordEntry.Text)
-		if err != nil {
-			log.Printf("--GUI-- User %v failed to login\n", usernameEntry.Text)
-			switch err {
-			case models.ErrUnauthorized:
-				statusLabel.SetText("Bad username/password")
-				statusLabel.Refresh()
-			case models.ErrServerIssue:
-				statusLabel.SetText("Error with server, please retry later")
-				statusLabel.Refresh()
-			default:
-				dialog.ShowError(err, appCtxt.MainWindow)
-			}
-		} else {
-			log.Printf("--GUI-- User %v logged in\n", usernameEntry.Text)
-			appCtxt.PageManager.ShowHomePage()
-		}
+		buttonFuncLogin(appCtxt, usernameEntry, passwordEntry, statusLabel)
 	})
 
 	passwordLostButton := widget.NewButtonWithIcon("Password lost", theme.QuestionIcon(), func() {
@@ -95,6 +79,26 @@ func createLoginContent(appCtxt *context.AppContext) *fyne.Container {
 
 	// Send content container back to page manager
 	return globalContainer
+}
+
+func buttonFuncLogin(appCtxt *context.AppContext, usernameEntry, passwordEntry *widget.Entry, statusLabel *widget.Label) {
+	_, err := appCtxt.APIClient.Auth.LoginUser(usernameEntry.Text, passwordEntry.Text)
+	if err != nil {
+		log.Printf("--GUI-- User %v failed to login\n", usernameEntry.Text)
+		switch err {
+		case models.ErrUnauthorized:
+			statusLabel.SetText("Bad username/password")
+			statusLabel.Refresh()
+		case models.ErrServerIssue:
+			statusLabel.SetText("Error with server, please retry later")
+			statusLabel.Refresh()
+		default:
+			dialog.ShowError(err, appCtxt.MainWindow)
+		}
+	} else {
+		log.Printf("--GUI-- User %v logged in\n", usernameEntry.Text)
+		appCtxt.PageManager.ShowHomePage()
+	}
 }
 
 func createWelcomeBackContent(appCtxt *context.AppContext) *fyne.Container {

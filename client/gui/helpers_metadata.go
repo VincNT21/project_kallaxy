@@ -78,8 +78,9 @@ func processMetadataFieldValue(appCtxt *context.AppContext, fieldName, textValue
 		}
 		return items
 	case "int":
+		fmt.Printf("given textvalue: %v, type:%T", textValue, textValue)
 		// For int, convert trimmed string to int
-		if val, err := strconv.Atoi(strings.TrimSpace(textValue)); err != nil {
+		if val, err := strconv.Atoi(strings.TrimSpace(textValue)); err == nil {
 			return val
 		}
 		return 0 // Default value for int
