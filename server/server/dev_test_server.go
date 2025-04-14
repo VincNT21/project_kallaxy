@@ -76,7 +76,7 @@ func setupTestServer(t *testing.T) (*http.Server, string) {
 	db := database.New(dbConnection)
 
 	// Init apiCfg
-	apiCfg := newAPIConfig(db, testEnv["SECRET"], "", "", "")
+	apiCfg := newAPIConfig(db, testEnv["SECRET"], "", "", "", "")
 
 	// Delete revoked refresh token in database
 	apiCfg.CleanRefreshTokens()

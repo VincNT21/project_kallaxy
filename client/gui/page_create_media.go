@@ -135,7 +135,7 @@ func createMediaCreationContent(appCtxt *context.AppContext, mediaType string) *
 	})
 
 	submitButton := widget.NewButtonWithIcon("Submit", theme.ConfirmIcon(), func() {
-		buttonFuncSubmitCreateMedia(appCtxt, mediaTypeEntry, titleEntry, creatorEntry, pubDateEntry, imageUrlEntry, startDateEntry, endDateEntry, mediumIdFromDB, metadataEntryMap)
+		buttonFuncSubmitCreateMedia(appCtxt, mediaTypeEntry, titleEntry, creatorEntry, pubDateEntry, imageUrlEntry, startDateEntry, endDateEntry, commentsEntry, mediumIdFromDB, metadataEntryMap)
 	})
 
 	// Group objects
@@ -248,7 +248,7 @@ func buttonFuncGetInfoOnline(appCtxt *context.AppContext, mediaType string, medi
 	}
 }
 
-func buttonFuncSubmitCreateMedia(appCtxt *context.AppContext, mediaTypeEntry, titleEntry, creatorEntry, pubDateEntry, imageUrlEntry, startDateEntry, endDateEntry, mediumIdFromDB *widget.Entry, metadataEntryMap map[string]*widget.Entry) {
+func buttonFuncSubmitCreateMedia(appCtxt *context.AppContext, mediaTypeEntry, titleEntry, creatorEntry, pubDateEntry, imageUrlEntry, startDateEntry, endDateEntry, commentsEntry, mediumIdFromDB *widget.Entry, metadataEntryMap map[string]*widget.Entry) {
 	// Confirm info dialog box
 	dialog.ShowCustomConfirm(
 		"Confirm",
@@ -269,7 +269,7 @@ func buttonFuncSubmitCreateMedia(appCtxt *context.AppContext, mediaTypeEntry, ti
 			if b {
 				// First, check if medium's info comes from DB or not, by looking at mediumIdFromDB Entry value
 				if mediumIdFromDB.Text != "" {
-					_, err := appCtxt.APIClient.Records.CreateRecord(mediumIdFromDB.Text, startDateEntry.Text, endDateEntry.Text)
+					_, err := appCtxt.APIClient.Records.CreateRecord(mediumIdFromDB.Text, startDateEntry.Text, endDateEntry.Text, commentsEntry.Text)
 					if err != nil {
 						switch err {
 						case models.ErrUnauthorized:
@@ -312,6 +312,7 @@ func buttonFuncSubmitCreateMedia(appCtxt *context.AppContext, mediaTypeEntry, ti
 					imageUrlEntry.Text,
 					startDateEntry.Text,
 					endDateEntry.Text,
+					commentsEntry.Text,
 					metadataParsed,
 				)
 				if err != nil {

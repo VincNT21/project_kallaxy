@@ -69,7 +69,7 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 			fmt.Println(actualImageUrl)
 			if err != nil {
 				statusText.SetText("Could not find image URL")
-				return createFallbackImage()
+				return createFallbackImage("")
 			}
 			imageUrl = actualImageUrl
 			result.ImageUrl = actualImageUrl
@@ -78,7 +78,7 @@ func updateSearchResultContent(appCtxt *context.AppContext, mediaType string, w 
 		bufImage, err := appCtxt.APIClient.Helpers.GetImage(imageUrl)
 		if err != nil {
 			statusText.SetText(fmt.Sprintf("Error loading image: %v\n", err))
-			return createFallbackImage()
+			return createFallbackImage("")
 		}
 		// Create the image component
 		image := canvas.NewImageFromReader(bufImage, "image")
@@ -184,7 +184,7 @@ func showSearchMediumDetails(appCtxt *context.AppContext, mediaType, mediumApiID
 		// Fetch the image as a buffer
 		bufImage, err := appCtxt.APIClient.Helpers.GetImage(urlImage)
 		if err != nil {
-			return createFallbackImage()
+			return createFallbackImage("")
 		}
 		// Create the image component
 		image := canvas.NewImageFromReader(bufImage, "image")

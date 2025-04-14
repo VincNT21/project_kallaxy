@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"image/gif"
 	"image/jpeg"
@@ -130,4 +131,23 @@ func resizeImage(originalImage []byte, maxWidth, maxHeight int) ([]byte, error) 
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (c *HelpersClient) FormatDateToServerFormat(dateLocalFormat string) (string, error) {
+	parsedDate, err := time.Parse("2006/01/02", dateLocalFormat)
+	if err != nil {
+		log.Printf("--ERROR-- with FormatDateToServerFormat(): %s", err)
+		return "", err
+	}
+	return parsedDate.Format(time.RFC3339), nil
+}
+
+func (c *HelpersClient) FormatDateToLocalFormat(dateServerFormat string) (string, error) {
+	serverLayout := "2006-01-02T15:04:05"
+	parsedDate, err := time.Parse(serverLayout, dateServerFormat)
+	if err != nil {
+		log.Printf("--ERROR-- with FormatDateToLocalFormat(): %s", err)
+		return "", err
+	}
+	return parsedDate.Format("2006/01/02"), nil
 }

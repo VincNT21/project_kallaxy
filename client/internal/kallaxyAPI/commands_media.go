@@ -8,7 +8,7 @@ import (
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, pubDate, imageUrl, startDate, endDate string, metadata map[string]interface{}) (models.Medium, models.Record, error) {
+func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, pubDate, imageUrl, startDate, endDate, comments string, metadata map[string]interface{}) (models.Medium, models.Record, error) {
 
 	// Make request for Medium creation
 	medium, err := c.apiClient.Media.CreateMedium(title, mediaType, creator, pubDate, imageUrl, metadata)
@@ -18,7 +18,7 @@ func (c *MediaClient) CreateMediumAndRecord(title, mediaType, creator, pubDate, 
 	}
 
 	// Make request for Record creation
-	record, err := c.apiClient.Records.CreateRecord(medium.ID, startDate, endDate)
+	record, err := c.apiClient.Records.CreateRecord(medium.ID, startDate, endDate, comments)
 	if err != nil {
 		log.Printf("--ERROR-- with CreateMediumAndRecord(): %v\n", err)
 		return models.Medium{}, models.Record{}, err

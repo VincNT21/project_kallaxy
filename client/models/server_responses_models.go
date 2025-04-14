@@ -49,6 +49,7 @@ type Record struct {
 	StartDate  string `json:"start_date"`
 	EndDate    string `json:"end_date"`
 	Duration   int32  `json:"duration"`
+	Comments   string `json:"comments"`
 }
 
 type Records struct {
@@ -68,6 +69,7 @@ type MediumWithRecord struct {
 	StartDate  string                 `json:"start_date"`
 	EndDate    string                 `json:"end_date"`
 	Duration   int32                  `json:"duration"`
+	Comments   string                 `json:"comments"`
 	MediaType  string                 `json:"media_type"`
 	Title      string                 `json:"title"`
 	Creator    string                 `json:"creator"`

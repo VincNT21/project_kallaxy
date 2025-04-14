@@ -15,3 +15,9 @@ client/config/cache.json
 client/config/metadata_fields_map.json
 .gitignore
 client/config/metadata_fields_specs.json
+docker-compose.yml
+docker-entrypoint.sh
+.gitignore
+Dockerfile.server
+kallaxy_start.bat
+.dockerignore

@@ -13,12 +13,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type parametersCreateUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-}
-
 // POST /api/users
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type response struct {

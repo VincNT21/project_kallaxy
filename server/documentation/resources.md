@@ -1,13 +1,35 @@
 # Project Kallaxy Resources <!-- omit from toc -->
 
-## Headers
+- [1. Headers](#1-headers)
+	- [1.1. Authorization header](#11-authorization-header)
+- [2. Server responses models](#2-server-responses-models)
+	- [2.1. User resource](#21-user-resource)
+	- [2.2. Media resource](#22-media-resource)
+	- [2.3. Record resource](#23-record-resource)
+	- [2.4. Media with Record resource](#24-media-with-record-resource)
+	- [2.5. Admin-Password Reset](#25-admin-password-reset)
+- [3. Client requests Go models](#3-client-requests-go-models)
+	- [3.1. Users](#31-users)
+	- [3.2. Media](#32-media)
+	- [3.3. Records](#33-records)
+	- [3.4. Authentification](#34-authentification)
+	- [3.5. Admin/Password Reset](#35-adminpassword-reset)
+- [4. Specific formats](#4-specific-formats)
+	- [4.1. Tokens](#41-tokens)
+		- [4.1.1. Access token](#411-access-token)
+		- [4.1.2. Refresh token](#412-refresh-token)
+		- [4.1.3. Go models](#413-go-models)
+	- [4.2. UUID](#42-uuid)
+	- [4.3. Datetime](#43-datetime)
 
-### Authorization header
+
+## 1. Headers
+
+### 1.1. Authorization header
 Most endpoint needs a valid access token, some needs a valid refresh token.
 This token must be set in an "Authorization" header.
 
-Access token is in format 
-Refresh token is in format 
+For more info about tokens formats, see [tokens](#41-tokens)
 
 ```json
 {
@@ -15,16 +37,18 @@ Refresh token is in format
 }
 ```
 
-## User resource
+## 2. Server responses models
 
-### Structure
+### 2.1. User resource
+
+-> Structure
 - `id`:         *string* (UUIDv4 format) - User's unique identifier
 - `created_at`: *string* (ISO 8601 datetime) - When the user was created
 - `updated_at`: *string* (ISO 8601 datetime) - Last time the user's info was updated
 - `username`:   *string* - User's chosen username
 - `email`:      *string* - User's email adress
   
-### Example
+-> Example
 ```json
 {
     "id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc",
@@ -35,7 +59,7 @@ Refresh token is in format
 }
 ```
 
-### GO
+-> In Go
 ```go
 type User struct {
 	ID        pgtype.UUID      `json:"id"`
@@ -46,20 +70,20 @@ type User struct {
 }
 ```
 
-## Media resource
+### 2.2. Media resource
 
-### Structure
+-> Structure
 - `id`:             *string* (UUIDv4 format) - Medium's unique identifier
 - `media_type`:     *string* - Medium's type (book, movie, serie...)
 - `created_at`:     *string* (ISO 8601 datetime format) - When the medium was first created
 - `updated_at`:     *string* (ISO 8601 datetime format) - Last time the medium's info was updated
 - `title`:          *string* - Medium's title
 - `creator`:        *string* - Medium's creator (author, director...)
-- `pub_date`:   *string* - Medium's date of publication
+- `pub_date`:   	*string* - Medium's date of publication (No specific format)
 - `image_url`:      *string* - A link to medium's cover
-- `metadata`:       *map[string]interface{}* - A json object containing metatadata about the medium, according to media type (see below)
+- `metadata`:       *map[string]interface{}* - A json object containing some metatadata about the medium, according to media type (see below)
 
-### Example
+-> Example
 ```json
 {
     "id": "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc",
@@ -74,12 +98,30 @@ type User struct {
 }
 ```
 
-## Metadata for media
+-> In Go
+```go
+type Medium struct {
+	ID          string          `json:"id"`
+	MediaType   string          `json:"media_type"`
+	CreatedAt   string          `json:"created_at"`
+	UpdatedAt   string          `json:"updated_at"`
+	Title       string          `json:"title"`
+	Creator     string          `json:"creator"`
+	PubDate 	string           `json:"pub_date"`
+	ImageUrl    string          `json:"image_url"`
+	Metadata    map[string]interface{} `json:"metadata"`
+}
+```
 
+```go
+type ListMedia struct {
+	Media []Medium `json:"media"`
+}
+```
 
-## Record resource 
+### 2.3. Record resource 
 
-### Structure
+-> Structure
 - `id`:             *string* (UUIDv4 format) - Record's unique identifier
 - `created_at`:     *string* (ISO 8601 datetime) - When the record was first created
 - `updated_at`:     *string* (ISO 8601 datetime) - Last time the user info was updated
@@ -90,7 +132,7 @@ type User struct {
 - `end_date`:       *string* (ISO 8601 datetime) - When user finished reading/watching/playing the medium
 - `duration`:       *int32* - Auto-calculated days interval between start and end dates
 
-### Example
+-> Example
 ```json
 {
     "id": "4aea83e5-36e2-47c3-a121-7e3db9ac72d1",
@@ -105,9 +147,30 @@ type User struct {
 }
 ```
 
-## Media with Record resource
+-> In Go
+```go
+type Record struct {
+	ID         string `json:"id"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+	UserID     string `json:"user_id"`
+	MediaID    string `json:"media_id"`
+	IsFinished bool   `json:"is_finished"`
+	StartDate  string `json:"start_date"`
+	EndDate    string `json:"end_date"`
+	Duration   int32  `json:"duration"`
+}
+```
 
-### Structure
+```go
+type Records struct {
+	Records []Record `json:"records"`
+}
+```
+
+### 2.4. Media with Record resource
+
+-> Structure
 - `id`:             *string* (UUIDv4 format) - Record's unique identifier
 - `user_id`:        *string* (UUIDv4 format) - User concerned by the record
 - `media_id`:       *string* (UUIDv4 format) - Medium concerned by the record
@@ -119,11 +182,11 @@ type User struct {
 - `media_type`:     *string* - Medium's type (book, movie, serie...)
 - `title`:          *string* - Medium's title
 - `creator`:        *string* - Medium's creator (author, director...)
-- `pub_date`:   *string* - Medium's date of publication
+- `pub_date`:   	*string* - Medium's date of publication
 - `image_url`:      *string* - A link to medium's cover
 - `metadata`:       *map[string]interface{}* - A json object containing metatadata about the medium, according to media type
 
-### Example
+-> Example
 ```json
 {
     "id": "4aea83e5-36e2-47c3-a121-7e3db9ac72d1",
@@ -143,54 +206,52 @@ type User struct {
 }
 ```
 
-## Specific formats
-### Tokens
-#### Access token
-A JSON Web Token consisting of three parts separated by dots (header.payload.signature)
-Example: 
-```json
-{
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrYWxsYXh5Iiwic3ViIjoiODFjMWNiMGQtYmJkYi00ZmFhLWFlZGUtYmQzNzFhNGFiNzIyIiwiZXhwIjoxNzQzMDIxMTMyLCJpYXQiOjE3NDMwMTc1MzJ9.1PUE_93e6pXaLwjZiMIfr5DAcxTxE4jEIiRftQuJptI"
-}
-
-```
-
-Access token expiration time : 1 hour
-
-#### Refresh token
-A 64-character hexadecimal string used to obtain a new access token
-Example: "176ddabd5f4c932b8cda583e00b620a05242187680002a071e8a13c4e2b0b14f"
-
-Refresh token lifspan : 30 days
-
-### UUID
-A UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" where x is a hexadecimal digit.
-Example: "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
-
-### Datetime
-A timestamp string in RFC3339 format: YYYY-MM-DDThh:mm:ssZ
-Where:
-- YYYY-MM-DD is the date portion
-- T is a literal character separating date and time
-- hh:mm:ss.sss is the time with optional microsecond precision
-- Z indicates UTC timezone (can be replaced with +/-hh:mm offset)
-
-Examples:
-  - "2025-04-01T07:58:56Z" (basic format)
-  - "2025-04-01T07:58:56.827795Z" (with microsecond precision)
-
-All timestamps should be in UTC timezone (indicated by the 'Z' suffix).
-
-In Go, you can use 
+-> In Go:
 ```go
-time.Now().UTC().Format(time.RFC3339)
+type MediumWithRecord struct {
+	ID         string                 `json:"record_id"`
+	UserID     string                 `json:"user_id"`
+	MediaID    string                 `json:"medium_id"`
+	IsFinished bool                   `json:"is_finished"`
+	StartDate  string                 `json:"start_date"`
+	EndDate    string                 `json:"end_date"`
+	Duration   int32                  `json:"duration"`
+	Comments   string                 `json:"comments"`
+	MediaType  string                 `json:"media_type"`
+	Title      string                 `json:"title"`
+	Creator    string                 `json:"creator"`
+	PubDate    string                 `json:"pub_date"`
+	ImageUrl   string                 `json:"image_url"`
+	Metadata   map[string]interface{} `json:"metadata"`
+}
 ```
 
-## Go models
+```go
+type MediaWithRecords struct {
+	MediaRecords map[string][]MediumWithRecord `json:"records"`
+}
+```
 
-### For client's requests
+### 2.5. Admin-Password Reset
+-> Go models for server's response:
+```go
+type PasswordResetRequest struct {
+	Message    string `json:"message"`
+	ResetLink  string `json:"reset_link"`
+	ResetToken string `json:"reset_token"`
+}
+```
 
-#### Users
+```go
+type responseVerifyResetToken struct {
+	Valid bool   `json:"valid"`
+	Email string `json:"email"`
+}
+```
+
+## 3. Client requests Go models
+
+### 3.1. Users
 ```go
 type parametersCreateUser struct {
 	Username string `json:"username"`
@@ -207,7 +268,7 @@ type parametersUpdateUser struct {
 }
 ```
 
-#### Media
+### 3.2. Media
 ```go
 type parametersCreateMedium struct {
 	Title       string          `json:"title"`
@@ -236,7 +297,7 @@ type parametersDeleteMedium struct {
 }
 ```
 
-#### Records
+### 3.3. Records
 ```go
 type parametersCreateUserMediumRecord struct {
 	MediumID  string `json:"medium_id"`
@@ -259,7 +320,7 @@ type parametersDeleteRecord struct {
 }
 ```
 
-#### Authentification
+### 3.4. Authentification
 
 ```go
 type parametersLogin struct {
@@ -274,25 +335,39 @@ type parametersConfirmPassword struct {
 }
 ```
 
-#### Admin/Password Reset
+### 3.5. Admin/Password Reset
 ```go
 type parametersPasswordResetRequest struct {
 	Email string `json:"email"`
 }
 ```
 
+## 4. Specific formats
+### 4.1. Tokens
+#### 4.1.1. Access token
+A JSON Web Token consisting of three parts separated by dots (header.payload.signature)  
+Example: 
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrYWxsYXh5Iiwic3ViIjoiODFjMWNiMGQtYmJkYi00ZmFhLWFlZGUtYmQzNzFhNGFiNzIyIiwiZXhwIjoxNzQzMDIxMTMyLCJpYXQiOjE3NDMwMTc1MzJ9.1PUE_93e6pXaLwjZiMIfr5DAcxTxE4jEIiRftQuJptI"
+}
 
-### For server's responses
-```go
-type User struct {
-	ID        string `json:"id"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
+```
+
+Access token expiration time : 1 hour
+
+#### 4.1.2. Refresh token
+A 64-character hexadecimal string used to obtain a new access token
+Example: 
+```json
+{
+	"refresh_token": "176ddabd5f4c932b8cda583e00b620a05242187680002a071e8a13c4e2b0b14f"  
 }
 ```
 
+Refresh token lifspan : 30 days
+
+#### 4.1.3. Go models
 ```go
 type Tokens struct {
 	AccessToken  string `json:"access_token"`
@@ -312,58 +387,25 @@ type TokensAndUser struct {
 }
 ```
 
-```go
-type Medium struct {
-	ID          string          `json:"id"`
-	MediaType   string          `json:"media_type"`
-	CreatedAt   string          `json:"created_at"`
-	UpdatedAt   string          `json:"updated_at"`
-	Title       string          `json:"title"`
-	Creator     string          `json:"creator"`
-	PubDate 	string           `json:"pub_date"`
-	ImageUrl    string          `json:"image_url"`
-	Metadata    map[string]interface{} `json:"metadata"`
-}
-```
+### 4.2. UUID
+A UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" where x is a hexadecimal digit.
+Example: "d8b5ad72-1a8d-4990-bb83-44bd4daa32dc"
 
-```go
-type ListMedia struct {
-	Media []Medium `json:"media"`
-}
-```
+### 4.3. Datetime
+A timestamp string in RFC3339 format: YYYY-MM-DDThh:mm:ssZ
+Where:
+- YYYY-MM-DD is the date portion
+- T is a literal character separating date and time
+- hh:mm:ss.sss is the time with optional microsecond precision
+- Z indicates UTC timezone (can be replaced with +/-hh:mm offset)
 
-```go
-type Record struct {
-	ID         string `json:"id"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-	UserID     string `json:"user_id"`
-	MediaID    string `json:"media_id"`
-	IsFinished bool   `json:"is_finished"`
-	StartDate  string `json:"start_date"`
-	EndDate    string `json:"end_date"`
-	Duration   int32  `json:"duration"`
-}
-```
+Examples:
+  - "2025-04-01T07:58:56Z" (basic format)
+  - "2025-04-01T07:58:56.827795Z" (with microsecond precision)
 
-```go
-type Records struct {
-	Records []Record `json:"records"`
-}
-```
+All timestamps should be in UTC timezone (indicated by the 'Z' suffix).
 
-#### Admin-Password Reset
+In Go, you can use 
 ```go
-type PasswordResetRequest struct {
-	Message    string `json:"message"`
-	ResetLink  string `json:"reset_link"`
-	ResetToken string `json:"reset_token"`
-}
-```
-
-```go
-type responseVerifyResetToken struct {
-	Valid bool   `json:"valid"`
-	Email string `json:"email"`
-}
+time.Now().UTC().Format(time.RFC3339)
 ```

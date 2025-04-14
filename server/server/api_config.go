@@ -8,14 +8,16 @@ type apiConfig struct {
 	openlibraryUA string
 	moviedbKey    string
 	rawgKey       string
+	serverVersion string
 }
 
-func newAPIConfig(db *database.Queries, jwtsecret, openLibraryUA, moviedbAPIKey, rawgKey string) *apiConfig {
+func newAPIConfig(db *database.Queries, jwtsecret, openLibraryUA, moviedbAPIKey, rawgKey, serverVersion string) *apiConfig {
 	return &apiConfig{
 		db:            db,
 		jwtsecret:     jwtsecret,
 		openlibraryUA: openLibraryUA,
 		moviedbKey:    moviedbAPIKey,
 		rawgKey:       rawgKey,
+		serverVersion: serverVersion,
 	}
 }

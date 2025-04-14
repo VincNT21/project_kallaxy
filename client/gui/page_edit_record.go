@@ -30,11 +30,6 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	// User's Record forms
 	// Date entries have a Action Button that calls a Date Picker dialog
 	startDateEntry := widget.NewEntry()
-	if mediumWithRecord.StartDate == "" {
-		startDateEntry.SetPlaceHolder("2025/01/01")
-	} else {
-		startDateEntry.SetText(mediumWithRecord.StartDate)
-	}
 
 	startDateEntry.ActionItem = widget.NewButtonWithIcon("", theme.MoreHorizontalIcon(), func() {
 		when := time.Now().UTC()
@@ -63,12 +58,19 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	})
 	startDateFormItem := widget.NewFormItem("Started on", startDateEntry)
 
-	endDateEntry := widget.NewEntry()
-	if mediumWithRecord.EndDate == "" {
-		endDateEntry.SetPlaceHolder("2025/01/01")
+	// Set initial date according to existing record
+	if mediumWithRecord.StartDate == "" {
+		startDateEntry.SetPlaceHolder("2025/01/01")
 	} else {
-		endDateEntry.SetText(mediumWithRecord.EndDate)
+		parsedDate, err := appCtxt.APIClient.Helpers.FormatDateToLocalFormat(mediumWithRecord.StartDate)
+		if err != nil {
+			startDateEntry.SetText("")
+		} else {
+			startDateEntry.SetText(parsedDate)
+		}
 	}
+
+	endDateEntry := widget.NewEntry()
 
 	endDateEntry.ActionItem = widget.NewButtonWithIcon("", theme.MoreHorizontalIcon(), func() {
 		when := time.Now().UTC()
@@ -97,8 +99,23 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	})
 	endDateFormItem := widget.NewFormItem("Completed on", endDateEntry)
 
+	// Set initial date according to existing record
+	if mediumWithRecord.EndDate == "" {
+		endDateEntry.SetPlaceHolder("2025/01/01")
+	} else {
+		parsedDate, err := appCtxt.APIClient.Helpers.FormatDateToLocalFormat(mediumWithRecord.EndDate)
+		if err != nil {
+			endDateEntry.SetText("")
+		} else {
+			endDateEntry.SetText(parsedDate)
+		}
+	}
+
 	commentsEntry := widget.NewMultiLineEntry()
 	commentsFormItem := widget.NewFormItem("Personal comments", commentsEntry)
+	if mediumWithRecord.Comments != "" {
+		commentsEntry.SetText(mediumWithRecord.Comments)
+	}
 
 	recordForm := widget.NewForm(startDateFormItem, endDateFormItem, commentsFormItem)
 
@@ -108,9 +125,21 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	buttonUndoChanges := widget.NewButtonWithIcon("Undo all changes", theme.ContentUndoIcon(), func() {
 		dialog.ShowConfirm("Confirm", "Are you sure you want to undo all changes ?", func(b bool) {
 			if b {
-				startDateEntry.SetText(mediumWithRecord.StartDate)
-				endDateEntry.SetText(mediumWithRecord.EndDate)
-				commentsEntry.SetText("")
+				parsedStartDate, err := appCtxt.APIClient.Helpers.FormatDateToLocalFormat(mediumWithRecord.StartDate)
+				if err != nil {
+					startDateEntry.SetText("")
+				} else {
+					startDateEntry.SetText(parsedStartDate)
+				}
+
+				parsedEndDate, err := appCtxt.APIClient.Helpers.FormatDateToLocalFormat(mediumWithRecord.EndDate)
+				if err != nil {
+					endDateEntry.SetText("")
+				} else {
+					endDateEntry.SetText(parsedEndDate)
+				}
+
+				commentsEntry.SetText(mediumWithRecord.Comments)
 			}
 		}, appCtxt.MainWindow)
 	})
@@ -124,7 +153,7 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	})
 
 	submitButton := widget.NewButtonWithIcon("Update", theme.ConfirmIcon(), func() {
-		buttonFuncSubmitEditRecord(appCtxt, mediumWithRecord, startDateEntry, endDateEntry)
+		buttonFuncSubmitEditRecord(appCtxt, mediumWithRecord, startDateEntry, endDateEntry, commentsEntry)
 	})
 
 	// Group objects
@@ -144,7 +173,7 @@ func createEditRecordContent(appCtxt *context.AppContext, mediaType string, medi
 	return globalContainer
 }
 
-func buttonFuncSubmitEditRecord(appCtxt *context.AppContext, mediumWithRecord models.MediumWithRecord, startDateEntry, endDateEntry *widget.Entry) {
+func buttonFuncSubmitEditRecord(appCtxt *context.AppContext, mediumWithRecord models.MediumWithRecord, startDateEntry, endDateEntry, commentsEntry *widget.Entry) {
 	// Confirm info dialog box
 	dialog.ShowCustomConfirm(
 		"Confirm",
@@ -153,6 +182,7 @@ func buttonFuncSubmitEditRecord(appCtxt *context.AppContext, mediumWithRecord mo
 		container.NewVBox(
 			widget.NewLabelWithStyle(fmt.Sprintf("Start Date: %s", startDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 			widget.NewLabelWithStyle(fmt.Sprintf("End Date: %s", endDateEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
+			widget.NewLabelWithStyle(fmt.Sprintf("Comments: %s", commentsEntry.Text), fyne.TextAlignLeading, fyne.TextStyle{}),
 		),
 		func(b bool) {
 			// If Confirmed. call the UpdateRecord client API function
@@ -161,6 +191,7 @@ func buttonFuncSubmitEditRecord(appCtxt *context.AppContext, mediumWithRecord mo
 					mediumWithRecord.ID,
 					startDateEntry.Text,
 					endDateEntry.Text,
+					commentsEntry.Text,
 				)
 				if err != nil {
 					switch err {

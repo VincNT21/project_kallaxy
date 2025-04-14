@@ -9,10 +9,13 @@ import (
 )
 
 type APIClient struct {
-	HttpClient  *http.Client
-	Config      *APIConfig
-	CurrentUser models.ClientUser
-	Cache       *cache.Cache
+	HttpClient    *http.Client
+	Config        *APIConfig
+	CurrentUser   models.ClientUser
+	ClientVersion string
+	ServerVersion string
+
+	Cache *cache.Cache
 
 	Users    *UsersClient
 	Media    *MediaClient

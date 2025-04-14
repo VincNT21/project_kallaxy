@@ -86,16 +86,25 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 		// Create all images for media of this type into a Grid Wrap
 		mediaDisplay := container.NewGridWrap(fyne.NewSize(200, 500))
 		for _, medium := range mediaRecords.MediaRecords[mediaType] {
-			// Get image buffer
-			buffer, err := appCtxt.APIClient.Helpers.GetImage(medium.ImageUrl)
-			if err != nil {
-				return container.NewVScroll(shelf), err
+
+			// Inside function lo load image
+			loadImage := func() fyne.CanvasObject {
+				if medium.ImageUrl == "" {
+					return createFallbackImage(medium.Title)
+				}
+				// Fetch the image as a buffer
+				bufImage, err := appCtxt.APIClient.Helpers.GetImage(medium.ImageUrl)
+				if err != nil {
+					return createFallbackImage(medium.Title)
+				}
+				// Create the image component
+				image := canvas.NewImageFromReader(bufImage, medium.Title)
+				image.FillMode = canvas.ImageFillContain
+
+				return image
 			}
 
-			image := canvas.NewImageFromReader(buffer, medium.Title)
-			image.FillMode = canvas.ImageFillContain
-
-			mediaDisplay.Add(image)
+			mediaDisplay.Add(loadImage())
 		}
 
 		// Put the Grid Wrap inside a Border Container

@@ -9,16 +9,8 @@ import (
 
 	"github.com/VincNT21/kallaxy/server/internal/database"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
-
-type parametersCreateMedium struct {
-	Title     string                 `json:"title"`
-	MediaType string                 `json:"media_type"`
-	Creator   string                 `json:"creator"`
-	PubDate   string                 `json:"pub_date"`
-	ImageUrl  string                 `json:"image_url"`
-	Metadata  map[string]interface{} `json:"metadata"`
-}
 
 // POST /api/media
 func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request) {
@@ -90,11 +82,6 @@ func (cfg *apiConfig) handlerCreateMedium(w http.ResponseWriter, r *http.Request
 	})
 }
 
-type parametersGetMediumByTitleAndType struct {
-	Title     string `json:"title"`
-	MediaType string `json:"media_type"`
-}
-
 // GET /api/media
 func (cfg *apiConfig) handlerGetMediumByTitleAndType(w http.ResponseWriter, r *http.Request) {
 	type response struct {
@@ -145,10 +132,6 @@ func (cfg *apiConfig) handlerGetMediumByTitleAndType(w http.ResponseWriter, r *h
 		},
 	})
 
-}
-
-type parametersGetMediaByType struct {
-	MediaType string `json:"media_type"`
 }
 
 type responseGetMediaByType struct {
@@ -204,13 +187,66 @@ func (cfg *apiConfig) handlerGetMediaByType(w http.ResponseWriter, r *http.Reque
 
 }
 
-type parametersUpdateMedium struct {
-	MediumID string                 `json:"medium_id"`
-	Title    string                 `json:"title"`
-	Creator  string                 `json:"creator"`
-	PubDate  string                 `json:"pub_date"`
-	ImageUrl string                 `json:"image_url"`
-	Metadata map[string]interface{} `json:"metadata"`
+type responseGetRecordsAndMediaByUserID struct {
+	MediaRecords map[string][]MediumWithRecord `json:"records"`
+}
+
+// GET /api/records_media
+func (cfg *apiConfig) handlerGetRecordsAndMediaByUserID(w http.ResponseWriter, r *http.Request) {
+
+	// Get userID from access token
+	userID := r.Context().Value(userIDKey).(pgtype.UUID)
+
+	// Call query function
+	recordsAndMedia, err := cfg.db.GetRecordsAndMediaByUserID(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, 500, "couldn't get records and media by user ID in database", err)
+		return
+	}
+	if len(recordsAndMedia) == 0 {
+		respondWithError(w, 404, "no record found for given user id", errors.New("recordsMedia list returning from query was empty"))
+		return
+	}
+
+	response := responseGetRecordsAndMediaByUserID{
+		MediaRecords: make(map[string][]MediumWithRecord),
+	}
+
+	for _, medium := range recordsAndMedia {
+		// Convert metadata back to map
+		metadataMap, err := bytesToMap(medium.Metadata)
+		if err != nil {
+			respondWithError(w, 500, "couldn't convert metadata map from database", err)
+			return
+		}
+		// Create the MediumWithRecord object
+		mediumRecord := MediumWithRecord{
+			ID:         medium.ID,
+			UserID:     medium.UserID,
+			MediaID:    medium.MediaID,
+			IsFinished: medium.IsFinished,
+			StartDate:  medium.StartDate,
+			EndDate:    medium.EndDate,
+			Duration:   medium.Duration.Days,
+			Comments:   medium.Comments,
+			MediaType:  medium.MediaType,
+			Title:      medium.Title,
+			Creator:    medium.Creator,
+			PubDate:    medium.PubDate,
+			ImageUrl:   medium.ImageUrl,
+			Metadata:   metadataMap,
+		}
+
+		// Get the appropriate media type key
+		mediaType := medium.MediaType
+
+		// Append to the correct slice in the map
+		response.MediaRecords[mediaType] = append(response.MediaRecords[mediaType], mediumRecord)
+	}
+
+	// Respond
+	respondWithJson(w, 200, response)
+
 }
 
 // PUT /api/media
@@ -282,10 +318,6 @@ func (cfg *apiConfig) handlerUpdateMedium(w http.ResponseWriter, r *http.Request
 		ImageUrl:  medium.ImageUrl,
 		Metadata:  metadataMap,
 	})
-}
-
-type parametersDeleteMedium struct {
-	MediumID string `json:"medium_id"`
 }
 
 // DELETE /api/media

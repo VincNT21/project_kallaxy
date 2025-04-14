@@ -155,6 +155,15 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaL
 			Value:    fmt.Sprintf("%v", medium.Duration),
 			NodeType: "single_line_with_title",
 		}
+		commentsLeafID := fmt.Sprintf("%s-%s", persRecordNodeID, "comments")
+		treeData[persRecordNodeID] = append(treeData[persRecordNodeID], commentsLeafID)
+		nodes[commentsLeafID] = TreeNode{
+			ID:       commentsLeafID,
+			ParentID: persRecordNodeID,
+			Title:    "Comments: ",
+			Value:    medium.Comments,
+			NodeType: "single_line_with_title",
+		}
 
 		// Metadata Branch node (3rd level)
 		metadataNodeID := fmt.Sprintf("%s-metadata", mediaNodeID)

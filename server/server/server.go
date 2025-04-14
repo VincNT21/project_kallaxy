@@ -25,7 +25,7 @@ func Start(envVars ...map[string]string) {
 		// Normal case: Load the .env file into the environement
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatalf("--FATAL ERROR-- couldn't load .env file: %v", err)
+			log.Printf("Warning: .env file not found, using environment variables")
 		}
 	}
 
@@ -51,6 +51,8 @@ func Start(envVars ...map[string]string) {
 		log.Fatal("--FATAL ERROR-- RAWG_KEY env. variable must be set")
 	}
 
+	serverVersion := "v1.0.0"
+
 	// Open a connection to database
 	dbConnection, err := pgxpool.New(context.Background(), dbUrl)
 	if err != nil {
@@ -62,7 +64,7 @@ func Start(envVars ...map[string]string) {
 	db := database.New(dbConnection)
 
 	// Init apiCfg
-	apiCfg := newAPIConfig(db, jwtsecret, openLibraryUA, moviedbAPIKey, rawgKey)
+	apiCfg := newAPIConfig(db, jwtsecret, openLibraryUA, moviedbAPIKey, rawgKey, serverVersion)
 
 	// Delete revoked refresh token in database
 	apiCfg.CleanRefreshTokens()
@@ -78,6 +80,13 @@ func Start(envVars ...map[string]string) {
 	mux.Handle("PUT /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateUser)))
 	mux.Handle("DELETE /api/users", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteUser)))
 
+	// Authentification endpoints
+	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
+	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
+	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
+	mux.Handle("GET /auth/login", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerConfirmPassword)))
+
 	// Media endpoints
 	mux.Handle("POST /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerCreateMedium)))
 	mux.Handle("GET /api/media", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerGetMediumByTitleAndType)))
@@ -92,23 +101,21 @@ func Start(envVars ...map[string]string) {
 	mux.Handle("PUT /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerUpdateRecord)))
 	mux.Handle("DELETE /api/records", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerDeleteRecord)))
 
-	// Authentification endpoints
-	mux.HandleFunc("POST /auth/login", apiCfg.handlerLogin)
-	mux.Handle("POST /auth/logout", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerLogout)))
-	mux.HandleFunc("POST /auth/refresh", apiCfg.handlerRefresh)
-	mux.HandleFunc("POST /auth/revoke", apiCfg.handlerRevoke)
-	mux.Handle("GET /auth/login", apiCfg.authMiddleware(http.HandlerFunc(apiCfg.handlerConfirmPassword)))
-
 	// Reset Password endpoints
 	mux.HandleFunc("POST /auth/password_reset", apiCfg.handlerPasswordResetRequest)
 	mux.HandleFunc("GET /auth/password_reset", apiCfg.handlerVerifyResetToken)
 	mux.HandleFunc("PUT /auth/password_reset", apiCfg.handlerResetPassword)
 
 	// Admin endpoint (only used on test server)
-	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
-	mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
-	mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
-	mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
+	/*
+		mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+		mux.HandleFunc("GET /admin/user", apiCfg.handlerCheckUserExists)
+		mux.HandleFunc("GET /admin/medium", apiCfg.handlerCheckMediumExists)
+		mux.HandleFunc("GET /admin/record", apiCfg.handlerCheckRecordExists)
+	*/
+
+	// Communicate server version to client
+	mux.HandleFunc("GET /server/version", apiCfg.handlerGetServerVersion)
 
 	// Proxy endpoints (for external 3rd party API)
 	// Books

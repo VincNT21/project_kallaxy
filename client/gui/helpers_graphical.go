@@ -28,17 +28,21 @@ func customSpacerVertical(height float32) fyne.CanvasObject {
 	return spacer
 }
 
-func createFallbackImage() fyne.CanvasObject {
+func createFallbackImage(title string) fyne.CanvasObject {
 	// Create a container with an icon and text
 	brokenIcon := canvas.NewImageFromResource(theme.ErrorIcon())
-	brokenIcon.SetMinSize(fyne.NewSize(50, 50))
+	brokenIcon.SetMinSize(fyne.NewSize(50, 150))
 
+	titleLine := canvas.NewText(title, color.White)
+	titleLine.Alignment = fyne.TextAlignCenter
+	titleLine.TextSize = 16
 	messageText := canvas.NewText("Image not available", color.White)
 	messageText.Alignment = fyne.TextAlignCenter
 
 	return container.NewCenter(
 		container.NewVBox(
 			brokenIcon,
+			titleLine,
 			messageText,
 		),
 	)

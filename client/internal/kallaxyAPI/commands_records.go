@@ -4,33 +4,33 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func (c *RecordsClient) CreateRecord(mediumID, startDate, endDate string) (models.Record, error) {
+func (c *RecordsClient) CreateRecord(mediumID, startDate, endDate, comments string) (models.Record, error) {
 	type parametersCreateUserMediumRecord struct {
 		MediumID  string `json:"medium_id"`
 		StartDate string `json:"start_date"`
 		EndDate   string `json:"end_date"`
+		Comments  string `json:"comments"`
 	}
 
 	// Convert input data to match server's requirement
 	if startDate != "" {
-		parsedStartDate, err := time.Parse("2006/01/02", startDate)
+		parsedStartDate, err := c.apiClient.Helpers.FormatDateToServerFormat(startDate)
 		if err != nil {
 			return models.Record{}, err
 		}
-		startDate = parsedStartDate.Format(time.RFC3339)
+		startDate = parsedStartDate
 	}
 
 	if endDate != "" {
-		parsedEndDate, err := time.Parse("2006/01/02", endDate)
+		parsedEndDate, err := c.apiClient.Helpers.FormatDateToServerFormat(endDate)
 		if err != nil {
 			return models.Record{}, err
 		}
-		endDate = parsedEndDate.Format(time.RFC3339)
+		endDate = parsedEndDate
 	}
 
 	// Parameters for request
@@ -38,6 +38,7 @@ func (c *RecordsClient) CreateRecord(mediumID, startDate, endDate string) (model
 		MediumID:  mediumID,
 		StartDate: startDate,
 		EndDate:   endDate,
+		Comments:  comments,
 	}
 
 	// Make request
@@ -61,34 +62,36 @@ func (c *RecordsClient) CreateRecord(mediumID, startDate, endDate string) (model
 	return record, nil
 }
 
-func (c *RecordsClient) UpdateRecord(recordID, startDate, endDate string) (models.Record, error) {
+func (c *RecordsClient) UpdateRecord(recordID, startDate, endDate, comments string) (models.Record, error) {
 	type parametersUpdateRecord struct {
 		RecordID  string `json:"record_id"`
 		StartDate string `json:"start_date"`
 		EndDate   string `json:"end_date"`
+		Comments  string `json:"comments"`
 	}
 
 	// Convert input data to match server's requirement
 	if startDate != "" {
-		parsedStartDate, err := time.Parse("2006/01/02", startDate)
+		parsedStartDate, err := c.apiClient.Helpers.FormatDateToServerFormat(startDate)
 		if err != nil {
 			return models.Record{}, err
 		}
-		startDate = parsedStartDate.Format(time.RFC3339)
+		startDate = parsedStartDate
 	}
 
 	if endDate != "" {
-		parsedEndDate, err := time.Parse("2006/01/02", endDate)
+		parsedEndDate, err := c.apiClient.Helpers.FormatDateToServerFormat(endDate)
 		if err != nil {
 			return models.Record{}, err
 		}
-		endDate = parsedEndDate.Format(time.RFC3339)
+		endDate = parsedEndDate
 	}
 
 	params := parametersUpdateRecord{
 		RecordID:  recordID,
 		StartDate: startDate,
 		EndDate:   endDate,
+		Comments:  comments,
 	}
 
 	// Make request

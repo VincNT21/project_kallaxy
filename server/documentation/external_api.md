@@ -2,6 +2,9 @@
 
 ## Open Library API (books)
 
+
+
+For covers :
 https://covers.openlibrary.org/b/isbn/<*ISBN*>-M.jpg
 
 ## The Movie DB (movies and tv shows)

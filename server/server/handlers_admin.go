@@ -9,6 +9,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// GET /server/Version
+func (cfg *apiConfig) handlerGetServerVersion(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+	}
+
+	type response struct {
+		ServerVersion string `json:"server_version"`
+	}
+
+	respondWithJson(w, 200, response{
+		ServerVersion: cfg.serverVersion,
+	})
+
+}
+
 // This handler is only used for integration tests
 // No endpoint for it exists in production server
 // POST /admin/reset

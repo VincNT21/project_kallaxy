@@ -147,7 +147,7 @@ func formatMetadataValueForEntry(appCtxt *context.AppContext, fieldName string, 
 // Create a canvas.Text of type "<medatada_field>: <result.metadata_value>"
 func createMetadataTextContainer(appCtxt *context.AppContext, entryMap map[string]*widget.Entry, result models.ClientMedium) *fyne.Container {
 	metadataContainer := container.NewVBox()
-	for field, _ := range entryMap {
+	for field := range entryMap {
 
 		metadataValue := formatMetadataValueForEntry(appCtxt, field, result.Metadata[field])
 		line := canvas.NewText(fmt.Sprintf("%v: %v", field, metadataValue), color.White)

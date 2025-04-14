@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -29,9 +30,6 @@ type SerializableCacheEntry struct {
 	CreatedAt time.Time `json:"createdAt"`
 	Data      string    `json:"data"` // Base64 encoded string
 }
-
-// local storage of cache entries is a temporary approach
-const localStorageCachePath = "/home/vincnt/workspace/project_kallaxy/client/config/cache.json"
 
 func NewCache() *Cache {
 	c := &Cache{
@@ -107,11 +105,26 @@ func (c *Cache) GetFromTemp(key string) ([]byte, bool) {
 	return entry.val, true
 }
 
+func getLocalCacheStoragePath() string {
+	// Get the path to the currently running executable
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Error with getLocalStoragePath(): %v", err)
+	}
+
+	// Determine the directory where the executable is located
+	execDir := filepath.Dir(execPath)
+
+	// Build the path to the "config/cache.json" file
+	return filepath.Join(execDir, "config", "cache.json")
+}
+
 func loadCacheFile() (map[string]cacheEntry, error) {
 	emptyMap := make(map[string]cacheEntry)
 
 	// Open local cache.json file
-	f, err := os.Open(localStorageCachePath)
+	localCacheFilePath := getLocalCacheStoragePath()
+	f, err := os.Open(localCacheFilePath)
 	if err != nil {
 		log.Printf("--ERROR-- with loadCacheFile(), couldn't open cache.json: %v\n", err)
 		return emptyMap, err
@@ -152,7 +165,8 @@ func loadCacheFile() (map[string]cacheEntry, error) {
 
 func (c *Cache) DumpCacheFile() {
 	// Create/erase local cache.json file
-	f, err := os.Create(localStorageCachePath)
+	localCacheFilePath := getLocalCacheStoragePath()
+	f, err := os.Create(localCacheFilePath)
 	if err != nil {
 		log.Printf("--ERROR-- with DumpCacheFile, couldn't create cache.json: %v\n", err)
 		return

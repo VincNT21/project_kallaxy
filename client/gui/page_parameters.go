@@ -27,6 +27,10 @@ func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 	usernameLabel := widget.NewLabel(fmt.Sprintf("Username: %s", appCtxt.APIClient.CurrentUser.Username))
 	emailLabel := widget.NewLabel(fmt.Sprintf("Email: %s", appCtxt.APIClient.CurrentUser.Email))
 
+	// Versions text
+	clientVersion := widget.NewLabel(fmt.Sprintf("Client current version: %s", appCtxt.APIClient.ClientVersion))
+	serverVersion := widget.NewLabel(fmt.Sprintf("Server current version: %s", appCtxt.APIClient.ServerVersion))
+
 	// Entries
 	passwordEntry := widget.NewPasswordEntry()
 	usernameEntry := widget.NewEntry()
@@ -55,8 +59,12 @@ func createParametersContent(appCtxt *context.AppContext) *fyne.Container {
 		}, appCtxt.MainWindow)
 	})
 
+	deleteUserButton := widget.NewButtonWithIcon("Delete User", theme.DeleteIcon(), func() {
+		buttonFuncDeleteUser(appCtxt)
+	})
+
 	// Group objects
-	textColumn := container.NewVBox(layout.NewSpacer(), usernameLabel, emailLabel, statusLabel, layout.NewSpacer(), updateButton, layout.NewSpacer())
+	textColumn := container.NewVBox(layout.NewSpacer(), clientVersion, serverVersion, usernameLabel, emailLabel, layout.NewSpacer(), statusLabel, updateButton, customSpacerVertical(100), deleteUserButton, layout.NewSpacer())
 	centerRow := container.NewHBox(layout.NewSpacer(), textColumn, layout.NewSpacer())
 
 	// Create the global frame
@@ -120,5 +128,17 @@ func buttonFuncUpdateUserInfo(appCtxt *context.AppContext, confirmPasswordform, 
 }
 
 func buttonFuncDeleteUser(appCtxt *context.AppContext) {
-
+	dialog.ShowConfirm("Confirm", "Are you sure you want to delete your user account ??", func(b bool) {
+		if b {
+			dialog.ShowConfirm("Last warning", "Last warning, This action is irreversible !", func(b bool) {
+				if b {
+					err := appCtxt.APIClient.Users.DeleteUser()
+					if err != nil {
+						dialog.ShowError(err, appCtxt.MainWindow)
+					}
+					appCtxt.PageManager.ShowLoginPage()
+				}
+			}, appCtxt.MainWindow)
+		}
+	}, appCtxt.MainWindow)
 }

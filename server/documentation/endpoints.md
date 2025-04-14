@@ -10,40 +10,42 @@
   - [2.2. POST /auth/logout -- Logout a user](#22-post-authlogout----logout-a-user)
   - [2.3. POST /auth/refresh -- Refresh access token](#23-post-authrefresh----refresh-access-token)
   - [2.4. POST /auth/revoke -- Revoke a refresh token](#24-post-authrevoke----revoke-a-refresh-token)
-  - [GET /auth/login -- Confirm user password](#get-authlogin----confirm-user-password)
+  - [2.5. GET /auth/login -- Confirm user password](#25-get-authlogin----confirm-user-password)
 - [3. Media endpoints](#3-media-endpoints)
   - [3.1. POST /api/media -- Create a new medium](#31-post-apimedia----create-a-new-medium)
   - [3.2. GET /api/media -- Get a medium's info by its title](#32-get-apimedia----get-a-mediums-info-by-its-title)
   - [3.3. GET /api/media/type -- Get all media based on given type](#33-get-apimediatype----get-all-media-based-on-given-type)
-  - [3.4. PUT /api/media -- Update a medium's info](#34-put-apimedia----update-a-mediums-info)
-  - [3.5. DELETE /api/media -- Delete a medium](#35-delete-apimedia----delete-a-medium)
+  - [3.4. GET /api/media\_records -- Get all user's record and related media](#34-get-apimedia_records----get-all-users-record-and-related-media)
+  - [3.5. PUT /api/media -- Update a medium's info](#35-put-apimedia----update-a-mediums-info)
+  - [3.6. DELETE /api/media -- Delete a medium](#36-delete-apimedia----delete-a-medium)
 - [4. Records endpoints](#4-records-endpoints)
   - [4.1. POST /api/records -- Create a new User-Medium Record](#41-post-apirecords----create-a-new-user-medium-record)
   - [4.2. GET /api/records -- Get all records by user's ID](#42-get-apirecords----get-all-records-by-users-id)
-  - [GET /api/media\_records -- Get all user's record and related media](#get-apimedia_records----get-all-users-record-and-related-media)
-  - [4.3. PUT /api/records -- Update a record's start and/ord end date](#43-put-apirecords----update-a-records-start-andord-end-date)
+  - [4.3. PUT /api/records -- Update a record's start and/or end date](#43-put-apirecords----update-a-records-start-andor-end-date)
   - [4.4. DELETE /api/records -- Delete a record with its medium ID](#44-delete-apirecords----delete-a-record-with-its-medium-id)
-- [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
-  - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
-  - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
-  - [5.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#53-put-authpassword_reset----step-3--set-a-new-password)
-- [External API endpoints (Server acts as a proxy)](#external-api-endpoints-server-acts-as-a-proxy)
-  - [Books (on openLibrary.org)](#books-on-openlibraryorg)
-    - [GET /external\_api/book/search -- Search for a book by title or by author](#get-external_apibooksearch----search-for-a-book-by-title-or-by-author)
-    - [GET /external\_api/book/isbn](#get-external_apibookisbn)
-    - [GET /external\_api/book/author](#get-external_apibookauthor)
-    - [GET /external\_api/book/search\_isbn](#get-external_apibooksearch_isbn)
-  - [Movies/Series](#moviesseries)
-    - [GET /external\_api/movie\_tv/search\_movie](#get-external_apimovie_tvsearch_movie)
-    - [GET /external\_api/movie\_tv/search\_tv](#get-external_apimovie_tvsearch_tv)
-    - [GET /external\_api/movie\_tv/search](#get-external_apimovie_tvsearch)
-    - [GET /external\_api/movie\_tv](#get-external_apimovie_tv)
-  - [Videogames](#videogames)
-    - [GET /external\_api/videogame/search](#get-external_apivideogamesearch)
-    - [GET /external\_api/videogame](#get-external_apivideogame)
-  - [Boardgames](#boardgames)
-    - [GET /external\_api/boardgame/search](#get-external_apiboardgamesearch)
-    - [GET /external\_api/boardgame](#get-external_apiboardgame)
+- [Other endoints](#other-endoints)
+  - [GET /server/version -- Get server version](#get-serverversion----get-server-version)
+  - [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
+    - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
+    - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
+    - [5.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#53-put-authpassword_reset----step-3--set-a-new-password)
+- [6. External API endpoints (Server acts as a proxy)](#6-external-api-endpoints-server-acts-as-a-proxy)
+  - [6.1. Books (on openLibrary.org)](#61-books-on-openlibraryorg)
+    - [6.1.1. GET /external\_api/book/search -- Search for a book by title or by author](#611-get-external_apibooksearch----search-for-a-book-by-title-or-by-author)
+    - [6.1.2. GET /external\_api/book/isbn](#612-get-external_apibookisbn)
+    - [6.1.3. GET /external\_api/book/author](#613-get-external_apibookauthor)
+    - [6.1.4. GET /external\_api/book/search\_isbn](#614-get-external_apibooksearch_isbn)
+  - [6.2. Movies/Series](#62-moviesseries)
+    - [6.2.1. GET /external\_api/movie\_tv/search\_movie](#621-get-external_apimovie_tvsearch_movie)
+    - [6.2.2. GET /external\_api/movie\_tv/search\_tv](#622-get-external_apimovie_tvsearch_tv)
+    - [6.2.3. GET /external\_api/movie\_tv/search](#623-get-external_apimovie_tvsearch)
+    - [6.2.4. GET /external\_api/movie\_tv](#624-get-external_apimovie_tv)
+  - [6.3. Videogames](#63-videogames)
+    - [6.3.1. GET /external\_api/videogame/search](#631-get-external_apivideogamesearch)
+    - [6.3.2. GET /external\_api/videogame](#632-get-external_apivideogame)
+  - [6.4. Boardgames](#64-boardgames)
+    - [6.4.1. GET /external\_api/boardgame/search](#641-get-external_apiboardgamesearch)
+    - [6.4.2. GET /external\_api/boardgame](#642-get-external_apiboardgame)
 
 
 ## 1. Users endpoints
@@ -56,8 +58,8 @@
 -> *Request body* :
 > **REQUIRED**:
 * unique `username` - *string*
-* `password` - *string* 
-* unique `email` - *string*
+* `password`        - *string* 
+* unique `email`    - *string*
 
 *Example*:
 ```json
@@ -78,7 +80,7 @@
     201 Created
 
 -> *Response body example* :
->See resource [User](resources.md#user-resource)
+>See resource [User](resources.md#21-user-resource)
 
 ### 1.2. GET /api/users -- Get user info by ID (need an valid access token)
 -> *Description* :
@@ -87,7 +89,7 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >None
@@ -101,7 +103,7 @@
     200 OK
 
 -> *OK Response body example* :
->See resource [User](resources.md#user-resource)
+>See resource [User](resources.md#21-user-resource)
 
 ### 1.3. PUT /api/users -- User info update
 -> *Description* : 
@@ -111,7 +113,7 @@
 
 -> *Request headers* : 
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >**REQUIRED**:  
@@ -141,7 +143,7 @@
     /!\ If client receives 200 OK response, it also means that user's refresh token has been revoked and need to log in again for new refresh token /!\ 
 
 -> *Response body example* :
->See resource [User](resources.md#user-resource)
+>See resource [User](resources.md#21-user-resource)
 
 ### 1.4. DELETE /api/users -- Delete all user's info (need a valid access token)
 -> *Description* :
@@ -150,7 +152,7 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >None
@@ -207,7 +209,7 @@
     "refresh_token": "176ddabd5f4c932b8cda583e00b620a05242187680002a071e8a13c4e2b0b14"
 }
 ```
->See resource [User](resources.md#user-resource) and resource [Tokens](resources.md#tokens)
+>See resource [User](resources.md#21-user-resource) and resource [Tokens](resources.md#41-tokens)
 
 ### 2.2. POST /auth/logout -- Logout a user
 -> *Description* : 
@@ -216,7 +218,7 @@
 
 -> *Request headers* : 
 > A valid access token in "Authorization" header
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >None
@@ -233,12 +235,12 @@
 ### 2.3. POST /auth/refresh -- Refresh access token
 -> *Description* : 
 >If given Refresh Token is still valid and not revoked, create a new Access Token and a new Refresh Token.
->Given refresh token will be revoked
-> Respond with both tokens
+>Old refresh token will be revoked
+>Respond with both tokens
 
 -> *Request headers* : 
 >A valid refresh token (string) in "Authorization" header
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > None
@@ -258,7 +260,7 @@
     "refresh_token": "<refresh_token>"
 }
 ```
-> See resource [Tokens](resources.md#tokens) for more details
+> See resource [Tokens](resources.md#41-tokens) for more details
 
 ### 2.4. POST /auth/revoke -- Revoke a refresh token
 -> *Description* : 
@@ -267,7 +269,7 @@
 
 -> *Request headers* : 
 >A valid refresh token (string) in "Authorization" header
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > None
@@ -284,7 +286,28 @@
 -> *Response body example* :
 >None
 
-### GET /auth/login -- Confirm user password
+### 2.5. GET /auth/login -- Confirm user password
+-> *Description* : 
+>Check if given password match logged user
+>Empty response's body
+
+-> *Request headers* : 
+>A valid refresh token (string) in "Authorization" header
+>See resource [Authorization header](resources.md#11-authorization-header)
+
+-> *Request body* :
+> None
+
+-> *Error Response status code to handle* : 
+
+    - 401 Unauthorized - There is a problem with "Authorization" header: missing or malformed OR Given password is invalid
+
+-> *OK Response status code expected* : 
+
+    200 No Content
+
+-> *Response body example* :
+>None
 
 ## 3. Media endpoints
 
@@ -295,7 +318,7 @@
 
 -> *Request headers* :
 > A valid Bearer access token in "Authorization" header.  
-> See resource [Authorization header](resources.md#authorization-header)
+> See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >**REQUIRED**:
@@ -307,8 +330,7 @@
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - map[string]interface{} (according to media type see resources [metadata](resources.md#metadata-for-media))
-
+* `metadata` - map[string]interface{} 
 
 *Example*:
 ```json
@@ -318,7 +340,16 @@
     "creator": "J.R.R Tolkien",
     "pub_date": "1954/02/01",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
-    "metadata": ""
+    "metadata": {
+                "description": "",
+                "isbn10": "3462053442",
+                "isbn13": "9783462053449",
+                "page_count": 850,
+                "publishers": [
+                    "Kiepenheuer & Witsch GmbH"
+                ],
+                "subjects": []
+            }
 }
 ```
 
@@ -333,7 +364,7 @@
     201 Created
 
 -> *Response body* :
-> See resource [Medium](resources.md#media-resource)
+> See resource [Medium](resources.md#22-media-resource)
 
 ### 3.2. GET /api/media -- Get a medium's info by its title
 -> *Description* :
@@ -342,7 +373,7 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header  
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >**REQUIRED**:
@@ -368,7 +399,7 @@
     200 OK
 
 -> *OK Response body example* :
-> See resource [Medium](resources.md#media-resource)
+> See resource [Medium](resources.md#22-media-resource)
 
 ### 3.3. GET /api/media/type -- Get all media based on given type
 -> *Description* :
@@ -377,7 +408,7 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header  
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >**REQUIRED**:
@@ -406,30 +437,57 @@
     "media": []Medium
 }
 ```
-> See resource [Medium](resources.md#media-resource)
+> See resource [Medium](resources.md#22-media-resource)
+
+### 3.4. GET /api/media_records -- Get all user's record and related media
+-> *Description* :
+> Find all records matching logged user (by user's id from access token) and all media related to those records
+> Respond with a map[string][]MediumWithRecord
+
+-> *Request headers* :
+>A valid Bearer access token in "Authorization" header 
+>See resource [Authorization header](resources.md#11-authorization-header)
+
+-> *Request body* :
+> None
+
+-> *Error Response status code to handle* : 
+
+    - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
+    - 404 Not Found - No record found for logged user
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* :
+```json
+{
+    "records": map[string][]MediumWithRecord
+}
+```
+> See resource [MediumWithRecord](resources.md#24-media-with-record-resource)
 
 
-
-
-### 3.4. PUT /api/media -- Update a medium's info
+### 3.5. PUT /api/media -- Update a medium's info
 -> *Description* :
 > Change some info about a specified medium (by medium's id)  
 > Respond with updated medium
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > **REQUIRED**:
-* `medium_id` - *string* (in format UUIDv4, see [resource documentation](resources.md#uuid))
+* `medium_id` - *string* (in format UUIDv4, see [resource documentation](resources.md#42-uuid))
 * unique `title` - *string*
 * `creator` - *string*
 * `pub_date` - *string*
 
 > **OPTIONNAL**:
 * `image_url` - *string*
-* `metadata` - map[string]interface{} (according to media type see resources [metadata](resources.md#metadata-for-media))
+* `metadata` - map[string]interface{}
 
 >**`media_type` cannot be updated**  
 >Even if a field is not updated, client still need to send old info (no comparison is done in server, all are replaced).
@@ -443,7 +501,16 @@
     "creator": "J.R.R Tolkien",
     "pub_date": "1954/02/01",
     "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/The_Fellowship_of_the_Ring_cover.gif/220px-The_Fellowship_of_the_Ring_cover.gif",
-    "metadata": ""
+    "metadata": {
+                "description": "",
+                "isbn10": "3462053442",
+                "isbn13": "9783462053449",
+                "page_count": 850,
+                "publishers": [
+                    "Kiepenheuer & Witsch GmbH"
+                ],
+                "subjects": []
+            }
 }
 ```
 
@@ -459,20 +526,20 @@
     200 OK
 
 -> *OK Response body example* :
-> See resource [Medium](resources.md#media-resource)
+> See resource [Medium](resources.md#22-media-resource)
 
-### 3.5. DELETE /api/media -- Delete a medium
+### 3.6. DELETE /api/media -- Delete a medium
 -> *Description* :
 >Delete a medium's info in database, based on given medium's ID
 >Empty response's body
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > **REQUIRED**
-* `medium_id` - *string* (in format UUIDv4, see [resource documentation](resources.md#uuid))
+* `medium_id` - *string* (in format UUIDv4, see [resource documentation](resources.md#42-uuid))
 
 *Example*:
 ```json
@@ -502,14 +569,15 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > **REQUIRED**: 
-* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#uuid))   
+* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#42-uuid))   
 > **OPTIONNAL**: 
-* `start_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#datetime))
-* `end_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#datetime))
+* `start_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#43-datetime))
+* `end_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#43-datetime))
+* `comments` - *string*
 
 *Example*:
 ```json
@@ -517,6 +585,7 @@
     "medium_id": "3b75af06-e596-42ce-a953-bf235dfc9102",
     "start_date": "2025-03-26T14:20:23.525332",
     "end_date": "2025-03-31T08:47:29.205805",
+    "comments": "I really loved this book"
 }
 ```
 -> *Error Response status code to handle* : 
@@ -531,7 +600,7 @@
     201 Created
 
 -> *OK Response body example* :
->See resource [Record](resources.md#record-resource)
+>See resource [Record](resources.md#23-record-resource)
 
 
 ### 4.2. GET /api/records -- Get all records by user's ID
@@ -541,7 +610,7 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 > None
@@ -561,55 +630,31 @@
     "records": []Record
 }
 ```
-> See resource [Record](resources.md#record-resource)
+> See resource [Record](resources.md#23-record-resource)
 
-### GET /api/media_records -- Get all user's record and related media
+### 4.3. PUT /api/records -- Update a record's start and/or end date 
 -> *Description* :
-> Find all records matching logged user (by user's id from access token) and all media related to those records
-> Respond with a map[string][]MediumWithRecord
-
--> *Request headers* :
->A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
-
--> *Request body* :
-> None
-
--> *Error Response status code to handle* : 
-
-    - 401 Unauthorized - Access token is expired, client should fetch **POST /auth/refresh** to get a new access token
-    - 404 Not Found - No record found for logged user
-
--> *OK Response status code expected* :
-
-    200 OK
-
--> *OK Response body example* :
-```json
-{
-    "records": map[string][]MediumWithRecord
-}
-```
-> See resource [MediumWithRecord](resources.md#media-with-record-resource)
-
-### 4.3. PUT /api/records -- Update a record's start and/ord end date 
--> *Description* :
-> Modify a already-existing record's start date and/or end date (based on given record's ID)
+> Modify a already-existing record (based on given medium's ID and on user's ID from access token)
 > Respond with the updated record
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
-> *OPTIONNAL*:
+> **REQUIRED**: 
+* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#42-uuid)) 
+> **OPTIONNAL**:
 * `start_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#iso-8601-datetime))
 * `end_date` - *string* (in format ISO 8601 datetime, see resource documentation [datetime](resources.md#iso-8601-datetime))
+* `comments` - *string*
 
 *Example*:
 ```json
 {
-    "end_date": "2025-03-31T08:47:29.205805"
+    "medium_id": "3b75af06-e596-42ce-a953-bf235dfc9102",
+    "end_date": "2025-03-31T08:47:29.205805",
+    "comments": "This movie was bad"
 }
 ```
 -> *Error Response status code to handle* : 
@@ -623,7 +668,7 @@
     200 OK
 
 -> *OK Response body example* :
-> See resource [Record](resources.md#record-resource)
+> See resource [Record](resources.md#23-record-resource)
 
 ### 4.4. DELETE /api/records -- Delete a record with its medium ID
 -> *Description* :
@@ -632,11 +677,11 @@
 
 -> *Request headers* :
 >A valid Bearer access token in "Authorization" header 
->See resource [Authorization header](resources.md#authorization-header)
+>See resource [Authorization header](resources.md#11-authorization-header)
 
 -> *Request body* :
 >**REQUIRED**:
-* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#uuid))  
+* `medium_id` - *string* (in format UUIDv4, see resource documentation [UUID](resources.md#42-uuid))  
 
 *Example*:
 ```json
@@ -657,9 +702,34 @@
 >Empty
 
 
-## 5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
+## Other endoints
 
-### 5.1. POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
+### GET /server/version -- Get server version
+-> *Description* :
+>Respond with the server version
+
+-> *Request body* :
+> none
+
+
+-> *Error Response status code to handle* : 
+
+    - none
+
+-> *OK Response status code expected* :
+
+    200 OK
+
+-> *OK Response body example* :
+```json
+{
+    "server_versions": "v1.0.0"
+}
+```
+
+### 5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
+
+#### 5.1. POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
 -> *Description* :
 >Based on given user's email
 * Server generates a unique, time-limited reset token (6h)
@@ -697,7 +767,7 @@
 }
 ```
 
-### 5.2. GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
+#### 5.2. GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
 -> *Description* :
 >Server verify if the token from query parameter exists, hasn't expired and hasn't already been used
 > Respond with `valid` (*bool*) and `email` (*string*)
@@ -731,7 +801,7 @@
 }
 ```
 
-### 5.3. PUT /auth/password_reset -- Step 3 : Set a new password
+#### 5.3. PUT /auth/password_reset -- Step 3 : Set a new password
 -> *Description* :
 >New password is set for user (based on given reset token)
 > All refresh token linked to user's ID will be revoked, user will need to login again to get new tokens.
@@ -761,57 +831,61 @@
     200 OK
 
 -> *OK Response body example* :
->See resource [User](resources.md#user-resource)
+>See resource [User](resources.md#21-user-resource)
 
 
-## External API endpoints (Server acts as a proxy)
-### Books (on openLibrary.org)
-#### GET /external_api/book/search -- Search for a book by title or by author
+## 6. External API endpoints (Server acts as a proxy)
+### 6.1. Books (on openLibrary.org)
+#### 6.1.1. GET /external_api/book/search -- Search for a book by title or by author
 -> *Request query parameters:*  
 > ?title=xxxx
 > ?author=xxxxx
 
-#### GET /external_api/book/isbn
+#### 6.1.2. GET /external_api/book/isbn
 -> *Request query parameters:*  
 > ?isbn=xxxxx
 
-#### GET /external_api/book/author
+#### 6.1.3. GET /external_api/book/author
 -> *Request query parameters:*  
 > ?author=xxxxx
 
-#### GET /external_api/book/search_isbn
+#### 6.1.4. GET /external_api/book/search_isbn
 -> *Request query parameters:*  
 > ?key=xxxxx
 
-### Movies/Series
-#### GET /external_api/movie_tv/search_movie
+### 6.2. Movies/Series
+#### 6.2.1. GET /external_api/movie_tv/search_movie
 -> *Request query parameters:*  
 > ?query=xxxx
 
-#### GET /external_api/movie_tv/search_tv
+#### 6.2.2. GET /external_api/movie_tv/search_tv
 -> *Request query parameters:*  
 > ?query=xxxx
 
-#### GET /external_api/movie_tv/search
+#### 6.2.3. GET /external_api/movie_tv/search
 -> *Request query parameters:*  
 > ?query=xxxx
 
-#### GET /external_api/movie_tv
+#### 6.2.4. GET /external_api/movie_tv
 -> Request body:
 movie_id string
 tv_id string
 language string
 
-### Videogames
-#### GET /external_api/videogame/search
+### 6.3. Videogames
+#### 6.3.1. GET /external_api/videogame/search
+-> Request query parameters:
 > ?search=<title>&platforms=<platformsID>
 
-#### GET /external_api/videogame
+#### 6.3.2. GET /external_api/videogame
+-> Request query parameters:
 > ?id=xxxx
 
-### Boardgames
-#### GET /external_api/boardgame/search
+### 6.4. Boardgames
+#### 6.4.1. GET /external_api/boardgame/search
+-> Request query parameters:
 > ?query=xxxx
 
-#### GET /external_api/boardgame
+#### 6.4.2. GET /external_api/boardgame
+-> Request query parameters:
 > ?id=xxxx

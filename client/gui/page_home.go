@@ -17,7 +17,7 @@ import (
 
 func createHomepageContent(appCtxt *context.AppContext) *fyne.Container {
 	// Create objects
-	// Texts
+	// Top Texts
 	titleText := canvas.NewText("Welcome to your Kallaxy", color.White)
 	titleText.TextSize = 40
 	titleText.Alignment = fyne.TextAlignCenter

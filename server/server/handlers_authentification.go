@@ -12,11 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type parametersLogin struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 // POST /auth/login
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type response struct {
@@ -211,10 +206,6 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 
 	// If ok, respond
 	w.WriteHeader(204)
-}
-
-type parametersConfirmPassword struct {
-	Password string `json:"password"`
 }
 
 // GET /auth/login
