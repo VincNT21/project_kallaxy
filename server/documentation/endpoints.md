@@ -23,12 +23,12 @@
   - [4.2. GET /api/records -- Get all records by user's ID](#42-get-apirecords----get-all-records-by-users-id)
   - [4.3. PUT /api/records -- Update a record's start and/or end date](#43-put-apirecords----update-a-records-start-andor-end-date)
   - [4.4. DELETE /api/records -- Delete a record with its medium ID](#44-delete-apirecords----delete-a-record-with-its-medium-id)
-- [Other endoints](#other-endoints)
-  - [GET /server/version -- Get server version](#get-serverversion----get-server-version)
-  - [5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#5-password-reset-endpoints-in-test-mode-not-secure-for-production)
-    - [5.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#51-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
-    - [5.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#52-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
-    - [5.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#53-put-authpassword_reset----step-3--set-a-new-password)
+- [5. Other endoints](#5-other-endoints)
+  - [5.1. GET /server/version -- Get server version](#51-get-serverversion----get-server-version)
+  - [5.2. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)](#52-password-reset-endpoints-in-test-mode-not-secure-for-production)
+    - [5.2.1. POST /auth/password\_reset -- Step 1 : Ask for a reset token and reset link](#521-post-authpassword_reset----step-1--ask-for-a-reset-token-and-reset-link)
+    - [5.2.2. GET /auth/password\_reset?token=xxxxxxxx -- Step 2 : Verify reset token](#522-get-authpassword_resettokenxxxxxxxx----step-2--verify-reset-token)
+    - [5.2.3. PUT /auth/password\_reset -- Step 3 : Set a new password](#523-put-authpassword_reset----step-3--set-a-new-password)
 - [6. External API endpoints (Server acts as a proxy)](#6-external-api-endpoints-server-acts-as-a-proxy)
   - [6.1. Books (on openLibrary.org)](#61-books-on-openlibraryorg)
     - [6.1.1. GET /external\_api/book/search -- Search for a book by title or by author](#611-get-external_apibooksearch----search-for-a-book-by-title-or-by-author)
@@ -702,9 +702,9 @@
 >Empty
 
 
-## Other endoints
+## 5. Other endoints
 
-### GET /server/version -- Get server version
+### 5.1. GET /server/version -- Get server version
 -> *Description* :
 >Respond with the server version
 
@@ -727,9 +727,9 @@
 }
 ```
 
-### 5. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
+### 5.2. Password Reset endpoints (IN TEST MODE, NOT SECURE FOR PRODUCTION)
 
-#### 5.1. POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
+#### 5.2.1. POST /auth/password_reset -- Step 1 : Ask for a reset token and reset link
 -> *Description* :
 >Based on given user's email
 * Server generates a unique, time-limited reset token (6h)
@@ -767,7 +767,7 @@
 }
 ```
 
-#### 5.2. GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
+#### 5.2.2. GET /auth/password_reset?token=xxxxxxxx -- Step 2 : Verify reset token
 -> *Description* :
 >Server verify if the token from query parameter exists, hasn't expired and hasn't already been used
 > Respond with `valid` (*bool*) and `email` (*string*)
@@ -801,7 +801,7 @@
 }
 ```
 
-#### 5.3. PUT /auth/password_reset -- Step 3 : Set a new password
+#### 5.2.3. PUT /auth/password_reset -- Step 3 : Set a new password
 -> *Description* :
 >New password is set for user (based on given reset token)
 > All refresh token linked to user's ID will be revoked, user will need to login again to get new tokens.

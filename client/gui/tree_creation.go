@@ -37,11 +37,11 @@ Node Types to handle :
 
 	- medium_title
 		branch node with the medium's title
-		can be clicked for update/delete medium or record
+		buttons for update/delete medium or record and for expand/collapse
 
 	- metadata_main
 		branch node for metadata
-		with a "expand all" button
+		buttons for expand/collapse
 
 	- single_line
 		leaf value node, with single line of text
@@ -53,8 +53,11 @@ Node Types to handle :
 
 	- multi_line
 		leaf value node, with multiple lines of text
-		displayed as a multi line text
+		displayed as a multi line text, scrollable, with buttons for expand/collapse
 
+	- multi_line_with_title
+		leaf value node, with multiple lines of text and a title
+		displayed as a multi line text, scrollable, with buttons for expand/collapse
 
 */
 
@@ -162,7 +165,7 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaL
 			ParentID: persRecordNodeID,
 			Title:    "Comments: ",
 			Value:    medium.Comments,
-			NodeType: "single_line_with_title",
+			NodeType: "multi_line_with_title",
 		}
 
 		// Metadata Branch node (3rd level)
@@ -256,11 +259,11 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaL
 				branchTextObject.TextStyle.Bold = true
 				branchContainer.Add(branchTextObject)
 			case "sub_title":
-				// Sub title will have medium text
+				// Sub title will have standard text
 				branchTextObject.TextSize = 14
 				branchContainer.Add(branchTextObject)
 			case "medium_title":
-				// Medium title will have medium text and edit/delete button
+				// Medium title will have standard text, edit/delete button, expand/collapse button
 				// color depends of category (finished, in progress, unstarted)
 				branchTextObject.TextSize = 14
 				switch node.ParentID {
@@ -282,12 +285,20 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaL
 				mediumDeleteButton := widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() {
 					buttonFuncMediumDelete(appCtxt, node)
 				})
+				expandButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropDown), func() {
+					buttonFuncExpandBranches(tree, treeData, node.ID)
+				})
+				collapseButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropUp), func() {
+					buttonFuncCollapseBranches(tree, treeData, node.ID)
+				})
 
 				branchContainer.Add(mediumEditButton)
 				branchContainer.Add(mediumDeleteButton)
+				branchContainer.Add(expandButton)
+				branchContainer.Add(collapseButton)
 
 			case "metadata_main":
-				// Metadata title will have medium text
+				// Metadata title will have standard text
 				// and a "expand all" button
 				branchTextObject.TextSize = 14
 				expandButton := widget.NewButtonWithIcon("", theme.Icon(theme.IconNameArrowDropDown), func() {
@@ -309,13 +320,28 @@ func createAndPopulateTree(appCtxt *context.AppContext, mediaType string, mediaL
 				// Use two canvas.Text : one for title, one for value
 				leafTitleObject := canvas.NewText(node.Title, color.White)
 				leafValueObject := canvas.NewText(node.Value, color.White)
-				branchContainer.Add(container.NewHBox(leafTitleObject, leafValueObject))
+				branchContainer.Add(leafTitleObject)
+				branchContainer.Add(leafValueObject)
 			case "multi_line":
-				// Use a scrollable label widget
+				// Use a scrollable label widget and a read button
 				leafTextObject := widget.NewLabel(node.Value)
 				scrollable := container.NewVScroll(leafTextObject)
+				readButton := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
+					dialog.ShowInformation(node.Title, node.Value, appCtxt.MainWindow)
+				})
+				branchContainer.Add(readButton)
 				branchContainer.Add(scrollable)
-
+			case "multi_line_with_title":
+				// Use a scrollable label widget and a read button
+				leafTitleObject := canvas.NewText(node.Title, color.White)
+				leafTextObject := widget.NewLabel(node.Value)
+				scrollable := container.NewVScroll(leafTextObject)
+				readButton := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
+					dialog.ShowInformation(node.Title, node.Value, appCtxt.MainWindow)
+				})
+				branchContainer.Add(leafTitleObject)
+				branchContainer.Add(readButton)
+				branchContainer.Add(scrollable)
 			default:
 				log.Printf("--GUI-- Tree unexpected nodeType: %v", node.NodeType)
 			}

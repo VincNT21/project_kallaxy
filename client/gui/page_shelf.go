@@ -68,12 +68,27 @@ func buildMediaContainers(appCtxt *context.AppContext, mediaRecords models.Media
 	// Iterate over each media type
 	for mediaType := range typesMap {
 		// Create the top separator
-		topTextButton := widget.NewButton(strings.ToTitle(mediaType), func() {
+
+		// Proper media type text
+		var mediaTypeProper string
+		switch mediaType {
+		case "book":
+			mediaTypeProper = "Books"
+		case "movie":
+			mediaTypeProper = "Movies"
+		case "series":
+			mediaTypeProper = "Series"
+		case "videogame":
+			mediaTypeProper = "Videogames"
+		case "boardgame":
+			mediaTypeProper = "Boardgames"
+		default:
+			mediaTypeProper = strings.ToTitle(mediaType)
+		}
+
+		topTextButton := widget.NewButton(mediaTypeProper, func() {
 			appCtxt.PageManager.ShowCompartmentTreePage(mediaType, mediaRecords.MediaRecords[mediaType])
 		})
-		topText := canvas.NewText(strings.ToTitle(mediaType), color.White)
-		topText.Alignment = fyne.TextAlignCenter
-		topText.TextSize = 20
 
 		topSeparator := container.NewBorder(
 			customSeparatorForShelf(),
