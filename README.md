@@ -89,5 +89,40 @@ Once medium find online, you can edit whatever field you want and add your perso
 
 *Screenshots coming soon!*
 
+## Contributing
+### Clone the repo
+
+```bash
+git clone https://github.com/VincNT21/project_kallaxy
+```
+
+### Install Go
+```bash
+  sudo apt install golang
+```
+
+### Check for dependencies
+
+// TO BE COMPLETED //
+
+
+
+### Run the project
+
+```bash
+./start_server.sh
+./start_client.sh
+```
+
+### Run the tests
+
+```bash
+go test ./...
+```
+
+### Submit a pull request
+
+If you'd like to contribute, please fork the repository and open a pull request to the `main` branch.
+
 ## App icon attribution
 [bookshelf icons](https://www.flaticon.com/free-icons/bookshelf)Bookshelf icons created by Freepik - Flaticon
