@@ -72,7 +72,7 @@ You can manually stop it by right-clicking on its icon in taskbar and chose "Qui
 
 ### Server API
 
-All documentation about server endpoints and resources can be found in the */server/documentation* folder
+All documentation about server endpoints and resources can be found in the */server/documentation* folder  
 Endpoints documentation : [here](https://github.com/VincNT21/project_kallaxy/blob/main/server/documentation/endpoints.md)
 
 ### Server Database
