@@ -2,28 +2,44 @@ package context
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	kallaxyapi "github.com/VincNT21/kallaxy/client/internal/kallaxyAPI"
 	"github.com/VincNT21/kallaxy/client/models"
 )
 
-func getLocalStoragePath() string {
-	// Get the path to the currently running executable
-	execPath, err := os.Executable()
-	if err != nil {
-		log.Fatalf("Error with getLocalStoragePath(): %v", err)
+func getLocalConfigStoragePath() string {
+	outputDir := ""
+
+	// Check if OS used is Windows or else
+	if runtime.GOOS == "windows" {
+		// For windows builds, Get the path to the currently running executable
+		execPath, err := os.Executable()
+		if err != nil {
+			log.Fatalf("Error with getLocalConfigStoragePath(): %v", err)
+		} else {
+			outputDir = filepath.Dir(execPath)
+		}
+	} else {
+		// For Linux/Mac, use working directory + client directory
+		workingDir, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Error with getLocalConfigStoragePath(): %v", err)
+		} else {
+			outputDir = filepath.Join(workingDir, "client")
+		}
 	}
 
-	// Determine the directory where the executable is located
-	execDir := filepath.Dir(execPath)
+	// If we couldn't determine a directory, fall back to current directory
+	if outputDir == "" {
+		outputDir = "."
+	}
 
 	// Build the path to the "config/" folder
-	fmt.Println(filepath.Join(execDir, "config"))
-	return filepath.Join(execDir, "config")
+	return filepath.Join(outputDir, "config")
 }
 
 type AppState struct {
@@ -34,7 +50,7 @@ type AppState struct {
 
 // Check if appstate data exists and loads it
 func (c *AppContext) LoadAppstate() {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	appStateFilePath := filepath.Join(localStoragePath, "appstate.json")
 	f, err := os.Open(appStateFilePath)
 	if err != nil {
@@ -60,7 +76,7 @@ func (c *AppContext) LoadAppstate() {
 
 // Store appstate data in local file
 func (c *AppContext) SaveAppstate() {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	appStateFilePath := filepath.Join(localStoragePath, "appstate.json")
 	// Create/erase local appstate file
 	f, err := os.Create(appStateFilePath)
@@ -91,7 +107,7 @@ func (c *AppContext) SaveAppstate() {
 }
 
 func (c *AppContext) LoadMetadataFieldsSpecs() error {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	metadataFieldsSpecsFilePath := filepath.Join(localStoragePath, "metadata_fields_specs.json")
 
 	var fieldSpecs map[string]kallaxyapi.FieldSpec
@@ -114,7 +130,7 @@ func (c *AppContext) LoadMetadataFieldsSpecs() error {
 }
 
 func (c *AppContext) SaveMetadataFieldsSpecs() {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	metadataFieldsSpecsFilePath := filepath.Join(localStoragePath, "metadata_fields_specs.json")
 
 	jsonData, err := json.MarshalIndent(c.MetadataFieldsSpecs, "", "  ")
@@ -131,7 +147,7 @@ func (c *AppContext) SaveMetadataFieldsSpecs() {
 }
 
 func (c *AppContext) LoadMetadataFieldsMap() error {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	metadataFieldsMapFile := filepath.Join(localStoragePath, "metadata_fields_map.json")
 	var fieldsMap map[string][]string
 
@@ -153,7 +169,7 @@ func (c *AppContext) LoadMetadataFieldsMap() error {
 }
 
 func (c *AppContext) SaveMedataFieldsMap() {
-	localStoragePath := getLocalStoragePath()
+	localStoragePath := getLocalConfigStoragePath()
 	metadataFieldsMapFile := filepath.Join(localStoragePath, "metadata_fields_map.json")
 
 	jsonData, err := json.MarshalIndent(c.MetadataFieldsMap, "", "  ")

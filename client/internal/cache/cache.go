@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -106,17 +107,34 @@ func (c *Cache) GetFromTemp(key string) ([]byte, bool) {
 }
 
 func getLocalCacheStoragePath() string {
-	// Get the path to the currently running executable
-	execPath, err := os.Executable()
-	if err != nil {
-		log.Fatalf("Error with getLocalStoragePath(): %v", err)
+	outputDir := ""
+
+	// Check if OS used is Windows or else
+	if runtime.GOOS == "windows" {
+		// For windows builds, Get the path to the currently running executable
+		execPath, err := os.Executable()
+		if err != nil {
+			log.Fatalf("Error with getLocalCacheStoragePath(): %v", err)
+		} else {
+			outputDir = filepath.Dir(execPath)
+		}
+	} else {
+		// For Linux/Mac, use working directory + client directory
+		workingDir, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Error with getLocalCacheStoragePath(): %v", err)
+		} else {
+			outputDir = filepath.Join(workingDir, "client")
+		}
 	}
 
-	// Determine the directory where the executable is located
-	execDir := filepath.Dir(execPath)
+	// If we couldn't determine a directory, fall back to current directory
+	if outputDir == "" {
+		outputDir = "."
+	}
 
 	// Build the path to the "config/cache.json" file
-	return filepath.Join(execDir, "config", "cache.json")
+	return filepath.Join(outputDir, "config", "cache.json")
 }
 
 func loadCacheFile() (map[string]cacheEntry, error) {
