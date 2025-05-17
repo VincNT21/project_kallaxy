@@ -19,3 +19,4 @@ docker-entrypoint.sh
 Dockerfile.server
 kallaxy_start.bat
 .dockerignore
+/releases

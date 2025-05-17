@@ -1,18 +1,13 @@
 # Project Kallaxy external - 3rd party API resources
 
+This part of documentation is for server's development use only 
+
 ## Open Library API (books)
-
-
 
 For covers :
 https://covers.openlibrary.org/b/isbn/<*ISBN*>-M.jpg
 
 ## The Movie DB (movies and tv shows)
-
-?language=en-US
-?language=fr-FR
-
-
 
 https://api.themoviedb.org/3/search/movie  
 Search for movies by their original, translated and alternative titles.
@@ -25,6 +20,8 @@ query parameters :
 * region region=FR
 * year
 
+?language=en-US
+?language=fr-FR
 
 https://api.themoviedb.org/3/search/tv  
 Search for TV shows by their original, translated and also known as names.
@@ -93,8 +90,8 @@ query parameters:
 
 # Responses in go
 
-package models
 
+```go
 // Response from https://openlibrary.org/search.json
 type responseBooksSearch struct {
 	NumFound         int    `json:"numFound"`
@@ -727,3 +724,4 @@ type ResponseBoardgameDetails struct {
 		Termsofuse string `json:"termsofuse"`
 	} `json:"items"`
 }
+```
