@@ -3,7 +3,7 @@ VincNT21's Capstone project
 End of backend-development learning path on [boot.dev](https://www.boot.dev/)
 
 ## PRESENTATION
-Project Kallaxy is a virtual shelf that allows users to :
+Project Kallaxy is a virtual shelf that allows users to:
 - Store information about various cultural media (books, movies, series, boardgames, video games...), as well as your personal reading/watching/playing record
 - Use 3rd party API to get precise details online about a specific medium
 - Review your collections as a shelf, organized by media type.
@@ -16,7 +16,7 @@ And more to come in future update !
 
 
 ## PROJECT DETAILS
-Project Kallaxy, in its current version,  is made up of four parts : 
+Project Kallaxy, in its current version,  is made up of four parts: 
 - a PostgreSQL database
 - an HTTP server RESTful API
 - an HTTP client REPL API 
@@ -25,12 +25,12 @@ Project Kallaxy, in its current version,  is made up of four parts :
 Server and client are coded in Go.  
 Everything is written by myself (around 125 hours of work), *certified with no vibe coding ;)*
 
-The idea of this project is based on my previous personal project : [Book Shelf and Stats](https://github.com/VincNT21/books_shelf_and_stats)
+The idea of this project is based on my previous personal project: [Book Shelf and Stats](https://github.com/VincNT21/books_shelf_and_stats)
 
 ## LEARNED SKILLS
 
 For this project I used and improved some of the skills I've learned on boot.dev.  
-Here's a short summary :
+Here's a short summary:
 - Using Go (Golang) programming language and its packages
 - Designing a SQL database and writing queries to interact with it  
 (including the use of tools to make it easier: Goose and SQLC generator)
@@ -59,7 +59,7 @@ in "Run" list, choose "Minimized"
 6b. For now, Docker Desktop won't stop automatically.  
 You can manually stop it by right-clicking on its icon in taskbar and chose "Quit Docker Desktop"
 
-> A word about updates :
+> A word about updates:
 > - If a new version of the Server is online, it will be automatically get by Docker
 > - If a new version of the Client is online, you'll have a pop-up when launching the app with a link to download it
 >   
